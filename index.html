@@ -22,7 +22,14 @@
         <h1>Your Mac.<br />Your devices.</h1>
         <p>Pair this browser to enter your workspace.</p>
         <form id="pair-form">
-          <label id="node-field" hidden>Mac address<input id="node-url" type="url" inputmode="url" autocomplete="url" placeholder="https://192.168.x.x:4301" /></label>
+          <label id="node-field" hidden
+            >Mac address<input
+              id="node-url"
+              type="url"
+              inputmode="url"
+              autocomplete="url"
+              placeholder="https://192.168.x.x:4301"
+          /></label>
           <label
             >This browser’s name<input
               id="device-name"
@@ -38,7 +45,11 @@
           ><button class="primary">Connect to Spider</button>
         </form>
         <p id="pair-error" role="alert"></p>
-        <p><a id="trust-mac" target="_blank" rel="noreferrer" hidden>Open the Mac directly to check certificate trust</a></p>
+        <p>
+          <a id="trust-mac" target="_blank" rel="noreferrer" hidden
+            >Open the Mac directly to check certificate trust</a
+          >
+        </p>
         <small
           >On the Mac, run <code>spider pair</code>, or use Add device in a
           paired frontend. Invitations work once and expire in ten

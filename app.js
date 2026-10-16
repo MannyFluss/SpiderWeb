@@ -3,8 +3,12 @@ import { uid } from "./sdk.js";
 import { normalizeNode, clientInfo } from "./connection.js";
 const fragment = new URLSearchParams(location.hash.slice(1));
 const hosted = document.documentElement.dataset.hosting === "static";
-let nodeBase = hosted ? localStorage.getItem("spider.node") || "" : location.origin;
-try { if (fragment.has("node")) nodeBase = normalizeNode(fragment.get("node")); } catch {}
+let nodeBase = hosted
+  ? localStorage.getItem("spider.node") || ""
+  : location.origin;
+try {
+  if (fragment.has("node")) nodeBase = normalizeNode(fragment.get("node"));
+} catch {}
 if (nodeBase) localStorage.setItem("spider.node", nodeBase);
 const trustKey = () => "spider.trust:" + nodeBase;
 let deviceToken = hosted ? localStorage.getItem(trustKey()) : null;
@@ -34,7 +38,11 @@ try {
 let cacheKey = "spider.client.v1:" + instanceId + ":" + nodeBase,
   local;
 try {
-  local = JSON.parse(localStorage.getItem(cacheKey) || (!hosted && localStorage.getItem("spider.client.v1:" + instanceId)) || "null");
+  local = JSON.parse(
+    localStorage.getItem(cacheKey) ||
+      (!hosted && localStorage.getItem("spider.client.v1:" + instanceId)) ||
+      "null",
+  );
 } catch {}
 if (!local) {
   try {
@@ -43,7 +51,8 @@ if (!local) {
       localStorage.getItem(previous || "spider.client.v1") || "null",
     );
     if (cached)
-      if (!hosted || cached.nodeBase === nodeBase) local = { ...cached, pending: previous ? [] : cached.pending || [] };
+      if (!hosted || cached.nodeBase === nodeBase)
+        local = { ...cached, pending: previous ? [] : cached.pending || [] };
   } catch {}
 }
 try {
@@ -79,8 +88,13 @@ function notice(message) {
   $("#notice").hidden = !message;
 }
 async function api(path, body, method) {
-  if (!nodeBase) throw Error("Enter the Mac’s HTTPS address or scan a pairing QR from Spider.");
-  const headers = body ? { "Content-Type": "application/json", "X-Spider-Request": "1" } : {};
+  if (!nodeBase)
+    throw Error(
+      "Enter the Mac’s HTTPS address or scan a pairing QR from Spider.",
+    );
+  const headers = body
+    ? { "Content-Type": "application/json", "X-Spider-Request": "1" }
+    : {};
   if (deviceToken) headers.Authorization = "Spider " + deviceToken;
   const response = await fetch(nodeBase + path, {
     method: method || (body ? "POST" : "GET"),
@@ -159,8 +173,18 @@ function contextState(ctx) {
       ctx.appId === "spider.connections"
         ? {
             ...report,
-            authority: { ...report?.authority, name: projected("spider.connections", "directory").names?.authority || report?.authority?.name },
-            devices: (report?.devices || []).map((d) => ({ ...d, label: projected("spider.connections", "directory").names?.[d.id] || d.label })),
+            authority: {
+              ...report?.authority,
+              name:
+                projected("spider.connections", "directory").names?.authority ||
+                report?.authority?.name,
+            },
+            devices: (report?.devices || []).map((d) => ({
+              ...d,
+              label:
+                projected("spider.connections", "directory").names?.[d.id] ||
+                d.label,
+            })),
             local: {
               pending: local.pending.length,
               conflicts: local.conflicts.length,
@@ -337,8 +361,9 @@ async function refresh(shouldFlush = true) {
         );
     } else if (!snapshot) {
       $("#pair-screen").hidden = false;
-      $("#pair-error").textContent =
-        nodeBase ? "Could not reach the Mac. Keep Spider running, check the address and certificate trust, and allow local network access if asked." : "Enter the Mac’s HTTPS address, or scan a QR from spider pair.";
+      $("#pair-error").textContent = nodeBase
+        ? "Could not reach the Mac. Keep Spider running, check the address and certificate trust, and allow local network access if asked."
+        : "Enter the Mac’s HTTPS address, or scan a QR from spider pair.";
     }
   }
   if (snapshot) showWorkspace();
@@ -349,7 +374,9 @@ function showWorkspace() {
   $("#pair-screen").hidden = true;
   $("#workspace").hidden = false;
   $("#client-label").textContent =
-    projected("spider.connections", "directory").names?.[clientId] || snapshot.devices?.[clientId]?.label || "Paired browser";
+    projected("spider.connections", "directory").names?.[clientId] ||
+    snapshot.devices?.[clientId]?.label ||
+    "Paired browser";
   if (!rendered) {
     rendered = true;
     const serverViews = snapshot.apps?.[APP]?.sessions?.[clientId]?.data?.views;
@@ -415,11 +442,26 @@ async function dispatch(ctx, msg) {
     case "write":
       return write(ctx.appId, ctx.sessionId, args.path, args.value);
     case "renameDevice": {
-      if (ctx.appId !== "spider.connections") throw Error("Device management is not declared by this app");
+      if (ctx.appId !== "spider.connections")
+        throw Error("Device management is not declared by this app");
       const label = String(args.label || "").trim();
-      if (!label || [...label].length > 80 || /[\u0000-\u001f\u007f]/.test(label)) throw Error("Use a name of 1–80 characters");
-      if (args.clientId !== "authority" && !(report?.devices || []).some((d) => d.id === args.clientId)) throw Error("Choose a paired device");
-      return write("spider.connections", "directory", ["names", args.clientId], label);
+      if (
+        !label ||
+        [...label].length > 80 ||
+        /[\u0000-\u001f\u007f]/.test(label)
+      )
+        throw Error("Use a name of 1–80 characters");
+      if (
+        args.clientId !== "authority" &&
+        !(report?.devices || []).some((d) => d.id === args.clientId)
+      )
+        throw Error("Choose a paired device");
+      return write(
+        "spider.connections",
+        "directory",
+        ["names", args.clientId],
+        label,
+      );
     }
     case "resize": {
       const frame = document.querySelector(
@@ -427,7 +469,13 @@ async function dispatch(ctx, msg) {
       );
       if (frame)
         frame.style.height =
-          Math.max(350, Math.min(ctx.appId === "spider.connections" ? 1800 : 1000, Number(args.height) || 500)) + "px";
+          Math.max(
+            350,
+            Math.min(
+              ctx.appId === "spider.connections" ? 1800 : 1000,
+              Number(args.height) || 500,
+            ),
+          ) + "px";
       return { ok: true };
     }
     case "models":
@@ -495,7 +543,10 @@ function dispose(id) {
   contexts.delete(id);
 }
 async function loadAppHtml(app) {
-  const url = hosted ? new URL(`apps/${app.id}/${app.entry || "index.html"}`, import.meta.url).href : `/apps/${app.id}/${app.entry || "index.html"}`;
+  const url = hosted
+    ? new URL(`apps/${app.id}/${app.entry || "index.html"}`, import.meta.url)
+        .href
+    : `/apps/${app.id}/${app.entry || "index.html"}`;
   let cache;
   try {
     cache = await caches.open("spider-code-v1");
@@ -527,9 +578,7 @@ async function renderView(view) {
     const tag = document.createElement("span");
     tag.className = "window-tag";
     tag.textContent =
-      app.id === "spider.connections"
-        ? "Device graph"
-        : "App session";
+      app.id === "spider.connections" ? "Device graph" : "App session";
     const close = document.createElement("button");
     close.className = "close";
     close.textContent = "×";
@@ -543,7 +592,9 @@ async function renderView(view) {
     bar.append(label, tag, close);
     if (app.id === "spider.calculator") {
       const link = document.createElement("a");
-      link.href = hosted ? new URL(`apps/${app.id}/${app.entry}`, import.meta.url).href : "/apps/" + app.id + "/" + app.entry;
+      link.href = hosted
+        ? new URL(`apps/${app.id}/${app.entry}`, import.meta.url).href
+        : "/apps/" + app.id + "/" + app.entry;
       link.target = "_blank";
       link.rel = "noopener";
       link.textContent = "↗";
@@ -639,7 +690,11 @@ async function pairBrowser(code) {
     if (hosted) {
       const entered = normalizeNode($("#node-url").value);
       if (entered !== nodeBase) {
-        location.hash = new URLSearchParams({ node: entered, pair: code, label: $("#device-name").value }).toString();
+        location.hash = new URLSearchParams({
+          node: entered,
+          pair: code,
+          label: $("#device-name").value,
+        }).toString();
         location.reload();
         return;
       }
@@ -668,7 +723,9 @@ async function pairBrowser(code) {
     rendered = false;
     await refresh();
   } catch (e) {
-    $("#pair-error").textContent = e.status ? e.message : "Could not connect directly to this Mac. Check its address, certificate trust, and local-network permission, then try the code again.";
+    $("#pair-error").textContent = e.status
+      ? e.message
+      : "Could not connect directly to this Mac. Check its address, certificate trust, and local-network permission, then try the code again.";
   }
 }
 function guessLabel() {
@@ -686,8 +743,12 @@ $("#node-field").hidden = !hosted;
 $("#node-url").required = hosted;
 $("#node-url").value = nodeBase;
 function updateTrustLink() {
-  try { $("#trust-mac").href = normalizeNode($("#node-url").value); $("#trust-mac").hidden = !hosted; }
-  catch { $("#trust-mac").hidden = true; }
+  try {
+    $("#trust-mac").href = normalizeNode($("#node-url").value);
+    $("#trust-mac").hidden = !hosted;
+  } catch {
+    $("#trust-mac").hidden = true;
+  }
 }
 $("#node-url").oninput = updateTrustLink;
 updateTrustLink();
@@ -770,8 +831,11 @@ if (pairing) {
   $("#pair-screen").hidden = false;
   if (hosted && !deviceToken) await pairBrowser(pairing);
   else {
-    try { await api("/api/state"); }
-    catch { await pairBrowser(pairing); }
+    try {
+      await api("/api/state");
+    } catch {
+      await pairBrowser(pairing);
+    }
   }
 }
 await refresh();
@@ -803,4 +867,6 @@ document.addEventListener("visibilitychange", () => {
 });
 
 if ("serviceWorker" in navigator)
-  navigator.serviceWorker.register(hosted ? "./sw.js" : "/sw.js", { scope: hosted ? "./" : "/" }).catch(() => {});
+  navigator.serviceWorker
+    .register(hosted ? "./sw.js" : "/sw.js", { scope: hosted ? "./" : "/" })
+    .catch(() => {});

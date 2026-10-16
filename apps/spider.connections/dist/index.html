@@ -1,11 +1,13 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Connections · Spider</title>
-  
-  
-<style>/* Shared primitives are deliberately small; app views own their layout. */
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Connections · Spider</title>
+    
+    
+    
+  <style>/* Shared primitives are deliberately small; app views own their layout. */
 * {
   box-sizing: border-box;
 }
@@ -61,37 +63,570 @@ button {
   }
 }
 
-:root{--ink:#24314d;--muted:#758096;--line:#e4e7f0;--blue:#586ecd;--mint:#3a9b82;--orange:#c8783e;--paper:#fbfcff}
-body{color:var(--ink);background:var(--paper)}main{max-width:1400px;margin:auto;padding:24px 28px 16px}header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:22px}h1{font-size:25px;letter-spacing:-.9px;margin:0 0 7px;font-weight:600}p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}.live-badge{display:flex;align-items:center;gap:7px;white-space:nowrap;color:#507264;font-size:11px}.live-badge i,.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#a8b0c2}.live-badge i,.dot.online{background:var(--mint)}.live-badge.offline{color:var(--muted)}.live-badge.offline i{background:#a8b0c2}
-.network-layout{display:grid;grid-template-columns:minmax(0,1fr) 255px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.graph-stage{position:relative;min-width:0;overflow:hidden;background:#f5f7fd;isolation:isolate}.graph-grid{position:absolute;inset:0;z-index:-1;background-image:radial-gradient(#c6cede 1px,transparent 1px);background-size:22px 22px;opacity:.5;mask-image:radial-gradient(ellipse,black 10%,transparent 75%)}#graph{width:100%;height:430px;display:block;overflow:visible}.edge{fill:none;stroke:#c8cfdf;stroke-width:1.4;transition:opacity .8s,stroke .8s;opacity:.55}.edge.live{stroke:#a3b7cf;stroke-dasharray:4 9;animation:flow 5s linear infinite;opacity:1}.edge.self{stroke:var(--orange)}.edge.departed{stroke:#abb1c0;stroke-dasharray:3 7;opacity:.3}.node{cursor:pointer;transition:transform .7s cubic-bezier(.2,.75,.2,1);outline:none}.node .node-face{fill:white;stroke:#cdd3e2;stroke-width:1.4;transition:fill .7s,stroke .7s,opacity .7s}.node .halo{fill:none;stroke:#a8b4e0;stroke-width:1;opacity:0;transition:opacity .3s}.node:hover .halo,.node:focus-visible .halo,.node.selected .halo{opacity:1}.node .device-glyph{fill:none;stroke:#8590aa;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:stroke .7s}.node.live .node-face{fill:#fdfefe;stroke:#86bbaa}.node.live .device-glyph{stroke:#447f73}.node.self .node-face{stroke:var(--orange);stroke-width:2}.node.self .device-glyph{stroke:#9f653d}.node.offline .node-face{fill:#f0f2f8;stroke:#d7dce8}.node.offline .device-glyph{stroke:#a3acc0}.node.authority .node-face{fill:#354573;stroke:#354573}.node.authority .device-glyph{stroke:white}.node .node-name{font:500 13px -apple-system,BlinkMacSystemFont,sans-serif;fill:var(--ink);text-anchor:middle}.node .node-caption{font:10px -apple-system,BlinkMacSystemFont,sans-serif;fill:var(--muted);text-anchor:middle}.presence{fill:none;stroke:#79b7a3;stroke-width:2;opacity:0;pointer-events:none}.node.arrived .presence{animation:arrival 1.4s ease-out}.node.departed .presence{stroke:#9aabc8;animation:departure 1.4s ease-out}.node.appearing .node-body{animation:appear .65s cubic-bezier(.2,.8,.25,1) both;transform-origin:0 0}.node .status-dot{fill:#b9c0d0;stroke:#f5f7fd;stroke-width:3}.node.live .status-dot{fill:var(--mint)}.node.self .status-dot{stroke:#fff1e7}
-.graph-key{display:flex;justify-content:center;align-items:center;gap:18px;font-size:10px;color:var(--muted);padding:0 12px}.graph-key span{display:flex;gap:6px;align-items:center}.you-key:before{content:'';width:8px;height:8px;border:1.5px solid var(--orange);border-radius:50%}.graph-event{height:42px;padding:12px;text-align:center;font-size:10px}
-aside{border-left:1px solid var(--line);padding:26px 22px;background:#fff}.selected-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:#edf1fb;margin-bottom:22px}.selected-icon svg{width:34px;height:34px;fill:none;stroke:#53679f;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.selected-role{font-size:11px;margin-bottom:5px}h2{font-size:20px;letter-spacing:-.5px;line-height:1.25;margin:0 0 7px;overflow-wrap:anywhere}.selected-status{font-size:11px;margin-bottom:20px}dl{margin:0;font-size:11px}dl>div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #edf0f6}dt{color:var(--muted)}dd{margin:0;text-align:right;overflow-wrap:anywhere}form{margin-top:27px}label{font-size:11px;display:block;margin-bottom:7px}.rename-controls{display:flex;gap:6px}input{width:100%;min-width:0;border:1px solid #dce1ed;background:#fbfcff;border-radius:6px;padding:9px;font-size:12px}button{border:0;border-radius:6px;background:#405685;color:white;padding:9px 11px;font-size:11px}#rename-message{font-size:10px;margin-top:8px;min-height:30px}.bottom-bar{display:flex;align-items:start;justify-content:space-between;gap:24px;padding:16px 0 5px}.sync{display:flex;gap:16px;flex-wrap:wrap;font-size:10px;color:var(--muted)}.sync strong{font-weight:500;color:#44577c}.bottom-bar details{font-size:10px;color:var(--muted);max-width:330px;min-width:180px;flex:0 1 330px}.bottom-bar summary{cursor:pointer;text-align:right}.bottom-bar dl{padding-top:8px;font-size:10px}.footnote{font-size:10px;margin-top:12px;max-width:850px}
-@keyframes flow{to{stroke-dashoffset:-78}}@keyframes arrival{0%{r:30;opacity:.9}100%{r:70;opacity:0}}@keyframes departure{0%{r:60;opacity:.6}100%{r:30;opacity:0}}@keyframes appear{0%{transform:scale(.55);opacity:0}100%{transform:scale(1);opacity:1}}
-@media(max-width:700px){main{padding:20px 16px 14px}.network-layout{grid-template-columns:1fr}#graph{height:430px}aside{border-left:0;border-top:1px solid var(--line);padding:20px;display:grid;grid-template-columns:48px minmax(0,1fr);column-gap:14px}.selected-icon{grid-row:1/4;margin:0}.selected-role,h2,.selected-status{grid-column:2}.selected-status{margin-bottom:0}aside dl,aside form{grid-column:1/-1}aside dl{margin-top:14px}form{margin-top:16px}.bottom-bar{flex-direction:column;gap:12px}.bottom-bar details{flex:auto;width:100%;max-width:none}.bottom-bar summary{text-align:left}.sync{gap:12px}h1{font-size:23px}}
-@media(prefers-reduced-motion:reduce){.node,.edge,.node *{animation:none!important;transition:none!important}.edge.live{stroke-dasharray:none}}
+:root {
+  --ink: #24314d;
+  --muted: #758096;
+  --line: #e4e7f0;
+  --blue: #586ecd;
+  --mint: #3a9b82;
+  --orange: #c8783e;
+  --paper: #fbfcff;
+}
+body {
+  color: var(--ink);
+  background: var(--paper);
+}
+main {
+  max-width: 1400px;
+  margin: auto;
+  padding: 24px 28px 16px;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+h1 {
+  font-size: 25px;
+  letter-spacing: -0.9px;
+  margin: 0 0 7px;
+  font-weight: 600;
+}
+p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  color: #507264;
+  font-size: 11px;
+}
+.live-badge i,
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a8b0c2;
+}
+.live-badge i,
+.dot.online {
+  background: var(--mint);
+}
+.live-badge.offline {
+  color: var(--muted);
+}
+.live-badge.offline i {
+  background: #a8b0c2;
+}
+.network-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 255px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.graph-stage {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  background: #f5f7fd;
+  isolation: isolate;
+}
+.graph-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(#c6cede 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.5;
+  mask-image: radial-gradient(ellipse, black 10%, transparent 75%);
+}
+#graph {
+  width: 100%;
+  height: 430px;
+  display: block;
+  overflow: visible;
+}
+.edge {
+  fill: none;
+  stroke: #c8cfdf;
+  stroke-width: 1.4;
+  transition:
+    opacity 0.8s,
+    stroke 0.8s;
+  opacity: 0.55;
+}
+.edge.live {
+  stroke: #a3b7cf;
+  stroke-dasharray: 4 9;
+  animation: flow 5s linear infinite;
+  opacity: 1;
+}
+.edge.self {
+  stroke: var(--orange);
+}
+.edge.departed {
+  stroke: #abb1c0;
+  stroke-dasharray: 3 7;
+  opacity: 0.3;
+}
+.node {
+  cursor: pointer;
+  transition: transform 0.7s cubic-bezier(0.2, 0.75, 0.2, 1);
+  outline: none;
+}
+.node .node-face {
+  fill: white;
+  stroke: #cdd3e2;
+  stroke-width: 1.4;
+  transition:
+    fill 0.7s,
+    stroke 0.7s,
+    opacity 0.7s;
+}
+.node .halo {
+  fill: none;
+  stroke: #a8b4e0;
+  stroke-width: 1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.node:hover .halo,
+.node:focus-visible .halo,
+.node.selected .halo {
+  opacity: 1;
+}
+.node .device-glyph {
+  fill: none;
+  stroke: #8590aa;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.7s;
+}
+.node.live .node-face {
+  fill: #fdfefe;
+  stroke: #86bbaa;
+}
+.node.live .device-glyph {
+  stroke: #447f73;
+}
+.node.self .node-face {
+  stroke: var(--orange);
+  stroke-width: 2;
+}
+.node.self .device-glyph {
+  stroke: #9f653d;
+}
+.node.offline .node-face {
+  fill: #f0f2f8;
+  stroke: #d7dce8;
+}
+.node.offline .device-glyph {
+  stroke: #a3acc0;
+}
+.node.authority .node-face {
+  fill: #354573;
+  stroke: #354573;
+}
+.node.authority .device-glyph {
+  stroke: white;
+}
+.node .node-name {
+  font:
+    500 13px -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.node .node-caption {
+  font:
+    10px -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  fill: var(--muted);
+  text-anchor: middle;
+}
+.presence {
+  fill: none;
+  stroke: #79b7a3;
+  stroke-width: 2;
+  opacity: 0;
+  pointer-events: none;
+}
+.node.arrived .presence {
+  animation: arrival 1.4s ease-out;
+}
+.node.departed .presence {
+  stroke: #9aabc8;
+  animation: departure 1.4s ease-out;
+}
+.node.appearing .node-body {
+  animation: appear 0.65s cubic-bezier(0.2, 0.8, 0.25, 1) both;
+  transform-origin: 0 0;
+}
+.node .status-dot {
+  fill: #b9c0d0;
+  stroke: #f5f7fd;
+  stroke-width: 3;
+}
+.node.live .status-dot {
+  fill: var(--mint);
+}
+.node.self .status-dot {
+  stroke: #fff1e7;
+}
+.graph-key {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  font-size: 10px;
+  color: var(--muted);
+  padding: 0 12px;
+}
+.graph-key span {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.you-key:before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--orange);
+  border-radius: 50%;
+}
+.graph-event {
+  height: 42px;
+  padding: 12px;
+  text-align: center;
+  font-size: 10px;
+}
+aside {
+  border-left: 1px solid var(--line);
+  padding: 26px 22px;
+  background: #fff;
+}
+.selected-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #edf1fb;
+  margin-bottom: 22px;
+}
+.selected-icon svg {
+  width: 34px;
+  height: 34px;
+  fill: none;
+  stroke: #53679f;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.selected-role {
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+h2 {
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  line-height: 1.25;
+  margin: 0 0 7px;
+  overflow-wrap: anywhere;
+}
+.selected-status {
+  font-size: 11px;
+  margin-bottom: 20px;
+}
+dl {
+  margin: 0;
+  font-size: 11px;
+}
+dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid #edf0f6;
+}
+dt {
+  color: var(--muted);
+}
+dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+form {
+  margin-top: 27px;
+}
+label {
+  font-size: 11px;
+  display: block;
+  margin-bottom: 7px;
+}
+.rename-controls {
+  display: flex;
+  gap: 6px;
+}
+input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #dce1ed;
+  background: #fbfcff;
+  border-radius: 6px;
+  padding: 9px;
+  font-size: 12px;
+}
+button {
+  border: 0;
+  border-radius: 6px;
+  background: #405685;
+  color: white;
+  padding: 9px 11px;
+  font-size: 11px;
+}
+#rename-message {
+  font-size: 10px;
+  margin-top: 8px;
+  min-height: 30px;
+}
+.bottom-bar {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 0 5px;
+}
+.sync {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: var(--muted);
+}
+.sync strong {
+  font-weight: 500;
+  color: #44577c;
+}
+.bottom-bar details {
+  font-size: 10px;
+  color: var(--muted);
+  max-width: 330px;
+  min-width: 180px;
+  flex: 0 1 330px;
+}
+.bottom-bar summary {
+  cursor: pointer;
+  text-align: right;
+}
+.bottom-bar dl {
+  padding-top: 8px;
+  font-size: 10px;
+}
+.footnote {
+  font-size: 10px;
+  margin-top: 12px;
+  max-width: 850px;
+}
+@keyframes flow {
+  to {
+    stroke-dashoffset: -78;
+  }
+}
+@keyframes arrival {
+  0% {
+    r: 30;
+    opacity: 0.9;
+  }
+  100% {
+    r: 70;
+    opacity: 0;
+  }
+}
+@keyframes departure {
+  0% {
+    r: 60;
+    opacity: 0.6;
+  }
+  100% {
+    r: 30;
+    opacity: 0;
+  }
+}
+@keyframes appear {
+  0% {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@media (max-width: 700px) {
+  main {
+    padding: 20px 16px 14px;
+  }
+  .network-layout {
+    grid-template-columns: 1fr;
+  }
+  #graph {
+    height: 430px;
+  }
+  aside {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    column-gap: 14px;
+  }
+  .selected-icon {
+    grid-row: 1/4;
+    margin: 0;
+  }
+  .selected-role,
+  h2,
+  .selected-status {
+    grid-column: 2;
+  }
+  .selected-status {
+    margin-bottom: 0;
+  }
+  aside dl,
+  aside form {
+    grid-column: 1/-1;
+  }
+  aside dl {
+    margin-top: 14px;
+  }
+  form {
+    margin-top: 16px;
+  }
+  .bottom-bar {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .bottom-bar details {
+    flex: auto;
+    width: 100%;
+    max-width: none;
+  }
+  .bottom-bar summary {
+    text-align: left;
+  }
+  .sync {
+    gap: 12px;
+  }
+  h1 {
+    font-size: 23px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .node,
+  .edge,
+  .node * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .edge.live {
+    stroke-dasharray: none;
+  }
+}
+.node.leaving .node-body {
+  animation: disappear 0.45s ease-in both;
+  transform-origin: 0 0;
+}
+.edge.leaving {
+  opacity: 0;
+}
+@keyframes disappear {
+  to {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+}
 </style></head>
-<body>
-<main>
-  <header><div><h1>Your network</h1><p id="summary">Listening for devices…</p></div><span class="live-badge"><i></i><span id="live-count">Connecting</span></span></header>
-  <div class="network-layout">
-    <section class="graph-stage" aria-label="Live connection graph">
-      <div class="graph-grid"></div>
-      <svg id="graph" viewBox="0 0 820 490" role="group" aria-label="Paired clients connected directly to the Mac authority"><g id="edges"></g><g id="nodes"></g></svg>
-      <div class="graph-key"><span><i class="dot online"></i>Connected</span><span><i class="dot"></i>Offline</span><span class="you-key">Your browser</span></div>
-      <p id="event" class="graph-event" role="status" aria-live="polite">Select a device to see its connection.</p>
-    </section>
-    <aside id="inspector">
-      <span id="selected-icon" class="selected-icon"></span>
-      <p id="selected-role" class="selected-role">Device</p><h2 id="selected-name">Your Mac</h2>
-      <p id="selected-status" class="selected-status"></p>
-      <dl id="details"></dl>
-      <form id="rename-form"><label for="device-label">Device name</label><div class="rename-controls"><input id="device-label" maxlength="80" required autocomplete="off" /><button type="submit">Save</button></div><p id="rename-message" role="status">Names are shared with your paired devices.</p></form>
-    </aside>
-  </div>
-  <div class="bottom-bar"><div id="sync" class="sync"></div><details><summary>What this browser can access</summary><dl id="permissions"></dl></details></div>
-  <p class="footnote">Connections shown here go through your Mac. Other clients are reported by the Mac; physical network routes are not observed. Offline clients keep their place.</p>
-</main>
-<script type="module">// sdk.js
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>Your network</h1>
+          <p id="summary">Listening for devices…</p>
+        </div>
+        <span class="live-badge"
+          ><i></i><span id="live-count">Connecting</span></span
+        >
+      </header>
+      <div class="network-layout">
+        <section class="graph-stage" aria-label="Live connection graph">
+          <div class="graph-grid"></div>
+          <svg
+            id="graph"
+            viewBox="0 0 820 490"
+            role="group"
+            aria-label="Paired clients connected directly to the Mac authority"
+          >
+            <g id="edges"></g>
+            <g id="nodes"></g>
+          </svg>
+          <div class="graph-key">
+            <span><i class="dot online"></i>Connected</span
+            ><span><i class="dot"></i>Offline</span
+            ><span class="you-key">Your browser</span>
+          </div>
+          <p id="event" class="graph-event" role="status" aria-live="polite">
+            Select a device to see its connection.
+          </p>
+        </section>
+        <aside id="inspector">
+          <span id="selected-icon" class="selected-icon"></span>
+          <p id="selected-role" class="selected-role">Device</p>
+          <h2 id="selected-name">Your Mac</h2>
+          <p id="selected-status" class="selected-status"></p>
+          <dl id="details"></dl>
+          <form id="rename-form">
+            <label for="device-label">Device name</label>
+            <div class="rename-controls">
+              <input
+                id="device-label"
+                maxlength="80"
+                required
+                autocomplete="off"
+              /><button type="submit">Save</button>
+            </div>
+            <p id="rename-message" role="status">
+              Names are shared with your paired devices.
+            </p>
+          </form>
+        </aside>
+      </div>
+      <div class="bottom-bar">
+        <div id="sync" class="sync"></div>
+        <details>
+          <summary>What this browser can access</summary>
+          <dl id="permissions"></dl>
+        </details>
+      </div>
+      <p class="footnote">
+        Connections shown here go through your Mac. Other clients are reported
+        by the Mac; physical network routes are not observed. Offline clients
+        keep their place.
+      </p>
+    </main>
+  <script type="module">// sdk.js
 var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 function connect() {
   if (window.parent === window) return Promise.resolve(null);
@@ -207,8 +742,21 @@ var glyphs = {
   desktop: '<rect x="-18" y="-14" width="36" height="25" rx="3"/><path d="M-7 17h14M0 11v6M-18 6h36"/>',
   browser: '<rect x="-18" y="-14" width="36" height="28" rx="4"/><path d="M-18-5h36M-12-10h1M-7-10h1M-2-10h1"/>'
 };
-var kindNames = { phone: "Phone", tablet: "Tablet", desktop: "Computer", browser: "Browser" };
-var fields = { sharedRecords: "Shared records", pairedDevices: "Paired devices", invitations: "Invitations", otherBrowserCredentials: "Other credentials", otherDeviceNetwork: "Other networks", macFilesystem: "Mac files", localBinaries: "Local binaries" };
+var kindNames = {
+  phone: "Phone",
+  tablet: "Tablet",
+  desktop: "Computer",
+  browser: "Browser"
+};
+var fields = {
+  sharedRecords: "Shared records",
+  pairedDevices: "Paired devices",
+  invitations: "Invitations",
+  otherBrowserCredentials: "Other credentials",
+  otherDeviceNetwork: "Other networks",
+  macFilesystem: "Mac files",
+  localBinaries: "Local binaries"
+};
 var nodes = /* @__PURE__ */ new Map();
 var current;
 var selected = "authority";
@@ -223,9 +771,6 @@ var svg = (tag, attrs = {}, parent2) => {
 };
 function kind(d) {
   if (glyphs[d.client?.kind]) return d.client.kind;
-  if (/ipad|tablet/i.test(d.label)) return "tablet";
-  if (/iphone|phone/i.test(d.label)) return "phone";
-  if (/mac|desktop|laptop/i.test(d.label)) return "desktop";
   return "browser";
 }
 function select(id) {
@@ -240,11 +785,19 @@ function flash(group, type) {
   setTimeout(() => group.classList.remove(type), 1500);
 }
 function makeNode(d) {
-  const group = svg("g", { class: "node appearing", tabindex: "0", role: "button" }, $("#nodes"));
+  const group = svg(
+    "g",
+    { class: "node appearing", tabindex: "0", role: "button" },
+    $("#nodes")
+  );
   const body = svg("g", { class: "node-body" }, group);
   svg("circle", { class: "halo", r: 46 }, body);
   svg("circle", { class: "presence", r: 36 }, body);
-  svg("circle", { class: "node-face", r: d.id === "authority" ? 45 : 34 }, body);
+  svg(
+    "circle",
+    { class: "node-face", r: d.id === "authority" ? 45 : 34 },
+    body
+  );
   const icon = svg("g", { class: "device-glyph" }, body);
   svg("circle", { class: "status-dot", cx: 25, cy: 23, r: 5 }, body);
   const name = svg("text", { class: "node-name", y: 60 }, body), caption = svg("text", { class: "node-caption", y: 77 }, body);
@@ -274,9 +827,17 @@ function details(rows, container) {
 function render(state) {
   if (!state) return;
   current = state;
-  const report = state.connections || {}, devices = [...report.devices || []].sort((a, b) => Number(b.isThisClient) - Number(a.isThisClient) || String(a.pairedAt).localeCompare(String(b.pairedAt)) || a.id.localeCompare(b.id));
+  const report = state.connections || {}, devices = [...report.devices || []].sort(
+    (a, b) => Number(b.isThisClient) - Number(a.isThisClient) || String(a.pairedAt).localeCompare(String(b.pairedAt)) || a.id.localeCompare(b.id)
+  );
   const live = (d2) => state.online && d2.sessions?.some((s) => s.connected);
-  const authority = { id: "authority", label: report.authority?.name || "Mac authority", client: { kind: "desktop", platform: "macOS", browser: "Spider runtime" }, sessions: [], authority: true };
+  const authority = {
+    id: "authority",
+    label: report.authority?.name || "Mac authority",
+    client: { kind: "desktop", platform: "macOS", browser: "Spider runtime" },
+    sessions: [],
+    authority: true
+  };
   const all = [authority, ...devices], narrow = matchMedia("(max-width:700px)").matches, cx = narrow ? 280 : 410, cy = narrow ? 275 : 225;
   const count = Math.max(1, devices.length), rings = Math.ceil(count / 8), height = (narrow ? 590 : 490) + Math.max(0, rings - 1) * 100;
   $("#graph").setAttribute("viewBox", `0 0 ${narrow ? 560 : 820} ${height}`);
@@ -292,7 +853,10 @@ function render(state) {
     node.group.classList.toggle("selected", d2.id === selected);
     node.group.classList.toggle("live", !!online);
     node.group.classList.toggle("offline", !online);
-    node.group.setAttribute("aria-label", `${d2.label}, ${d2.authority ? "Mac authority" : kindNames[kind(d2)]}, ${online ? "connected" : "offline"}${d2.isThisClient ? ", this browser" : ""}`);
+    node.group.setAttribute(
+      "aria-label",
+      `${d2.label}, ${d2.authority ? "Mac authority" : kindNames[kind(d2)]}, ${online ? "connected" : "offline"}${d2.isThisClient ? ", this browser" : ""}`
+    );
     node.group.setAttribute("aria-pressed", String(d2.id === selected));
     if (node.kind !== kind(d2)) {
       node.kind = kind(d2);
@@ -301,7 +865,10 @@ function render(state) {
     node.name.textContent = d2.label.length > 22 ? d2.label.slice(0, 21) + "\u2026" : d2.label;
     node.caption.textContent = d2.authority ? "State authority" : `${d2.isThisClient ? "This browser \xB7 " : ""}${kindNames[kind(d2)]}`;
     if (node.edge) {
-      node.edge.setAttribute("d", `M${cx} ${cy}Q${(cx + x) / 2} ${(cy + y) / 2 - 25} ${x} ${y}`);
+      node.edge.setAttribute(
+        "d",
+        `M${cx} ${cy}Q${(cx + x) / 2} ${(cy + y) / 2 - 25} ${x} ${y}`
+      );
       node.edge.classList.toggle("live", !!online);
       node.edge.classList.toggle("self", !!d2.isThisClient);
       node.edge.classList.toggle("departed", !online);
@@ -315,43 +882,82 @@ function render(state) {
     }
     node.live = !!online;
   }
-  for (const [id, node] of nodes) if (!all.some((d2) => d2.id === id)) {
-    node.group.remove();
-    node.edge?.remove();
-    nodes.delete(id);
-  }
+  for (const [id, node] of nodes)
+    if (!all.some((d2) => d2.id === id)) {
+      node.group.classList.add("leaving");
+      node.edge?.classList.add("leaving");
+      setTimeout(() => {
+        node.group.remove();
+        node.edge?.remove();
+      }, 450);
+      nodes.delete(id);
+    }
   hadReport ||= devices.length > 0;
   const liveCount = devices.filter(live).length;
   $("#summary").textContent = state.online ? `${devices.length} paired ${devices.length === 1 ? "client" : "clients"}, linked through your Mac.` : "Your Mac is offline. This is the last known network.";
   $("#live-count").textContent = state.online ? `${liveCount} connected` : "Offline";
   $(".live-badge").classList.toggle("offline", !state.online);
-  const d = all.find((d2) => d2.id === selected), latest = [...d.sessions || []].sort((a, b) => a.secondsAgo - b.secondsAgo)[0];
+  const d = all.find((d2) => d2.id === selected), latest = [...d.sessions || []].sort(
+    (a, b) => a.secondsAgo - b.secondsAgo
+  )[0];
   $("#selected-icon").innerHTML = `<svg viewBox="-24 -24 48 48" aria-hidden="true">${glyphs[kind(d)]}</svg>`;
   $("#selected-role").textContent = d.authority ? "Mac authority" : `${kindNames[kind(d)]}${d.isThisClient ? " \xB7 this browser" : ""}`;
   $("#selected-name").textContent = d.label;
   $("#selected-status").textContent = d.authority ? state.online ? "Your saved state lives here." : "Not reachable from this browser." : live(d) ? "Connected to your Mac." : latest ? `Last reported ${latest.secondsAgo} seconds ago.` : "Paired. Waiting for first contact.";
-  details([["Client", d.client?.browser || "Browser"], ["Platform", d.client?.platform || "Not reported"], ["State revision", d.authority ? report.authority?.revision ?? "\u2014" : latest?.appliedRevision ?? "\u2014"], ["Connection", d.authority ? "Direct authority" : d.isThisClient ? "Observed here" : "Reported by Mac"]], $("#details"));
-  if (selectionBefore !== selected || document.activeElement !== $("#device-label") && lastName !== d.label) $("#device-label").value = d.label;
+  details(
+    [
+      ["Client", d.client?.browser || "Browser"],
+      ["Platform", d.client?.platform || "Not reported"],
+      [
+        "State revision",
+        d.authority ? report.authority?.revision ?? "\u2014" : latest?.appliedRevision ?? "\u2014"
+      ],
+      [
+        "Connection",
+        d.authority ? "Direct authority" : d.isThisClient ? "Observed here" : "Reported by Mac"
+      ]
+    ],
+    $("#details")
+  );
+  if (selectionBefore !== selected || document.activeElement !== $("#device-label") && lastName !== d.label)
+    $("#device-label").value = d.label;
   selectionBefore = selected;
   lastName = d.label;
   const local = report.local || {};
   $("#sync").replaceChildren();
-  for (const text of [`Revision ${local.revision || 0}`, `${local.pending || 0} pending`, `${local.conflicts || 0} conflicts kept by Mac`]) {
+  for (const text of [
+    `Revision ${local.revision || 0}`,
+    `${local.pending || 0} pending`,
+    `${local.conflicts || 0} conflicts kept by Mac`
+  ]) {
     const item = document.createElement("span");
     item.textContent = text;
     $("#sync").append(item);
   }
-  details(Object.entries(report.permissions || {}).map(([k, v]) => [fields[k] || k, v]), $("#permissions"));
+  details(
+    Object.entries(report.permissions || {}).map(([k, v]) => [
+      fields[k] || k,
+      v
+    ]),
+    $("#permissions")
+  );
   resize();
 }
 function resize() {
-  sdk.request("resize", { height: Math.ceil(document.querySelector("main").getBoundingClientRect().height) + 8 }).catch(() => {
+  sdk.request("resize", {
+    height: Math.ceil(
+      document.querySelector("main").getBoundingClientRect().height
+    ) + 8
+  }).catch(() => {
   });
 }
 $("#rename-form").onsubmit = async (e) => {
   e.preventDefault();
   try {
-    await sdk.request("renameDevice", { clientId: selected, label: $("#device-label").value });
+    await sdk.request("renameDevice", {
+      clientId: selected,
+      label: $("#device-label").value
+    });
     $("#rename-message").textContent = current.online ? "Name saved here and queued for sync." : "Saved offline. The name will sync when you reconnect.";
   } catch (error) {
     $("#rename-message").textContent = error.message;
@@ -360,4 +966,5 @@ $("#rename-form").onsubmit = async (e) => {
 $("details").addEventListener("toggle", resize);
 window.addEventListener("resize", () => render(current));
 sdk.onState(render);
-</script></body></html>
+</script></body>
+</html>
