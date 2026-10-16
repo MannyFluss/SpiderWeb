@@ -493,3 +493,78 @@ code {
   font-size: 14px;
   padding: 4px;
 }
+.connection-help-button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f6f9f8;
+  padding: 11px 15px;
+  font-size: 13px;
+}
+#connection-check-address {
+  display: block;
+  overflow-wrap: anywhere;
+  margin-top: 6px;
+  font-size: 13px;
+}
+#connection-check-summary {
+  font-size: 14px;
+  font-weight: 500;
+}
+.connection-check-results {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+.connection-check-results li {
+  padding: 12px 14px;
+  border-left: 3px solid #99a7af;
+  background: #edf2f3;
+  margin: 8px 0;
+  border-radius: 0 7px 7px 0;
+}
+.connection-check-results li[data-result="pass"] {
+  border-left-color: #4b8a6d;
+}
+.connection-check-results li[data-result="fail"] {
+  border-left-color: #a3433b;
+}
+.connection-check-results strong,
+.connection-check-results span {
+  display: block;
+}
+.connection-check-results strong {
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+.connection-check-results span,
+.check-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.connection-guide {
+  border-top: 1px solid var(--line);
+  padding: 14px 0;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.connection-guide summary {
+  cursor: pointer;
+  font-weight: 500;
+}
+.connection-guide ol {
+  padding-left: 20px;
+}
+.connection-guide li {
+  margin: 9px 0;
+}
+@media (max-width: 500px) {
+  #connection-dialog {
+    padding: 20px;
+    width: calc(100% - 24px);
+  }
+  #connection-dialog .toolbar button {
+    flex: 1;
+    min-height: 44px;
+  }
+}

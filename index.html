@@ -45,6 +45,13 @@
           ><button class="primary">Connect to Spider</button>
         </form>
         <p id="pair-error" role="alert"></p>
+        <button
+          type="button"
+          data-connection-help
+          class="connection-help-button"
+        >
+          Check connection
+        </button>
         <p>
           <a id="trust-mac" target="_blank" rel="noreferrer" hidden
             >Open the Mac directly to check certificate trust</a
@@ -71,7 +78,12 @@
           ><span class="spider-mark">✳</span> Spider</a
         ><span id="connection-status" class="status-pill">Connecting</span>
         <div class="header-actions">
-          <button id="add-device">Add device</button
+          <button
+            data-connection-help
+            title="Check the Mac address and connection"
+          >
+            Connection help</button
+          ><button id="add-device">Add device</button
           ><button
             id="state-toggle"
             class="icon-button"
@@ -108,6 +120,100 @@
         ><span>Independent views. Shared work.</span>
       </footer>
     </div>
+    <dialog id="connection-dialog" aria-labelledby="connection-check-title">
+      <button
+        class="dialog-close"
+        data-close="connection-dialog"
+        aria-label="Close connection help"
+      >
+        ×
+      </button>
+      <h2 id="connection-check-title">Check your connection</h2>
+      <p>Mac address <code id="connection-check-address"></code></p>
+      <p id="connection-check-summary" role="status">
+        Ready to check this browser’s connection.
+      </p>
+      <ul id="connection-check-results" class="connection-check-results"></ul>
+      <div class="toolbar">
+        <button id="run-connection-check">Run check again</button
+        ><button id="copy-connection-report" disabled>
+          Copy connection report
+        </button>
+      </div>
+      <p>
+        <a id="open-check-mac" target="_blank" rel="noreferrer"
+          >Open the Mac’s connection test</a
+        >
+      </p>
+      <p class="check-note">
+        If that page shows <code>"app":"spider"</code>, the address is
+        reachable. Over HTTPS, the browser has also accepted its certificate.
+      </p>
+      <details class="connection-guide" open>
+        <summary>Check the address and Wi-Fi</summary>
+        <ol>
+          <li>Keep the Mac awake and Spider running.</li>
+          <li>
+            Connect the phone and Mac to the same Wi-Fi. A guest network may
+            isolate devices.
+          </li>
+          <li>
+            Run <code>spider pair</code> on the Mac. Compare the printed Mac
+            address above, or scan the new QR to fill it in.
+          </li>
+          <li>
+            If asked, allow this browser or website to connect to devices on
+            your local network.
+          </li>
+        </ol>
+      </details>
+      <details class="connection-guide">
+        <summary>Check certificate trust on iPhone or iPad</summary>
+        <ol>
+          <li>
+            Open
+            <strong>Settings → General → VPN &amp; Device Management</strong>.
+            Check that your original Clay certificate profile is installed.
+          </li>
+          <li>
+            Open
+            <strong
+              >Settings → General → About → Certificate Trust Settings</strong
+            >.
+          </li>
+          <li>
+            Under <strong>Enable full trust for root certificates</strong>,
+            enable your Mac’s <strong>Clay local room CA</strong> certificate.
+          </li>
+          <li>
+            Return to Spider and run this check again. If no Clay certificate is
+            listed, install the original profile from your Mac first.
+          </li>
+        </ol>
+        <p>
+          A webpage cannot inspect or change iOS certificate settings. A
+          successful HTTPS check confirms that this browser accepted the Mac’s
+          certificate.
+        </p>
+        <p>
+          <a
+            href="https://support.apple.com/102390"
+            target="_blank"
+            rel="noreferrer"
+            >Apple’s certificate-trust instructions</a
+          >
+        </p>
+      </details>
+      <details class="connection-guide">
+        <summary>The Mac answers, but the API is rejected</summary>
+        <p>
+          Spider had a bug that rejected HTTP/2 API requests with “Unrecognized
+          Spider address.” The page could load while its workspace failed.
+          Update Spider on the Mac, then run this check again. Pairing errors
+          are shown separately from connection failures.
+        </p>
+      </details>
+    </dialog>
     <dialog id="pair-dialog">
       <button class="dialog-close" data-close="pair-dialog" aria-label="Close">
         ×

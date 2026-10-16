@@ -1,6 +1,6 @@
 const base = new URL(".", self.location.href);
 const hosted = base.pathname !== "/";
-const CACHE = "spider-code-v3:" + base.pathname;
+const CACHE = "spider-code-v4:" + base.pathname;
 const shell = hosted
   ? [
       ".",
@@ -44,7 +44,8 @@ self.addEventListener("fetch", (event) => {
     event.request.method !== "GET" ||
     url.origin !== base.origin ||
     !url.pathname.startsWith(base.pathname) ||
-    url.pathname.startsWith("/api/")
+    url.pathname.startsWith("/api/") ||
+    url.pathname === "/health"
   )
     return;
   event.respondWith(

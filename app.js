@@ -1,6 +1,12 @@
 import { portableView } from "./export.js";
 import { uid } from "./sdk.js";
-import { normalizeNode, clientInfo } from "./connection.js";
+import {
+  normalizeNode,
+  clientInfo,
+  requestNode,
+  connectionMessage,
+  checkConnection,
+} from "./connection.js";
 const fragment = new URLSearchParams(location.hash.slice(1));
 const hosted = document.documentElement.dataset.hosting === "static";
 let nodeBase = hosted
@@ -88,36 +94,12 @@ function notice(message) {
   $("#notice").hidden = !message;
 }
 async function api(path, body, method) {
-  if (!nodeBase)
-    throw Error(
-      "Enter the Mac’s HTTPS address or scan a pairing QR from Spider.",
-    );
-  const headers = body
-    ? { "Content-Type": "application/json", "X-Spider-Request": "1" }
-    : {};
-  if (deviceToken) headers.Authorization = "Spider " + deviceToken;
-  const response = await fetch(nodeBase + path, {
-    method: method || (body ? "POST" : "GET"),
-    credentials: hosted ? "omit" : "same-origin",
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-    cache: "no-store",
-    signal: AbortSignal.timeout(8000),
+  return requestNode(nodeBase, path, {
+    body,
+    method,
+    hosted,
+    token: deviceToken,
   });
-  let result;
-  try {
-    result = await response.json();
-  } catch {
-    throw Error(
-      "Could not reach Spider at this Mac address. Keep the Mac awake and check certificate trust.",
-    );
-  }
-  if (!response.ok) {
-    const e = Error(result.error || "Request failed");
-    e.status = response.status;
-    throw e;
-  }
-  return result;
 }
 const versionKey = (app, sid, path) =>
   [app, sid, ...path]
@@ -353,6 +335,7 @@ async function refresh(shouldFlush = true) {
     online = false;
     if (e.status === 401) {
       if (!snapshot) {
+        $("#pair-error").textContent = connectionMessage(e);
         $("#pair-screen").hidden = false;
         $("#workspace").hidden = true;
       } else
@@ -361,9 +344,7 @@ async function refresh(shouldFlush = true) {
         );
     } else if (!snapshot) {
       $("#pair-screen").hidden = false;
-      $("#pair-error").textContent = nodeBase
-        ? "Could not reach the Mac. Keep Spider running, check the address and certificate trust, and allow local network access if asked."
-        : "Enter the Mac’s HTTPS address, or scan a QR from spider pair.";
+      $("#pair-error").textContent = connectionMessage(e);
     }
   }
   if (snapshot) showWorkspace();
@@ -723,9 +704,7 @@ async function pairBrowser(code) {
     rendered = false;
     await refresh();
   } catch (e) {
-    $("#pair-error").textContent = e.status
-      ? e.message
-      : "Could not connect directly to this Mac. Check its address, certificate trust, and local-network permission, then try the code again.";
+    $("#pair-error").textContent = connectionMessage(e);
   }
 }
 function guessLabel() {
@@ -739,19 +718,74 @@ function guessLabel() {
         : "Browser";
 }
 $("#device-name").value = fragment.get("label") || guessLabel();
-$("#node-field").hidden = !hosted;
+$("#node-field").hidden = false;
+$("#node-url").readOnly = !hosted;
 $("#node-url").required = hosted;
 $("#node-url").value = nodeBase;
 function updateTrustLink() {
   try {
     $("#trust-mac").href = normalizeNode($("#node-url").value);
-    $("#trust-mac").hidden = !hosted;
+    $("#trust-mac").hidden = false;
   } catch {
     $("#trust-mac").hidden = true;
   }
 }
 $("#node-url").oninput = updateTrustLink;
 updateTrustLink();
+let diagnosticReport = null,
+  diagnosticRun = 0;
+async function runConnectionCheck() {
+  const run = ++diagnosticRun;
+  $("#run-connection-check").disabled = true;
+  $("#copy-connection-report").disabled = true;
+  $("#connection-check-summary").textContent =
+    "Checking the Mac from this browser…";
+  $("#connection-check-results").replaceChildren();
+  const entered = $("#node-url").value || nodeBase;
+  $("#connection-check-address").textContent =
+    entered || "No Mac address selected";
+  try {
+    $("#open-check-mac").href = normalizeNode(entered) + "/health";
+    $("#open-check-mac").hidden = false;
+  } catch {
+    $("#open-check-mac").hidden = true;
+  }
+  let checkToken;
+  try {
+    if (normalizeNode(entered) === nodeBase) checkToken = deviceToken;
+  } catch {}
+  const result = await checkConnection(entered, { hosted, token: checkToken });
+  if (run !== diagnosticRun) return;
+  diagnosticReport = {
+    ...result,
+    frontend: location.origin,
+    frontendMode: hosted ? "GitHub Pages" : "Mac served",
+  };
+  $("#connection-check-summary").textContent = result.message;
+  for (const item of result.checks) {
+    const row = document.createElement("li"),
+      name = document.createElement("strong"),
+      detail = document.createElement("span");
+    row.dataset.result = item.status;
+    name.textContent = item.name;
+    detail.textContent = item.detail;
+    row.append(name, detail);
+    $("#connection-check-results").append(row);
+  }
+  $("#run-connection-check").disabled = false;
+  $("#copy-connection-report").disabled = false;
+}
+for (const button of document.querySelectorAll("[data-connection-help]"))
+  button.onclick = () => {
+    $("#connection-dialog").showModal();
+    runConnectionCheck();
+  };
+$("#run-connection-check").onclick = runConnectionCheck;
+$("#copy-connection-report").onclick = () =>
+  copy(
+    JSON.stringify(diagnosticReport, null, 2),
+    "Connection report copied. It contains no pairing code, credential, or saved workspace.",
+  );
 $("#pair-form").onsubmit = (e) => {
   e.preventDefault();
   pairBrowser($("#pair-code").value.trim());

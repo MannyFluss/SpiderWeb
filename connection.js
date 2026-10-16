@@ -57,3 +57,188 @@ export function clientInfo(n) {
             : "Browser",
   };
 }
+
+export class NodeRequestError extends Error {
+  constructor(message, { kind, status } = {}) {
+    super(message);
+    this.kind = kind;
+    this.status = status;
+  }
+}
+
+export async function requestNode(
+  node,
+  path,
+  {
+    hosted = false,
+    token,
+    body,
+    method,
+    timeoutMs = 8000,
+    fetchImpl = globalThis.fetch,
+  } = {},
+) {
+  if (!node)
+    throw new NodeRequestError(
+      "Enter the Mac’s HTTPS address or scan a pairing QR from Spider.",
+      { kind: "address" },
+    );
+  const headers = body
+    ? { "Content-Type": "application/json", "X-Spider-Request": "1" }
+    : {};
+  if (token) headers.Authorization = "Spider " + token;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetchImpl(node + path, {
+      method: method || (body ? "POST" : "GET"),
+      credentials: hosted ? "omit" : "same-origin",
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    let result;
+    try {
+      result = await response.json();
+    } catch (error) {
+      if (controller.signal.aborted) throw error;
+      throw new NodeRequestError(
+        `The address answered with an unreadable response (HTTP ${response.status}). Check that it is the Spider Mac address.`,
+        { kind: "response", status: response.status },
+      );
+    }
+    if (!response.ok)
+      throw new NodeRequestError(
+        result.error || `Spider returned HTTP ${response.status}`,
+        { kind: "server", status: response.status },
+      );
+    return result;
+  } catch (error) {
+    if (error instanceof NodeRequestError) throw error;
+    throw new NodeRequestError(
+      controller.signal.aborted
+        ? "The request to the Mac timed out."
+        : "The browser could not connect to the Mac.",
+      { kind: controller.signal.aborted ? "timeout" : "network" },
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export function connectionMessage(error) {
+  if (error.status === 401)
+    return "The Mac is reachable. Enter a fresh pairing code to connect this browser.";
+  if (error.kind === "server")
+    return `Spider replied with HTTP ${error.status}: ${error.message} Open Check connection for details.`;
+  if (error.kind === "response" || error.kind === "address")
+    return error.message;
+  return `${error.message || "Could not reach the Mac."} Use Check connection to test the address and see the iPhone trust steps.`;
+}
+
+export async function checkConnection(node, options = {}) {
+  const report = {
+    checkedAt: new Date().toISOString(),
+    node: "",
+    status: "checking",
+    checks: [],
+  };
+  const add = (name, status, detail) =>
+    report.checks.push({ name, status, detail });
+  try {
+    report.node = normalizeNode(node);
+    add("Mac address", "pass", report.node);
+  } catch (error) {
+    add("Mac address", "fail", error.message);
+    return {
+      ...report,
+      status: "address",
+      message: "Check the Mac address printed by spider pair.",
+    };
+  }
+  const secure = report.node.startsWith("https:");
+  try {
+    const health = await requestNode(
+      report.node,
+      "/health?check=" + encodeURIComponent(report.checkedAt),
+      options,
+    );
+    if (health.app !== "spider") {
+      add(
+        "Spider service",
+        "fail",
+        "This address replied, but it did not identify itself as Spider.",
+      );
+      return {
+        ...report,
+        status: "wrong-service",
+        message: "Use the Mac address printed by spider pair.",
+      };
+    }
+    add(
+      "Network connection",
+      "pass",
+      `Reached Spider ${health.version || ""}.`.trim(),
+    );
+    add(
+      "Certificate trust",
+      secure ? "pass" : "info",
+      secure
+        ? "This browser accepted the Mac’s HTTPS certificate for this request."
+        : "This is local HTTP on the Mac. No TLS certificate is used.",
+    );
+  } catch (error) {
+    add("Network connection", "fail", connectionMessage(error));
+    add(
+      "Certificate trust",
+      "unknown",
+      "Not confirmed. A blocked request does not reveal whether the cause is Wi-Fi, certificate trust, or browser local-network permission.",
+    );
+    return {
+      ...report,
+      status: "blocked",
+      httpStatus: error.status,
+      message:
+        "The browser could not confirm a connection. Follow the checks below.",
+    };
+  }
+  try {
+    await requestNode(report.node, "/api/state", options);
+    add(
+      "Workspace access",
+      "pass",
+      "This browser is paired and can read the workspace.",
+    );
+    return {
+      ...report,
+      status: "ready",
+      message:
+        "Connected. The address, browser connection, and workspace access work.",
+    };
+  } catch (error) {
+    if (error.status === 401) {
+      add(
+        "Workspace access",
+        "info",
+        "The Mac answered HTTP 401: this browser needs pairing.",
+      );
+      return {
+        ...report,
+        status: "pairing",
+        httpStatus: 401,
+        message: "Your Mac is reachable. Enter a fresh pairing code.",
+      };
+    }
+    add("Workspace access", "fail", connectionMessage(error));
+    return {
+      ...report,
+      status: error.kind === "server" ? "server-rejected" : "blocked",
+      httpStatus: error.status,
+      message:
+        error.kind === "server"
+          ? `The Mac is reachable, but its API rejected the request (HTTP ${error.status}): ${error.message}`
+          : "The Mac answered the connection test, but the workspace request failed.",
+    };
+  }
+}
