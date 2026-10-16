@@ -189,7 +189,11 @@ export async function checkConnection(node, options = {}) {
         : "This is local HTTP on the Mac. No TLS certificate is used.",
     );
   } catch (error) {
-    add("Network connection", "fail", connectionMessage(error));
+    add(
+      "Network connection",
+      "fail",
+      error.status ? `HTTP ${error.status}: ${error.message}` : error.message,
+    );
     add(
       "Certificate trust",
       "unknown",
@@ -230,7 +234,11 @@ export async function checkConnection(node, options = {}) {
         message: "Your Mac is reachable. Enter a fresh pairing code.",
       };
     }
-    add("Workspace access", "fail", connectionMessage(error));
+    add(
+      "Workspace access",
+      "fail",
+      error.status ? `HTTP ${error.status}: ${error.message}` : error.message,
+    );
     return {
       ...report,
       status: error.kind === "server" ? "server-rejected" : "blocked",
