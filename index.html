@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" data-hosting="static">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#dfe8ec" />
+    <title>Spider</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 5v30M5 20h30M9 9l22 22M31 9L9 31' stroke='%23234453' stroke-width='3'/%3E%3Ccircle cx='20' cy='20' r='6' fill='%23d4e9e4' stroke='%23234453' stroke-width='3'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <div id="pair-screen" class="pair-screen" hidden>
+      <div class="pair-panel">
+        <div class="brand"><span class="spider-mark">✳</span> Spider</div>
+        <h1>Your Mac.<br />Your devices.</h1>
+        <p>Pair this browser to enter your workspace.</p>
+        <form id="pair-form">
+          <label id="node-field" hidden>Mac address<input id="node-url" type="url" inputmode="url" autocomplete="url" placeholder="https://192.168.x.x:4301" /></label>
+          <label
+            >This browser’s name<input
+              id="device-name"
+              maxlength="80"
+              autocomplete="nickname"
+              placeholder="My iPad" /></label
+          ><label
+            >Pairing code<input
+              id="pair-code"
+              autocomplete="one-time-code"
+              placeholder="Code from a paired device"
+              required /></label
+          ><button class="primary">Connect to Spider</button>
+        </form>
+        <p id="pair-error" role="alert"></p>
+        <p><a id="trust-mac" target="_blank" rel="noreferrer" hidden>Open the Mac directly to check certificate trust</a></p>
+        <small
+          >On the Mac, run <code>spider pair</code>, or use Add device in a
+          paired frontend. Invitations work once and expire in ten
+          minutes.</small
+        >
+      </div>
+      <div class="pair-art" aria-hidden="true">
+        <div class="orb center">Mac</div>
+        <div class="orb phone">Phone</div>
+        <div class="orb ipad">iPad</div>
+        <div class="web-line one"></div>
+        <div class="web-line two"></div>
+        <p>One workspace.<br />A few different windows into it.</p>
+      </div>
+    </div>
+    <div id="workspace" hidden>
+      <header>
+        <a class="brand" href="./" aria-label="Spider home"
+          ><span class="spider-mark">✳</span> Spider</a
+        ><span id="connection-status" class="status-pill">Connecting</span>
+        <div class="header-actions">
+          <button id="add-device">Add device</button
+          ><button
+            id="state-toggle"
+            class="icon-button"
+            title="Inspect and copy source state"
+          >
+            { }
+          </button>
+        </div>
+      </header>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <main>
+        <div class="work-heading">
+          <div>
+            <p class="quiet" id="client-label">Your workspace</p>
+            <h1>A place to connect.</h1>
+          </div>
+          <div class="app-launcher" aria-label="Open an app">
+            <button data-app="spider.chat"><span>↗</span> Chat</button
+            ><button data-app="spider.calculator">
+              <span>＋</span> Calculator</button
+            ><button data-app="spider.connections">
+              <span>⌁</span> Connections
+            </button>
+          </div>
+        </div>
+        <div id="mounts" class="mounts"></div>
+        <div id="empty" class="empty" hidden>
+          <span class="spider-mark">✳</span>
+          <p>Open an app. Your work keeps its place.</p>
+        </div>
+      </main>
+      <footer>
+        <span id="sync-status">Mac authority</span
+        ><span>Independent views. Shared work.</span>
+      </footer>
+    </div>
+    <dialog id="pair-dialog">
+      <button class="dialog-close" data-close="pair-dialog" aria-label="Close">
+        ×
+      </button>
+      <p class="quiet">Add a browser</p>
+      <h2>Make another connection.</h2>
+      <div id="qr-image"></div>
+      <p>Scan this QR on your phone or iPad.</p>
+      <p class="pairing-code" id="invite-code"></p>
+      <p>
+        <a id="invite-url" target="_blank" rel="noreferrer">Open invitation</a
+        ><button id="copy-invitation">Copy invitation</button>
+      </p>
+      <small
+        >One use. Valid for ten minutes. Creating a new invitation replaces the
+        previous one.</small
+      >
+    </dialog>
+    <dialog id="state-dialog">
+      <button class="dialog-close" data-close="state-dialog" aria-label="Close">
+        ×
+      </button>
+      <h2>Source state</h2>
+      <p>
+        Your saved work, in one portable object. Browser pairing credentials
+        stay private.
+      </p>
+      <div class="toolbar">
+        <button id="copy-state">Copy state</button
+        ><a
+          href="/api/export"
+          download="spider-source-state.json"
+          class="button"
+          >Download JSON</a
+        ><button id="refresh-state">Refresh from Mac</button>
+      </div>
+      <pre id="source-state"></pre>
+      <small
+        >Restore a snapshot with <code>spider state import snapshot.json</code>.
+        Spider keeps a backup of the state it replaces.</small
+      >
+    </dialog>
+  </body>
+</html>

@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Chat · Spider</title>
+    
+    
+    
+  <style>/* Shared primitives are deliberately small; app views own their layout. */
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #203540;
+  margin: 0;
+  background: #fff;
+  font-size: 14px;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid #b58155;
+  outline-offset: 2px;
+}
+[hidden] {
+  display: none !important;
+}
+button {
+  touch-action: manipulation;
+}
+@media (pointer: coarse) {
+  button {
+    min-height: 42px;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+main {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  max-width: 900px;
+  margin: auto;
+}
+.chat-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #e0e7e9;
+}
+.chat-controls label {
+  font-size: 11px;
+  color: #6a808a;
+  display: grid;
+  gap: 4px;
+}
+select {
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  max-width: 220px;
+  padding: 4px 0;
+  color: #34586a;
+}
+button {
+  border: 1px solid #cbd9de;
+  border-radius: 7px;
+  background: #f5f9f9;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+#messages {
+  flex: 1;
+  overflow: auto;
+  min-height: 70px;
+  padding: 18px 0;
+  scroll-behavior: smooth;
+}
+.empty {
+  color: #82939a;
+  max-width: 320px;
+  margin: 22px auto;
+  text-align: center;
+  line-height: 1.7;
+}
+.empty strong {
+  display: block;
+  color: #3f6574;
+  font:
+    25px Georgia,
+    serif;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+.message {
+  max-width: 92%;
+  margin-bottom: 20px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.message.user {
+  margin-left: auto;
+  background: #edf3f4;
+  border-radius: 12px 12px 3px 12px;
+  padding: 10px 14px;
+  max-width: 85%;
+}
+.message .role {
+  font-size: 10px;
+  color: #7d9097;
+  margin-bottom: 5px;
+}
+.message p {
+  white-space: pre-wrap;
+  margin: 0;
+}
+#status {
+  min-height: 16px;
+  font-size: 11px;
+  color: #7f6850;
+  margin: 5px 0;
+}
+.composer-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+}
+.composer-footer small {
+  font-size: 10px;
+  color: #7d9097;
+  margin-right: auto;
+}
+textarea {
+  width: 100%;
+  resize: vertical;
+  max-height: 140px;
+  border: 1px solid #c9d8de;
+  border-radius: 9px;
+  background: #f9fbfb;
+  padding: 10px;
+  line-height: 1.5;
+  min-height: 63px;
+}
+#send {
+  background: #315e73;
+  color: #fff;
+  border-color: #315e73;
+  padding: 9px 17px;
+}
+#embedded {
+  border: 1px solid #c4d7d6;
+  background: #f4f8f6;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 7px 0;
+  flex-shrink: 0;
+}
+.embed-label {
+  padding: 6px 10px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #577b78;
+}
+#close-calculator {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 19px;
+}
+.embedded-app {
+  width: 100%;
+  height: 530px;
+  border: 0;
+  display: block;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+}
+body:has(#embedded:not([hidden])) #messages {
+  min-height: 150px;
+}
+body:has(#embedded:not([hidden])) main {
+  height: auto;
+  min-height: 100vh;
+}
+#embedded:not([hidden]) ~ #composer {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding-bottom: 10px;
+}
+@media (max-width: 360px) {
+  main {
+    padding: 12px;
+  }
+  .chat-controls button {
+    font-size: 10px;
+  }
+  select {
+    max-width: 170px;
+  }
+}
+</style></head>
+  <body>
+    <main>
+      <div class="chat-controls">
+        <label
+          >Ollama Cloud
+          <select id="model" aria-label="Ollama Cloud model">
+            <option>Connecting…</option>
+          </select></label
+        ><button id="calculator">＋ Calculator</button>
+      </div>
+      <div class="conversation" id="messages" aria-live="polite"></div>
+      <div id="embedded" hidden>
+        <div class="embed-label">
+          Calculator in Chat
+          <button id="close-calculator" aria-label="Close embedded calculator">
+            ×
+          </button>
+        </div>
+        <div id="calculator-slot"></div>
+      </div>
+      <div id="status" role="status"></div>
+      <form id="composer">
+        <label class="sr-only" for="draft">Message</label
+        ><textarea
+          id="draft"
+          rows="2"
+          placeholder="What are you thinking about?"
+        ></textarea>
+        <div class="composer-footer">
+          <small id="hint">Saved in this conversation</small
+          ><button type="button" id="cancel" hidden>Stop reply</button
+          ><button id="send" type="submit">Send ↗</button>
+        </div>
+      </form>
+    </main>
+  <script type="module">// sdk.js
+var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function connect() {
+  if (window.parent === window) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const ready = (e) => {
+      if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
+        return;
+      window.removeEventListener("message", ready);
+      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set();
+      let state = e.data.state;
+      port.onmessage = ({ data }) => {
+        if (data.type === "state") {
+          state = data.state;
+          for (const fn of listeners) fn(state);
+          return;
+        }
+        const task = pending.get(data.id);
+        if (task) {
+          pending.delete(data.id);
+          data.error ? task.reject(Error(data.error)) : task.resolve(data.result);
+        }
+      };
+      function request(method, args = {}) {
+        return new Promise((resolve2, reject) => {
+          const id = uid();
+          pending.set(id, { resolve: resolve2, reject });
+          port.postMessage({ id, method, args });
+        });
+      }
+      const sdk2 = {
+        context: e.data.context,
+        get state() {
+          return state;
+        },
+        read: () => state?.data || {},
+        write: (path, value) => request("write", { path, value }),
+        request,
+        onState(fn) {
+          listeners.add(fn);
+          fn(state);
+          return () => listeners.delete(fn);
+        },
+        async mount(appId, container, options = {}) {
+          const desc = await request("mount", { appId, ...options });
+          const frame = document.createElement("iframe");
+          frame.srcdoc = desc.html;
+          frame.title = desc.name;
+          frame.sandbox = "allow-scripts allow-forms";
+          frame.className = "embedded-app";
+          container.append(frame);
+          const channel = new MessageChannel();
+          channel.port1.onmessage = async (ev) => {
+            const msg = ev.data;
+            try {
+              const result = await request("child", {
+                mountId: desc.context.mountId,
+                message: msg
+              });
+              channel.port1.postMessage({ id: msg.id, result });
+            } catch (error) {
+              channel.port1.postMessage({ id: msg.id, error: error.message });
+            }
+          };
+          const ready2 = (event) => {
+            if (event.source !== frame.contentWindow || event.data?.type !== "spider:ready")
+              return;
+            window.removeEventListener("message", ready2);
+            frame.contentWindow.postMessage(
+              { type: "spider:init", context: desc.context, state: desc.state },
+              "*",
+              [channel.port2]
+            );
+          };
+          window.addEventListener("message", ready2);
+          const unsubscribe = sdk2.onState(() => {
+            request("childState", { mountId: desc.context.mountId }).then(
+              (s) => channel.port1.postMessage({ type: "state", state: s })
+            ).catch(() => {
+            });
+          });
+          return {
+            frame,
+            close() {
+              unsubscribe();
+              request("unmount", { mountId: desc.context.mountId }).catch(
+                () => {
+                }
+              );
+              frame.remove();
+              channel.port1.close();
+            }
+          };
+        }
+      };
+      resolve(sdk2);
+    };
+    window.addEventListener("message", ready);
+    parent.postMessage({ type: "spider:ready" }, "*");
+  });
+}
+
+// ../SpiderChat/app.js
+var sdk = await connect();
+var $ = (s) => document.querySelector(s);
+var current = null;
+var models = [];
+var loading = false;
+var draftTimer;
+var embedded = null;
+var sending = false;
+var renderKey = "";
+var applying = /* @__PURE__ */ new Set();
+if (!sdk) {
+  document.body.textContent = "Chat uses Spider. Open it from the Spider frontend.";
+  throw Error("Spider required");
+}
+async function loadModels() {
+  if (loading || models.length) return;
+  loading = true;
+  try {
+    const result = await sdk.request("models");
+    models = result.models;
+    $("#model").replaceChildren(
+      ...models.map((name) => {
+        const o = document.createElement("option");
+        o.value = name;
+        o.textContent = name;
+        return o;
+      })
+    );
+    if (current?.data?.model && models.includes(current.data.model))
+      $("#model").value = current.data.model;
+    else if (models.includes("gemma4:cloud"))
+      $("#model").value = "gemma4:cloud";
+    if (!models.length)
+      $("#status").textContent = "No Cloud models found. Sign in to Ollama on the Mac.";
+  } catch (e) {
+    $("#status").textContent = e.message;
+  } finally {
+    loading = false;
+  }
+}
+function latestJob() {
+  return Object.values(current?.jobs || {}).sort(
+    (a, b) => b.createdAt.localeCompare(a.createdAt)
+  )[0];
+}
+function render(state) {
+  const switched = current?.sessionId !== state.sessionId;
+  current = state;
+  const data = state.data || {};
+  if (state.online) loadModels();
+  else if (!models.length) {
+    const option = document.createElement("option");
+    option.textContent = data.model || "Ollama Cloud \xB7 offline";
+    $("#model").replaceChildren(option);
+  }
+  if (switched || document.activeElement !== $("#draft"))
+    $("#draft").value = data.draft || "";
+  if (models.includes(data.model)) $("#model").value = data.model;
+  const messages = Object.entries(data.messages || {}).sort(
+    ([a, x], [b, y]) => x.at.localeCompare(y.at) || a.localeCompare(b)
+  );
+  const key = JSON.stringify(messages);
+  if (key !== renderKey) {
+    renderKey = key;
+    $("#messages").replaceChildren();
+    if (!messages.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.innerHTML = "<strong>Start a conversation.</strong>Your Mac connects to Ollama Cloud.<br>This conversation belongs to Spider.";
+      $("#messages").append(empty);
+    }
+    for (const [, m] of messages) {
+      const div = document.createElement("div");
+      div.className = "message " + m.role;
+      const label = document.createElement("div");
+      label.className = "role";
+      label.textContent = m.role === "user" ? "You" : m.model || "Ollama";
+      const p = document.createElement("p");
+      p.textContent = m.content;
+      div.append(label, p);
+      $("#messages").append(div);
+    }
+    $("#messages").scrollTop = $("#messages").scrollHeight;
+  }
+  const job = latestJob(), running = job?.status === "running";
+  $("#send").disabled = !state.online || running || sending;
+  $("#cancel").hidden = !running;
+  $("#hint").textContent = state.online ? "Cmd / Ctrl + Enter to send" : "Offline \xB7 keep writing; reconnect to send";
+  if (running) $("#status").textContent = "Ollama Cloud is replying\u2026";
+  else if (job && ["error", "interrupted", "cancelled"].includes(job.status))
+    $("#status").textContent = job.error || "Reply cancelled.";
+  else if (!loading) $("#status").textContent = "";
+  for (const job2 of Object.values(state.jobs || {})) {
+    if (job2.status === "complete" && !data.messages?.["reply-" + job2.id] && !applying.has(job2.id)) {
+      applying.add(job2.id);
+      sdk.write(["messages", "reply-" + job2.id], {
+        role: "assistant",
+        content: job2.output,
+        model: job2.model,
+        at: job2.finishedAt
+      }).finally(() => applying.delete(job2.id));
+    }
+  }
+}
+sdk.onState(render);
+$("#draft").oninput = () => {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(
+    () => sdk.write(["draft"], $("#draft").value).catch((e) => $("#status").textContent = e.message),
+    180
+  );
+};
+$("#model").onchange = () => sdk.write(["model"], $("#model").value);
+$("#composer").onsubmit = async (e) => {
+  e.preventDefault();
+  const text = $("#draft").value.trim();
+  if (!text || sending) return;
+  sending = true;
+  $("#send").disabled = true;
+  clearTimeout(draftTimer);
+  try {
+    const model = $("#model").value;
+    if (!models.includes(model)) throw Error("Choose an available Cloud model");
+    const message = {
+      role: "user",
+      content: text,
+      at: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    await sdk.write(["messages", uid()], message);
+    await sdk.write(["draft"], "");
+    await sdk.write(["model"], model);
+    $("#draft").value = "";
+    const messages = Object.values(sdk.read().messages || {}).sort(
+      (a, b) => a.at.localeCompare(b.at)
+    );
+    await sdk.request("ollama", { requestId: uid(), model, messages });
+    $("#status").textContent = "Ollama Cloud is replying\u2026";
+  } catch (error) {
+    $("#status").textContent = error.message;
+  } finally {
+    sending = false;
+    render(current);
+  }
+};
+$("#draft").onkeydown = (e) => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    $("#composer").requestSubmit();
+  }
+};
+$("#cancel").onclick = async () => {
+  const job = latestJob();
+  if (job) await sdk.request("cancel", { taskId: job.id });
+};
+$("#calculator").onclick = async () => {
+  if (embedded) return;
+  try {
+    $("#embedded").hidden = false;
+    embedded = await sdk.mount("spider.calculator", $("#calculator-slot"));
+    $("#calculator").disabled = true;
+    sdk.request("resize", { height: 1e3 });
+  } catch (e) {
+    $("#status").textContent = e.message;
+    $("#embedded").hidden = true;
+  }
+};
+$("#close-calculator").onclick = () => {
+  embedded?.close();
+  embedded = null;
+  $("#embedded").hidden = true;
+  $("#calculator").disabled = false;
+  sdk.request("resize", { height: 500 });
+};
+</script></body>
+</html>

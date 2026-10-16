@@ -1,0 +1,109 @@
+export const uid = () =>
+  globalThis.crypto?.randomUUID?.() ||
+  `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+export function connect() {
+  if (window.parent === window) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const ready = (e) => {
+      if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
+        return;
+      window.removeEventListener("message", ready);
+      const port = e.ports[0],
+        pending = new Map(),
+        listeners = new Set();
+      let state = e.data.state;
+      port.onmessage = ({ data }) => {
+        if (data.type === "state") {
+          state = data.state;
+          for (const fn of listeners) fn(state);
+          return;
+        }
+        const task = pending.get(data.id);
+        if (task) {
+          pending.delete(data.id);
+          data.error
+            ? task.reject(Error(data.error))
+            : task.resolve(data.result);
+        }
+      };
+      function request(method, args = {}) {
+        return new Promise((resolve, reject) => {
+          const id = uid();
+          pending.set(id, { resolve, reject });
+          port.postMessage({ id, method, args });
+        });
+      }
+      const sdk = {
+        context: e.data.context,
+        get state() {
+          return state;
+        },
+        read: () => state?.data || {},
+        write: (path, value) => request("write", { path, value }),
+        request,
+        onState(fn) {
+          listeners.add(fn);
+          fn(state);
+          return () => listeners.delete(fn);
+        },
+        async mount(appId, container, options = {}) {
+          const desc = await request("mount", { appId, ...options });
+          const frame = document.createElement("iframe");
+          frame.srcdoc = desc.html;
+          frame.title = desc.name;
+          frame.sandbox = "allow-scripts allow-forms";
+          frame.className = "embedded-app";
+          container.append(frame);
+          const channel = new MessageChannel();
+          channel.port1.onmessage = async (ev) => {
+            const msg = ev.data;
+            try {
+              const result = await request("child", {
+                mountId: desc.context.mountId,
+                message: msg,
+              });
+              channel.port1.postMessage({ id: msg.id, result });
+            } catch (error) {
+              channel.port1.postMessage({ id: msg.id, error: error.message });
+            }
+          };
+          const ready = (event) => {
+            if (
+              event.source !== frame.contentWindow ||
+              event.data?.type !== "spider:ready"
+            )
+              return;
+            window.removeEventListener("message", ready);
+            frame.contentWindow.postMessage(
+              { type: "spider:init", context: desc.context, state: desc.state },
+              "*",
+              [channel.port2],
+            );
+          };
+          window.addEventListener("message", ready);
+          const unsubscribe = sdk.onState(() => {
+            request("childState", { mountId: desc.context.mountId })
+              .then((s) =>
+                channel.port1.postMessage({ type: "state", state: s }),
+              )
+              .catch(() => {});
+          });
+          return {
+            frame,
+            close() {
+              unsubscribe();
+              request("unmount", { mountId: desc.context.mountId }).catch(
+                () => {},
+              );
+              frame.remove();
+              channel.port1.close();
+            },
+          };
+        },
+      };
+      resolve(sdk);
+    };
+    window.addEventListener("message", ready);
+    parent.postMessage({ type: "spider:ready" }, "*");
+  });
+}

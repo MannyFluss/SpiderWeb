@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Calculator · Spider</title>
+    
+    
+  <style>* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font:
+    14px -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: #254553;
+  background: #f5f8f7;
+}
+main {
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
+}
+.calc-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.calc-label small {
+  color: #5e7d82;
+}
+label {
+  font-size: 11px;
+  color: #6b8589;
+  display: block;
+  margin-bottom: 7px;
+}
+input {
+  font:
+    22px ui-monospace,
+    monospace;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid #c0d2d4;
+  background: transparent;
+  color: #254553;
+  outline-offset: 3px;
+}
+.answer {
+  font:
+    46px/1.4 Georgia,
+    serif;
+  text-align: right;
+  overflow-wrap: anywhere;
+  min-height: 70px;
+  padding: 5px 0 10px;
+  letter-spacing: -1px;
+}
+.keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+button {
+  font: inherit;
+  border: 1px solid #d0dddf;
+  border-radius: 7px;
+  background: #fff;
+  color: #294c5a;
+  cursor: pointer;
+  padding: 10px;
+  min-height: 38px;
+  touch-action: manipulation;
+}
+.keys button {
+  font-size: 17px;
+}
+.keys button.operator {
+  background: #e2eceb;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.actions button:first-child {
+  flex: 1;
+}
+.equals {
+  flex: 3;
+  background: #315f69;
+  color: #fff;
+  border-color: #315f69;
+}
+button:hover {
+  filter: brightness(0.96);
+}
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 3px solid #b88c58;
+  outline-offset: 2px;
+}
+details {
+  margin-top: 15px;
+  font-size: 12px;
+  color: #60797c;
+}
+summary {
+  cursor: pointer;
+}
+ol {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+li {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 6px 0;
+  border-top: 1px solid #dde6e6;
+}
+#error {
+  color: #a54435;
+  font-size: 12px;
+  min-height: 15px;
+  padding-top: 6px;
+}
+@media (pointer: coarse) {
+  input {
+    font-size: 22px;
+  }
+  button {
+    min-height: 43px;
+  }
+}
+</style></head>
+  <body>
+    <main>
+      <div class="calc-label">
+        <span>Calculator</span><small id="mode">Standalone</small>
+      </div>
+      <form id="calculate">
+        <label for="expression">Your calculation</label
+        ><input
+          id="expression"
+          inputmode="decimal"
+          autocomplete="off"
+          placeholder="(12 + 8) × 3"
+        />
+        <div class="answer" id="answer" aria-live="polite">0</div>
+        <div class="keys" aria-label="Calculator keypad"></div>
+        <div class="actions">
+          <button type="button" id="clear">Clear</button
+          ><button class="equals" type="submit">Calculate =</button>
+        </div>
+      </form>
+      <div id="error" role="alert"></div>
+      <details>
+        <summary>Recent calculations</summary>
+        <ol id="history"></ol>
+      </details>
+    </main>
+  <script type="module">// sdk.js
+var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function connect() {
+  if (window.parent === window) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const ready = (e) => {
+      if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
+        return;
+      window.removeEventListener("message", ready);
+      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set();
+      let state = e.data.state;
+      port.onmessage = ({ data: data2 }) => {
+        if (data2.type === "state") {
+          state = data2.state;
+          for (const fn of listeners) fn(state);
+          return;
+        }
+        const task = pending.get(data2.id);
+        if (task) {
+          pending.delete(data2.id);
+          data2.error ? task.reject(Error(data2.error)) : task.resolve(data2.result);
+        }
+      };
+      function request(method, args = {}) {
+        return new Promise((resolve2, reject) => {
+          const id = uid();
+          pending.set(id, { resolve: resolve2, reject });
+          port.postMessage({ id, method, args });
+        });
+      }
+      const sdk2 = {
+        context: e.data.context,
+        get state() {
+          return state;
+        },
+        read: () => state?.data || {},
+        write: (path, value) => request("write", { path, value }),
+        request,
+        onState(fn) {
+          listeners.add(fn);
+          fn(state);
+          return () => listeners.delete(fn);
+        },
+        async mount(appId, container, options = {}) {
+          const desc = await request("mount", { appId, ...options });
+          const frame = document.createElement("iframe");
+          frame.srcdoc = desc.html;
+          frame.title = desc.name;
+          frame.sandbox = "allow-scripts allow-forms";
+          frame.className = "embedded-app";
+          container.append(frame);
+          const channel = new MessageChannel();
+          channel.port1.onmessage = async (ev) => {
+            const msg = ev.data;
+            try {
+              const result = await request("child", {
+                mountId: desc.context.mountId,
+                message: msg
+              });
+              channel.port1.postMessage({ id: msg.id, result });
+            } catch (error) {
+              channel.port1.postMessage({ id: msg.id, error: error.message });
+            }
+          };
+          const ready2 = (event) => {
+            if (event.source !== frame.contentWindow || event.data?.type !== "spider:ready")
+              return;
+            window.removeEventListener("message", ready2);
+            frame.contentWindow.postMessage(
+              { type: "spider:init", context: desc.context, state: desc.state },
+              "*",
+              [channel.port2]
+            );
+          };
+          window.addEventListener("message", ready2);
+          const unsubscribe = sdk2.onState(() => {
+            request("childState", { mountId: desc.context.mountId }).then(
+              (s) => channel.port1.postMessage({ type: "state", state: s })
+            ).catch(() => {
+            });
+          });
+          return {
+            frame,
+            close() {
+              unsubscribe();
+              request("unmount", { mountId: desc.context.mountId }).catch(
+                () => {
+                }
+              );
+              frame.remove();
+              channel.port1.close();
+            }
+          };
+        }
+      };
+      resolve(sdk2);
+    };
+    window.addEventListener("message", ready);
+    parent.postMessage({ type: "spider:ready" }, "*");
+  });
+}
+
+// ../SpiderCalculator/math.js
+function calculate(text) {
+  const source = text.replaceAll("\xD7", "*").replaceAll("\xF7", "/").replaceAll("\u2212", "-");
+  const tokens = source.match(/(?:\d*\.?\d+(?:[eE][+-]?\d+)?)|[()+\-*/%]/g) || [];
+  if (tokens.join("") !== source.replace(/\s/g, ""))
+    throw Error("Use numbers, parentheses, +, \u2212, \xD7, \xF7 or %.");
+  let i = 0;
+  function atom() {
+    const t = tokens[i++];
+    if (t === "+") return atom();
+    if (t === "-") return -atom();
+    if (t === "(") {
+      const n = sum();
+      if (tokens[i++] !== ")") throw Error("Close the parentheses.");
+      return n;
+    }
+    if (!t || !/^\d*\.?\d/.test(t))
+      throw Error("Enter a complete calculation.");
+    return Number(t);
+  }
+  function product() {
+    let n = atom();
+    while (["*", "/", "%"].includes(tokens[i])) {
+      const op = tokens[i++], r = atom();
+      if ((op === "/" || op === "%") && r === 0)
+        throw Error("Cannot divide by zero.");
+      n = op === "*" ? n * r : op === "/" ? n / r : n % r;
+    }
+    return n;
+  }
+  function sum() {
+    let n = product();
+    while (["+", "-"].includes(tokens[i])) {
+      const op = tokens[i++], r = product();
+      n = op === "+" ? n + r : n - r;
+    }
+    return n;
+  }
+  if (tokens.length > 500) throw Error("Try a shorter calculation.");
+  const result = sum();
+  if (i !== tokens.length || !Number.isFinite(result))
+    throw Error("Enter a valid finite calculation.");
+  return Number(result.toPrecision(13));
+}
+
+// ../SpiderCalculator/app.js
+var sdk = null;
+var data = { expression: "", answer: 0, history: {} };
+try {
+  if (parent !== window) {
+    sdk = await connect();
+  } else
+    data = {
+      ...data,
+      ...JSON.parse(
+        localStorage.getItem("spider.calculator.standalone") || "{}"
+      )
+    };
+} catch {
+}
+var $ = (s) => document.querySelector(s);
+var debounce;
+var lastSession;
+async function save(path, value) {
+  data[path] = value;
+  if (sdk) await sdk.write([path], value);
+  else
+    try {
+      localStorage.setItem(
+        "spider.calculator.standalone",
+        JSON.stringify(data)
+      );
+    } catch {
+      $("#error").textContent = "This browser could not save calculator history.";
+    }
+}
+function render(force = false) {
+  if (force || document.activeElement !== $("#expression"))
+    $("#expression").value = data.expression || "";
+  $("#answer").textContent = data.answer ?? 0;
+  $("#history").replaceChildren();
+  for (const entry of Object.values(data.history || {}).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 12)) {
+    const li = document.createElement("li"), left = document.createElement("span"), right = document.createElement("strong");
+    left.textContent = entry.expression;
+    right.textContent = entry.answer;
+    li.append(left, right);
+    $("#history").append(li);
+  }
+}
+for (const key of [
+  "7",
+  "8",
+  "9",
+  "\xF7",
+  "4",
+  "5",
+  "6",
+  "\xD7",
+  "1",
+  "2",
+  "3",
+  "\u2212",
+  "0",
+  ".",
+  "(",
+  "+"
+]) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = key;
+  button.classList.toggle("operator", "\xF7\xD7\u2212+".includes(key));
+  button.onclick = () => {
+    const input = $("#expression");
+    input.value += key;
+    data.expression = input.value;
+    save("expression", input.value);
+  };
+  $(".keys").append(button);
+}
+$("#expression").oninput = () => {
+  data.expression = $("#expression").value;
+  clearTimeout(debounce);
+  debounce = setTimeout(() => save("expression", data.expression), 180);
+};
+$("#calculate").onsubmit = async (e) => {
+  e.preventDefault();
+  clearTimeout(debounce);
+  try {
+    const expression = $("#expression").value, answer = calculate(expression);
+    $("#error").textContent = "";
+    await save("expression", expression);
+    await save("answer", answer);
+    const id = uid();
+    const entry = { expression, answer, at: (/* @__PURE__ */ new Date()).toISOString() };
+    data.history ||= {};
+    data.history[id] = entry;
+    if (sdk) await sdk.write(["history", id], entry);
+    else await save("history", data.history);
+    render();
+  } catch (error) {
+    $("#error").textContent = error.message;
+  }
+};
+$("#clear").onclick = () => {
+  save("expression", "");
+  save("answer", 0);
+  $("#expression").value = "";
+  $("#error").textContent = "";
+  render();
+};
+if (sdk) {
+  sdk.onState((state) => {
+    const switched = lastSession !== state.sessionId;
+    lastSession = state.sessionId;
+    data = { expression: "", answer: 0, history: {}, ...state.data };
+    $("#mode").textContent = state.online ? "Saved in Spider" : "Offline \xB7 saved here";
+    render(switched);
+  });
+} else render();
+</script></body>
+</html>
