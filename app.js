@@ -859,6 +859,8 @@ downloadLink.onclick = (e) => {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
+// Keep connection help usable while the first network probe is pending.
+if (!snapshot) $("#pair-screen").hidden = false;
 const pairing = fragment.get("pair");
 if (pairing) {
   history.replaceState(null, "", location.pathname);
