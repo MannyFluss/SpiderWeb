@@ -34,7 +34,7 @@ try {
 let cacheKey = "spider.client.v1:" + instanceId + ":" + nodeBase,
   local;
 try {
-  local = JSON.parse(localStorage.getItem(cacheKey) || "null");
+  local = JSON.parse(localStorage.getItem(cacheKey) || (!hosted && localStorage.getItem("spider.client.v1:" + instanceId)) || "null");
 } catch {}
 if (!local) {
   try {
@@ -88,6 +88,7 @@ async function api(path, body, method) {
     headers,
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
+    signal: AbortSignal.timeout(8000),
   });
   let result;
   try {
@@ -542,7 +543,7 @@ async function renderView(view) {
     bar.append(label, tag, close);
     if (app.id === "spider.calculator") {
       const link = document.createElement("a");
-      link.href = "/apps/" + app.id + "/" + app.entry;
+      link.href = hosted ? new URL(`apps/${app.id}/${app.entry}`, import.meta.url).href : "/apps/" + app.id + "/" + app.entry;
       link.target = "_blank";
       link.rel = "noopener";
       link.textContent = "↗";
@@ -638,7 +639,7 @@ async function pairBrowser(code) {
     if (hosted) {
       const entered = normalizeNode($("#node-url").value);
       if (entered !== nodeBase) {
-        location.hash = new URLSearchParams({ node: entered, pair: code }).toString();
+        location.hash = new URLSearchParams({ node: entered, pair: code, label: $("#device-name").value }).toString();
         location.reload();
         return;
       }
@@ -667,7 +668,7 @@ async function pairBrowser(code) {
     rendered = false;
     await refresh();
   } catch (e) {
-    $("#pair-error").textContent = e.message;
+    $("#pair-error").textContent = e.status ? e.message : "Could not connect directly to this Mac. Check its address, certificate trust, and local-network permission, then try the code again.";
   }
 }
 function guessLabel() {
@@ -680,7 +681,7 @@ function guessLabel() {
         ? "Mac browser"
         : "Browser";
 }
-$("#device-name").value = guessLabel();
+$("#device-name").value = fragment.get("label") || guessLabel();
 $("#node-field").hidden = !hosted;
 $("#node-url").required = hosted;
 $("#node-url").value = nodeBase;
@@ -767,10 +768,10 @@ const pairing = fragment.get("pair");
 if (pairing) {
   history.replaceState(null, "", location.pathname);
   $("#pair-screen").hidden = false;
-  try {
-    await api("/api/state");
-  } catch {
-    await pairBrowser(pairing);
+  if (hosted && !deviceToken) await pairBrowser(pairing);
+  else {
+    try { await api("/api/state"); }
+    catch { await pairBrowser(pairing); }
   }
 }
 await refresh();
