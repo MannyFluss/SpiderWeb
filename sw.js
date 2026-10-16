@@ -1,6 +1,6 @@
 const base = new URL(".", self.location.href);
 const hosted = base.pathname !== "/";
-const CACHE = "spider-code-v4:" + base.pathname;
+const CACHE = "spider-code-v5:" + base.pathname;
 const shell = hosted
   ? [
       ".",

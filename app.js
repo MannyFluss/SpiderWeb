@@ -155,6 +155,7 @@ function contextState(ctx) {
       ctx.appId === "spider.connections"
         ? {
             ...report,
+            directory: projected("spider.connections", "directory"),
             authority: {
               ...report?.authority,
               name:
@@ -173,6 +174,7 @@ function contextState(ctx) {
               online,
               revision: snapshot?.revision,
               clientId,
+              instanceId,
             },
           }
         : undefined,
@@ -432,16 +434,27 @@ async function dispatch(ctx, msg) {
         /[\u0000-\u001f\u007f]/.test(label)
       )
         throw Error("Use a name of 1–80 characters");
-      if (
-        args.clientId !== "authority" &&
-        !(report?.devices || []).some((d) => d.id === args.clientId)
-      )
+      if (args.clientId !== "authority" && !snapshot?.devices?.[args.clientId])
         throw Error("Choose a paired device");
       return write(
         "spider.connections",
         "directory",
         ["names", args.clientId],
         label,
+      );
+    }
+    case "assignDevice": {
+      if (ctx.appId !== "spider.connections")
+        throw Error("Device management is not declared by this app");
+      if (!(report?.devices || []).some((d) => d.id === args.clientId))
+        throw Error("Choose a paired browser");
+      if (args.deviceId !== "authority" && !snapshot?.devices?.[args.deviceId])
+        throw Error("Choose a known device");
+      return write(
+        "spider.connections",
+        "directory",
+        ["deviceForClient", args.clientId],
+        args.deviceId,
       );
     }
     case "resize": {
@@ -884,6 +897,7 @@ setInterval(async () => {
       report = await api("/api/connections", {
         revision: snapshot.revision,
         session,
+        instance: instanceId,
         client: ownClient,
       });
       local.report = report;

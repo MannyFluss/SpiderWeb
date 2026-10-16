@@ -65,11 +65,11 @@ button {
 
 :root {
   --ink: #24314d;
-  --muted: #758096;
-  --line: #e4e7f0;
-  --blue: #586ecd;
-  --mint: #3a9b82;
-  --orange: #c8783e;
+  --muted: #68758c;
+  --line: #e1e7f0;
+  --blue: #405685;
+  --mint: #34866f;
+  --orange: #b96a36;
   --paper: #fbfcff;
 }
 body {
@@ -105,7 +105,7 @@ p {
   align-items: center;
   gap: 7px;
   white-space: nowrap;
-  color: #507264;
+  color: var(--mint);
   font-size: 11px;
 }
 .live-badge i,
@@ -126,163 +126,361 @@ p {
 .live-badge.offline i {
   background: #a8b0c2;
 }
-.network-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 255px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
 .graph-stage {
   position: relative;
-  min-width: 0;
-  overflow: hidden;
-  background: #f5f7fd;
+  padding: 26px 24px 30px;
   isolation: isolate;
+  background: #f3f6fc;
+  border-block: 1px solid var(--line);
 }
 .graph-grid {
   position: absolute;
   inset: 0;
-  z-index: -1;
-  background-image: radial-gradient(#c6cede 1px, transparent 1px);
+  z-index: -2;
+  background-image: radial-gradient(#bac6db 0.8px, transparent 0.8px);
   background-size: 22px 22px;
-  opacity: 0.5;
-  mask-image: radial-gradient(ellipse, black 10%, transparent 75%);
+  opacity: 0.45;
+  mask-image: radial-gradient(ellipse, black 10%, transparent 85%);
 }
-#graph {
+#edges {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 430px;
-  display: block;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
   overflow: visible;
 }
 .edge {
   fill: none;
-  stroke: #c8cfdf;
-  stroke-width: 1.4;
-  transition:
-    opacity 0.8s,
-    stroke 0.8s;
-  opacity: 0.55;
+  stroke: #c3cedd;
+  stroke-width: 1.5;
+  opacity: 0.6;
 }
 .edge.live {
-  stroke: #a3b7cf;
+  stroke: #83a99d;
   stroke-dasharray: 4 9;
-  animation: flow 5s linear infinite;
   opacity: 1;
+  animation: flow 7s linear infinite;
 }
 .edge.self {
   stroke: var(--orange);
 }
-.edge.departed {
-  stroke: #abb1c0;
-  stroke-dasharray: 3 7;
-  opacity: 0.3;
+#authority {
+  display: flex;
+  justify-content: center;
 }
-.node {
+#authority > .device-branch {
+  width: min(100%, 450px);
+}
+#device-nodes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 34px 24px;
+  align-items: start;
+  margin-top: 48px;
+}
+#device-nodes:empty {
+  display: none;
+}
+.device-branch {
+  min-width: 0;
+}
+.device-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 8px 12px 0;
+  color: var(--ink);
   cursor: pointer;
-  transition: transform 0.7s cubic-bezier(0.2, 0.75, 0.2, 1);
-  outline: none;
+  border-radius: 12px;
 }
-.node .node-face {
-  fill: white;
-  stroke: #cdd3e2;
-  stroke-width: 1.4;
+.device-node:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 4px;
+}
+.node-symbol {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 76px;
+  width: 76px;
+  margin: 4px 0 14px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1.5px solid #cad3e3;
   transition:
-    fill 0.7s,
-    stroke 0.7s,
-    opacity 0.7s;
+    background 0.5s,
+    border-color 0.5s;
 }
-.node .halo {
-  fill: none;
-  stroke: #a8b4e0;
-  stroke-width: 1;
-  opacity: 0;
-  transition: opacity 0.3s;
+.device-glyph {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
 }
-.node:hover .halo,
-.node:focus-visible .halo,
-.node.selected .halo {
-  opacity: 1;
-}
-.node .device-glyph {
+.device-glyph svg,
+.browser-glyph svg {
+  width: 100%;
+  height: 100%;
   fill: none;
   stroke: #8590aa;
-  stroke-width: 1.6;
+  stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: stroke 0.7s;
 }
-.node.live .node-face {
-  fill: #fdfefe;
-  stroke: #86bbaa;
+.live .node-symbol {
+  border-color: #73aa98;
+  background: #fff;
 }
-.node.live .device-glyph {
+.live .device-glyph svg {
   stroke: #447f73;
 }
-.node.self .node-face {
-  stroke: var(--orange);
-  stroke-width: 2;
+.self .node-symbol {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 4px #f8e8dc;
 }
-.node.self .device-glyph {
-  stroke: #9f653d;
+.authority .node-symbol {
+  background: #354573;
+  border-color: #354573;
+  width: 86px;
+  height: 86px;
 }
-.node.offline .node-face {
-  fill: #f0f2f8;
-  stroke: #d7dce8;
-}
-.node.offline .device-glyph {
-  stroke: #a3acc0;
-}
-.node.authority .node-face {
-  fill: #354573;
-  stroke: #354573;
-}
-.node.authority .device-glyph {
+.authority .device-glyph svg {
   stroke: white;
 }
-.node .node-name {
-  font:
-    500 13px -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
-  fill: var(--ink);
-  text-anchor: middle;
+.expanded .node-symbol,
+.device-node:hover .node-symbol {
+  outline: 1px solid #a8b4d5;
+  outline-offset: 7px;
 }
-.node .node-caption {
-  font:
-    10px -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
-  fill: var(--muted);
-  text-anchor: middle;
+.status-dot {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 12px;
+  height: 12px;
+  background: #a8b2c4;
+  border-radius: 50%;
+  border: 3px solid #f3f6fc;
 }
-.presence {
-  fill: none;
-  stroke: #79b7a3;
-  stroke-width: 2;
+.live .status-dot {
+  background: var(--mint);
+}
+.node-name {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.node-caption {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.node-count {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.disclosure {
+  font-size: 24px;
+  line-height: 22px;
+  color: var(--muted);
+  margin-top: 4px;
+  transition: transform 0.25s;
+}
+.expanded .disclosure {
+  transform: rotate(180deg);
+}
+.instance-drawer {
+  display: grid;
+  grid-template-rows: 0fr;
   opacity: 0;
-  pointer-events: none;
+  transition:
+    grid-template-rows 0.3s ease,
+    opacity 0.25s;
 }
-.node.arrived .presence {
-  animation: arrival 1.4s ease-out;
+.expanded .instance-drawer {
+  grid-template-rows: 1fr;
+  opacity: 1;
 }
-.node.departed .presence {
-  stroke: #9aabc8;
-  animation: departure 1.4s ease-out;
+.drawer-inner {
+  overflow: hidden;
+  min-height: 0;
 }
-.node.appearing .node-body {
-  animation: appear 0.65s cubic-bezier(0.2, 0.8, 0.25, 1) both;
-  transform-origin: 0 0;
+.drawer-content {
+  margin-top: 12px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #d8e1ee;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px #24314d06;
 }
-.node .status-dot {
-  fill: #b9c0d0;
-  stroke: #f5f7fd;
-  stroke-width: 3;
+.drawer-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
 }
-.node.live .status-dot {
-  fill: var(--mint);
+h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
 }
-.node.self .status-dot {
-  stroke: #fff1e7;
+.instance-total {
+  color: var(--muted);
+  font-size: 11px;
+}
+.device-description {
+  font-size: 11px;
+}
+.browser-list {
+  max-height: 430px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.browser-entry {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+.browser-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.browser-glyph {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+h3 {
+  font-size: 12px;
+  margin: 0 0 3px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.paired-label {
+  font-size: 10px;
+}
+.instance-list {
+  list-style: none;
+  padding: 0 0 0 12px;
+  margin: 13px 0 13px 12px;
+  border-left: 1px solid var(--line);
+}
+.instance-row {
+  position: relative;
+  padding: 4px 0 12px;
+}
+.instance-row:before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a8b2c4;
+  border: 1px solid white;
+}
+.instance-row.connected:before {
+  background: var(--mint);
+}
+.instance-row:last-child {
+  padding-bottom: 0;
+}
+.instance-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+}
+.instance-title strong {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.connected .instance-title strong {
+  color: var(--mint);
+}
+.instance-seen,
+.instance-first {
+  font-size: 10px;
+  margin-top: 3px;
+}
+.instance-first {
+  color: #79849a;
+}
+.group-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 10px;
+  color: var(--muted);
+}
+select {
+  max-width: 72%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 6px;
+  background: var(--paper);
+  font-size: 11px;
+}
+.empty-history {
+  font-size: 11px;
+  margin: 10px 0;
+}
+.rename-form {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+  padding-top: 15px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+.rename-form label {
+  font-size: 11px;
+}
+input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #dce1ed;
+  background: var(--paper);
+  border-radius: 6px;
+  padding: 9px;
+  font-size: 12px;
+  margin-top: 7px;
+}
+.rename-form button {
+  background: var(--blue);
+  color: white;
+  border: 0;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 11px;
+}
+.rename-message {
+  grid-column: 1/-1;
+  font-size: 10px;
+  min-height: 16px;
+}
+.empty-devices {
+  padding: 28px 0 0;
+  max-width: 390px;
+  margin: auto;
+  text-align: center;
+  font-size: 11px;
 }
 .graph-key {
   display: flex;
@@ -291,7 +489,7 @@ p {
   gap: 18px;
   font-size: 10px;
   color: var(--muted);
-  padding: 0 12px;
+  padding: 18px 12px 0;
 }
 .graph-key span {
   display: flex;
@@ -306,101 +504,10 @@ p {
   border-radius: 50%;
 }
 .graph-event {
-  height: 42px;
+  min-height: 42px;
   padding: 12px;
   text-align: center;
   font-size: 10px;
-}
-aside {
-  border-left: 1px solid var(--line);
-  padding: 26px 22px;
-  background: #fff;
-}
-.selected-icon {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: #edf1fb;
-  margin-bottom: 22px;
-}
-.selected-icon svg {
-  width: 34px;
-  height: 34px;
-  fill: none;
-  stroke: #53679f;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.selected-role {
-  font-size: 11px;
-  margin-bottom: 5px;
-}
-h2 {
-  font-size: 20px;
-  letter-spacing: -0.5px;
-  line-height: 1.25;
-  margin: 0 0 7px;
-  overflow-wrap: anywhere;
-}
-.selected-status {
-  font-size: 11px;
-  margin-bottom: 20px;
-}
-dl {
-  margin: 0;
-  font-size: 11px;
-}
-dl > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid #edf0f6;
-}
-dt {
-  color: var(--muted);
-}
-dd {
-  margin: 0;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-form {
-  margin-top: 27px;
-}
-label {
-  font-size: 11px;
-  display: block;
-  margin-bottom: 7px;
-}
-.rename-controls {
-  display: flex;
-  gap: 6px;
-}
-input {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid #dce1ed;
-  background: #fbfcff;
-  border-radius: 6px;
-  padding: 9px;
-  font-size: 12px;
-}
-button {
-  border: 0;
-  border-radius: 6px;
-  background: #405685;
-  color: white;
-  padding: 9px 11px;
-  font-size: 11px;
-}
-#rename-message {
-  font-size: 10px;
-  margin-top: 8px;
-  min-height: 30px;
 }
 .bottom-bar {
   display: flex;
@@ -408,6 +515,7 @@ button {
   justify-content: space-between;
   gap: 24px;
   padding: 16px 0 5px;
+  border-top: 1px solid var(--line);
 }
 .sync {
   display: flex;
@@ -415,10 +523,6 @@ button {
   flex-wrap: wrap;
   font-size: 10px;
   color: var(--muted);
-}
-.sync strong {
-  font-weight: 500;
-  color: #44577c;
 }
 .bottom-bar details {
   font-size: 10px;
@@ -431,14 +535,45 @@ button {
   cursor: pointer;
   text-align: right;
 }
-.bottom-bar dl {
-  padding-top: 8px;
+dl {
+  margin: 8px 0 0;
   font-size: 10px;
+}
+dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 .footnote {
   font-size: 10px;
   margin-top: 12px;
   max-width: 850px;
+}
+.presence-ring {
+  position: absolute;
+  inset: -2px;
+  border: 2px solid #79b7a3;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.arrived .presence-ring {
+  animation: arrival 1.3s ease-out;
+}
+.departed .presence-ring {
+  border-color: #99a8c4;
+  animation: departure 1.3s ease-out;
+}
+.device-branch.appearing > .device-node,
+.instance-row.appearing {
+  animation: appear 0.45s ease-out both;
 }
 @keyframes flow {
   to {
@@ -446,74 +581,53 @@ button {
   }
 }
 @keyframes arrival {
-  0% {
-    r: 30;
-    opacity: 0.9;
+  from {
+    transform: scale(0.85);
+    opacity: 1;
   }
-  100% {
-    r: 70;
+  to {
+    transform: scale(1.5);
     opacity: 0;
   }
 }
 @keyframes departure {
-  0% {
-    r: 60;
+  from {
+    transform: scale(1.5);
     opacity: 0.6;
   }
-  100% {
-    r: 30;
+  to {
+    transform: scale(0.85);
     opacity: 0;
   }
 }
 @keyframes appear {
-  0% {
-    transform: scale(0.55);
+  from {
     opacity: 0;
+    transform: translateY(-5px);
   }
-  100% {
-    transform: scale(1);
+  to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 @media (max-width: 700px) {
   main {
     padding: 20px 16px 14px;
   }
-  .network-layout {
+  header {
+    flex-direction: column;
+    align-items: start;
+    gap: 10px;
+  }
+  .graph-stage {
+    padding: 22px 20px 24px;
+  }
+  #device-nodes {
     grid-template-columns: 1fr;
+    gap: 32px;
   }
-  #graph {
-    height: 430px;
-  }
-  aside {
-    border-left: 0;
-    border-top: 1px solid var(--line);
-    padding: 20px;
-    display: grid;
-    grid-template-columns: 48px minmax(0, 1fr);
-    column-gap: 14px;
-  }
-  .selected-icon {
-    grid-row: 1/4;
-    margin: 0;
-  }
-  .selected-role,
-  h2,
-  .selected-status {
-    grid-column: 2;
-  }
-  .selected-status {
-    margin-bottom: 0;
-  }
-  aside dl,
-  aside form {
-    grid-column: 1/-1;
-  }
-  aside dl {
-    margin-top: 14px;
-  }
-  form {
-    margin-top: 16px;
+  .drawer-content {
+    padding: 15px;
   }
   .bottom-bar {
     flex-direction: column;
@@ -533,29 +647,25 @@ button {
   h1 {
     font-size: 23px;
   }
+  select,
+  input {
+    font-size: 16px;
+  }
+  .rename-form {
+    grid-template-columns: 1fr;
+  }
+  .rename-form button {
+    min-height: 42px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .node,
-  .edge,
-  .node * {
+  *,
+  *::before {
     animation: none !important;
     transition: none !important;
   }
   .edge.live {
     stroke-dasharray: none;
-  }
-}
-.node.leaving .node-body {
-  animation: disappear 0.45s ease-in both;
-  transform-origin: 0 0;
-}
-.edge.leaving {
-  opacity: 0;
-}
-@keyframes disappear {
-  to {
-    opacity: 0;
-    transform: scale(0.65);
   }
 }
 </style></head>
@@ -570,60 +680,40 @@ button {
           ><i></i><span id="live-count">Connecting</span></span
         >
       </header>
-      <div class="network-layout">
-        <section class="graph-stage" aria-label="Live connection graph">
-          <div class="graph-grid"></div>
-          <svg
-            id="graph"
-            viewBox="0 0 820 490"
-            role="group"
-            aria-label="Paired clients connected directly to the Mac authority"
-          >
-            <g id="edges"></g>
-            <g id="nodes"></g>
-          </svg>
-          <div class="graph-key">
-            <span><i class="dot online"></i>Connected</span
-            ><span><i class="dot"></i>Offline</span
-            ><span class="you-key">Your browser</span>
-          </div>
-          <p id="event" class="graph-event" role="status" aria-live="polite">
-            Select a device to see its connection.
-          </p>
-        </section>
-        <aside id="inspector">
-          <span id="selected-icon" class="selected-icon"></span>
-          <p id="selected-role" class="selected-role">Device</p>
-          <h2 id="selected-name">Your Mac</h2>
-          <p id="selected-status" class="selected-status"></p>
-          <dl id="details"></dl>
-          <form id="rename-form">
-            <label for="device-label">Device name</label>
-            <div class="rename-controls">
-              <input
-                id="device-label"
-                maxlength="80"
-                required
-                autocomplete="off"
-              /><button type="submit">Save</button>
-            </div>
-            <p id="rename-message" role="status">
-              Names are shared with your paired devices.
-            </p>
-          </form>
-        </aside>
+      <section
+        id="graph-stage"
+        class="graph-stage"
+        aria-label="Device connection graph"
+      >
+        <div class="graph-grid" aria-hidden="true"></div>
+        <svg id="edges" aria-hidden="true"></svg>
+        <div id="authority"></div>
+        <div id="device-nodes"></div>
+        <p id="empty-devices" class="empty-devices" hidden>
+          Pair another device to see it here. Browser instances on your Mac
+          appear under its node.
+        </p>
+      </section>
+      <div class="graph-key">
+        <span><i class="dot online"></i>Connected</span
+        ><span><i class="dot"></i>Offline</span
+        ><span class="you-key">Your device</span>
       </div>
+      <p id="event" class="graph-event" role="status" aria-live="polite">
+        Select a device to open its browser history.
+      </p>
       <div class="bottom-bar">
         <div id="sync" class="sync"></div>
-        <details>
+        <details id="access">
           <summary>What this browser can access</summary>
           <dl id="permissions"></dl>
         </details>
       </div>
       <p class="footnote">
-        Connections shown here go through your Mac. Other clients are reported
-        by the Mac; physical network routes are not observed. Offline clients
-        keep their place.
+        Connections go through your Mac. Use “On device” to group browsers that
+        belong to the same device; device type alone cannot identify hardware.
+        Instance history begins when this version first sees a tab. Clearing
+        browser storage can create a new identity.
       </p>
     </main>
   <script type="module">// sdk.js
@@ -728,6 +818,58 @@ function connect() {
   });
 }
 
+// ../SpiderConnections/model.mjs
+function deviceGraph(report = {}, online = false) {
+  const directory = report.directory || {}, names = directory.names || {};
+  const authority = {
+    id: "authority",
+    label: names.authority || report.authority?.name || "Mac authority",
+    kind: "desktop",
+    platform: "macOS",
+    authority: true,
+    browsers: []
+  };
+  const groups = /* @__PURE__ */ new Map([[authority.id, authority]]);
+  for (const browser of report.devices || []) {
+    const id = directory.deviceForClient?.[browser.id] || browser.deviceId || browser.defaultDeviceId || browser.id;
+    if (!groups.has(id)) {
+      const anchor = (report.devices || []).find((d) => d.id === id) || browser;
+      groups.set(id, {
+        id,
+        label: names[id] || anchor.label || "Device",
+        kind: anchor.client?.kind || "browser",
+        platform: anchor.client?.platform || "Not reported",
+        browsers: []
+      });
+    }
+    groups.get(id).browsers.push(browser);
+  }
+  for (const device of groups.values()) {
+    device.browsers.sort(
+      (a, b) => String(a.pairedAt).localeCompare(String(b.pairedAt)) || a.id.localeCompare(b.id)
+    );
+    device.instances = device.browsers.flatMap(
+      (browser) => [...browser.sessions || []].sort(
+        (a, b) => String(a.firstSeen || a.id).localeCompare(
+          String(b.firstSeen || b.id)
+        )
+      ).map((instance, index) => ({
+        ...instance,
+        browserId: browser.id,
+        key: `${browser.id}/${instance.id}`,
+        number: index + 1,
+        connected: online && !!instance.connected,
+        isThisInstance: browser.isThisClient && instance.id === (report.local?.instanceId || report.instanceId)
+      }))
+    );
+    device.isThisClient = device.browsers.some((b) => b.isThisClient);
+    device.connected = online && (device.authority || device.instances.some((i) => i.connected));
+  }
+  return [...groups.values()].sort(
+    (a, b) => Number(!!b.authority) - Number(!!a.authority) || Number(b.isThisClient) - Number(a.isThisClient) || a.id.localeCompare(b.id)
+  );
+}
+
 // ../SpiderConnections/app.js
 var sdk = await connect();
 var $ = (s) => document.querySelector(s);
@@ -735,14 +877,13 @@ if (!sdk) {
   document.body.textContent = "Open Connections inside Spider to see your devices.";
   throw Error("Spider required");
 }
-var NS = "http://www.w3.org/2000/svg";
 var glyphs = {
   phone: '<rect x="-9" y="-16" width="18" height="32" rx="4"/><path d="M-3-12h6M-2 12h4"/>',
   tablet: '<rect x="-13" y="-17" width="26" height="34" rx="3"/><path d="M-2 13h4"/>',
   desktop: '<rect x="-18" y="-14" width="36" height="25" rx="3"/><path d="M-7 17h14M0 11v6M-18 6h36"/>',
   browser: '<rect x="-18" y="-14" width="36" height="28" rx="4"/><path d="M-18-5h36M-12-10h1M-7-10h1M-2-10h1"/>'
 };
-var kindNames = {
+var kinds = {
   phone: "Phone",
   tablet: "Tablet",
   desktop: "Computer",
@@ -759,212 +900,263 @@ var fields = {
 };
 var nodes = /* @__PURE__ */ new Map();
 var current;
-var selected = "authority";
-var selectionBefore;
-var lastName;
+var devices = [];
+var expanded = null;
+var drawFrame;
 var hadReport = false;
-var svg = (tag, attrs = {}, parent2) => {
-  const e = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
-  parent2?.append(e);
+var icon = (kind) => `<svg viewBox="-24 -24 48 48" aria-hidden="true">${glyphs[kind] || glyphs.browser}</svg>`;
+var plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+var when = (stamp) => stamp && Number.isFinite(Date.parse(stamp)) ? new Date(stamp).toLocaleString([], {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit"
+}) : "Not recorded";
+function element(tag, className, text) {
+  const e = document.createElement(tag);
+  if (className) e.className = className;
+  if (text !== void 0) e.textContent = text;
   return e;
-};
-function kind(d) {
-  if (glyphs[d.client?.kind]) return d.client.kind;
-  return "browser";
 }
-function select(id) {
-  selected = id;
-  render(current);
-  $("#device-label").focus({ preventScroll: true });
+function arrange(parent2, children) {
+  children.forEach((child, i) => {
+    if (parent2.children[i] !== child)
+      parent2.insertBefore(child, parent2.children[i] || null);
+  });
+  while (parent2.children.length > children.length)
+    parent2.lastElementChild.remove();
 }
-function flash(group, type) {
-  group.classList.remove("arrived", "departed");
-  void group.getBoundingClientRect();
-  group.classList.add(type);
-  setTimeout(() => group.classList.remove(type), 1500);
-}
-function makeNode(d) {
-  const group = svg(
-    "g",
-    { class: "node appearing", tabindex: "0", role: "button" },
-    $("#nodes")
-  );
-  const body = svg("g", { class: "node-body" }, group);
-  svg("circle", { class: "halo", r: 46 }, body);
-  svg("circle", { class: "presence", r: 36 }, body);
-  svg(
-    "circle",
-    { class: "node-face", r: d.id === "authority" ? 45 : 34 },
-    body
-  );
-  const icon = svg("g", { class: "device-glyph" }, body);
-  svg("circle", { class: "status-dot", cx: 25, cy: 23, r: 5 }, body);
-  const name = svg("text", { class: "node-name", y: 60 }, body), caption = svg("text", { class: "node-caption", y: 77 }, body);
-  const edge = d.id === "authority" ? null : svg("path", { class: "edge" }, $("#edges"));
-  group.onclick = () => select(d.id);
-  group.onkeydown = (e) => {
-    if (["Enter", " "].includes(e.key)) {
-      e.preventDefault();
-      select(d.id);
+function makeNode(device) {
+  const root = element("article", "device-branch appearing");
+  root.innerHTML = `<button class="device-node" type="button" aria-expanded="false">
+    <span class="node-symbol"><span class="presence-ring"></span><span class="device-glyph"></span><i class="status-dot"></i></span>
+    <span class="node-name"></span><span class="node-caption"></span><span class="node-count"></span>
+    <span class="disclosure" aria-hidden="true">\u2304</span></button>
+    <div class="instance-drawer" inert><div class="drawer-inner"><div class="drawer-content">
+      <div class="drawer-heading"><h2>Browser instances</h2><span class="instance-total"></span></div>
+      <p class="device-description"></p><div class="browser-list"></div>
+      <form class="rename-form"><label>Device name<input maxlength="80" required autocomplete="off" /></label>
+      <button type="submit">Save name</button><p class="rename-message" role="status"></p></form>
+    </div></div></div>`;
+  const find = (s) => root.querySelector(s), button = find(".device-node"), drawer = find(".instance-drawer");
+  const node = {
+    root,
+    button,
+    drawer,
+    find,
+    browsers: /* @__PURE__ */ new Map(),
+    live: void 0
+  };
+  const panelId = `instances-${device.id}`;
+  drawer.id = panelId;
+  button.setAttribute("aria-controls", panelId);
+  button.onclick = () => {
+    expanded = expanded === device.id ? null : device.id;
+    render(current);
+  };
+  find("form").onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await sdk.request("renameDevice", {
+        clientId: device.id,
+        label: find("input").value
+      });
+      find(".rename-message").textContent = current.online ? "Name saved and queued for sync." : "Saved offline. The name will sync when you reconnect.";
+    } catch (error) {
+      find(".rename-message").textContent = error.message;
     }
   };
-  setTimeout(() => group.classList.remove("appearing"), 700);
-  const node = { group, icon, name, caption, edge, live: void 0 };
-  nodes.set(d.id, node);
+  drawer.addEventListener("transitionend", layout);
+  setTimeout(() => root.classList.remove("appearing"), 700);
+  nodes.set(device.id, node);
   return node;
 }
-function details(rows, container) {
-  container.replaceChildren();
-  for (const [key, value] of rows) {
-    const row = document.createElement("div"), dt = document.createElement("dt"), dd = document.createElement("dd");
-    dt.textContent = key;
-    dd.textContent = value;
-    row.append(dt, dd);
-    container.append(row);
+function makeBrowser(browser, node) {
+  const root = element("section", "browser-entry");
+  root.innerHTML = `<div class="browser-heading"><span class="browser-glyph">${icon("browser")}</span><div><h3></h3><p class="paired-label"></p></div></div>
+    <ol class="instance-list"></ol><p class="empty-history">Paired. Waiting for its first connection report.</p>
+    <label class="group-control">On device<select aria-label="Device for this browser pairing"></select></label>`;
+  const select = root.querySelector("select");
+  select.onchange = async () => {
+    const target = select.value;
+    select.disabled = true;
+    try {
+      await sdk.request("assignDevice", {
+        clientId: browser.id,
+        deviceId: target
+      });
+      expanded = target;
+      render(current);
+      $("#event").textContent = "Browser grouping saved. Other devices will receive it through sync.";
+    } catch (error) {
+      $("#event").textContent = error.message;
+      render(current);
+    } finally {
+      select.disabled = false;
+    }
+  };
+  const entry = { root, select, rows: /* @__PURE__ */ new Map(), optionsKey: "" };
+  node.browsers.set(browser.id, entry);
+  return entry;
+}
+function renderBrowser(browser, device, node) {
+  const entry = node.browsers.get(browser.id) || makeBrowser(browser, node), root = entry.root;
+  root.querySelector("h3").textContent = `${browser.client?.browser || "Browser"}${browser.isThisClient ? " \xB7 this browser" : ""}`;
+  root.querySelector(".paired-label").textContent = `Paired ${when(browser.pairedAt)}`;
+  const instances = device.instances.filter((i) => i.browserId === browser.id);
+  const rows = instances.map((instance) => {
+    let row = entry.rows.get(instance.id);
+    if (!row) {
+      row = element("li", "instance-row appearing");
+      row.innerHTML = '<div class="instance-title"><span></span><strong></strong></div><p class="instance-seen"></p><p class="instance-first"></p>';
+      entry.rows.set(instance.id, row);
+      setTimeout(() => row.classList.remove("appearing"), 700);
+    }
+    row.classList.toggle("connected", instance.connected);
+    row.querySelector("span").textContent = `Tab ${instance.number}${instance.isThisInstance ? " \xB7 this tab" : ""}`;
+    row.querySelector("strong").textContent = instance.connected ? "Connected" : current.online ? "Offline" : "Last known";
+    row.querySelector(".instance-seen").textContent = instance.connected ? `State revision ${instance.appliedRevision ?? "\u2014"}` : `Last seen ${when(instance.lastSeen)}`;
+    row.querySelector(".instance-first").textContent = `First seen ${when(instance.firstSeen)}`;
+    return row;
+  });
+  arrange(root.querySelector("ol"), rows);
+  root.querySelector(".empty-history").hidden = rows.length > 0;
+  const options = devices.map((d) => [d.id, d.label]);
+  if (!options.some(([id]) => id === browser.id))
+    options.push([browser.id, "Separate device"]);
+  const key = JSON.stringify(options);
+  if (key !== entry.optionsKey) {
+    entry.select.replaceChildren(
+      ...options.map(([id, name]) => {
+        const o = element("option", "", name);
+        o.value = id;
+        return o;
+      })
+    );
+    entry.optionsKey = key;
   }
+  entry.select.value = device.id;
+  return root;
 }
 function render(state) {
   if (!state) return;
   current = state;
-  const report = state.connections || {}, devices = [...report.devices || []].sort(
-    (a, b) => Number(b.isThisClient) - Number(a.isThisClient) || String(a.pairedAt).localeCompare(String(b.pairedAt)) || a.id.localeCompare(b.id)
-  );
-  const live = (d2) => state.online && d2.sessions?.some((s) => s.connected);
-  const authority = {
-    id: "authority",
-    label: report.authority?.name || "Mac authority",
-    client: { kind: "desktop", platform: "macOS", browser: "Spider runtime" },
-    sessions: [],
-    authority: true
-  };
-  const all = [authority, ...devices], narrow = matchMedia("(max-width:700px)").matches, cx = narrow ? 280 : 410, cy = narrow ? 275 : 225;
-  const count = Math.max(1, devices.length), rings = Math.ceil(count / 8), height = (narrow ? 590 : 490) + Math.max(0, rings - 1) * 100;
-  $("#graph").setAttribute("viewBox", `0 0 ${narrow ? 560 : 820} ${height}`);
-  $("#graph").style.height = narrow ? "430px" : `${Math.max(430, height * 0.85)}px`;
-  if (!all.some((d2) => d2.id === selected)) selected = "authority";
-  for (const d2 of all) {
-    const node = nodes.get(d2.id) || makeNode(d2), index = devices.indexOf(d2), ring = Math.floor(index / 8), inRing = Math.min(8, count - ring * 8);
-    const angle = Math.PI + index % 8 * Math.PI * 2 / Math.max(1, inRing), x = d2.authority ? cx : cx + Math.cos(angle) * (narrow ? 168 : 260) * (1 - ring * 0.13), y = d2.authority ? cy : cy + Math.sin(angle) * (narrow ? 190 : 145) + ring * 95;
-    const online = d2.authority ? state.online : live(d2), was = node.live;
-    node.group.style.transform = `translate(${x}px,${y}px)`;
-    node.group.classList.toggle("authority", !!d2.authority);
-    node.group.classList.toggle("self", !!d2.isThisClient);
-    node.group.classList.toggle("selected", d2.id === selected);
-    node.group.classList.toggle("live", !!online);
-    node.group.classList.toggle("offline", !online);
-    node.group.setAttribute(
+  const report = state.connections || {};
+  devices = deviceGraph(report, state.online);
+  if (!devices.some((d) => d.id === expanded)) expanded = null;
+  for (const d of devices) {
+    const node = nodes.get(d.id) || makeNode(d), open = expanded === d.id;
+    node.root.classList.toggle("authority", !!d.authority);
+    node.root.classList.toggle("self", !!d.isThisClient);
+    node.root.classList.toggle("live", d.connected);
+    node.root.classList.toggle("expanded", open);
+    node.button.setAttribute("aria-expanded", String(open));
+    node.button.setAttribute(
       "aria-label",
-      `${d2.label}, ${d2.authority ? "Mac authority" : kindNames[kind(d2)]}, ${online ? "connected" : "offline"}${d2.isThisClient ? ", this browser" : ""}`
+      `${d.label}, ${d.authority ? "Mac authority" : kinds[d.kind] || "Device"}, ${plural(d.browsers.length, "browser")}, ${plural(d.instances.length, "saved tab")}, ${open ? "collapse" : "expand"}`
     );
-    node.group.setAttribute("aria-pressed", String(d2.id === selected));
-    if (node.kind !== kind(d2)) {
-      node.kind = kind(d2);
-      node.icon.innerHTML = glyphs[node.kind];
+    node.drawer.inert = !open;
+    if (node.kind !== d.kind) {
+      node.find(".device-glyph").innerHTML = icon(d.kind);
+      node.kind = d.kind;
     }
-    node.name.textContent = d2.label.length > 22 ? d2.label.slice(0, 21) + "\u2026" : d2.label;
-    node.caption.textContent = d2.authority ? "State authority" : `${d2.isThisClient ? "This browser \xB7 " : ""}${kindNames[kind(d2)]}`;
-    if (node.edge) {
-      node.edge.setAttribute(
-        "d",
-        `M${cx} ${cy}Q${(cx + x) / 2} ${(cy + y) / 2 - 25} ${x} ${y}`
-      );
-      node.edge.classList.toggle("live", !!online);
-      node.edge.classList.toggle("self", !!d2.isThisClient);
-      node.edge.classList.toggle("departed", !online);
-    }
-    if (was !== void 0 && was !== !!online) {
-      flash(node.group, online ? "arrived" : "departed");
-      $("#event").textContent = `${d2.label} ${online ? "connected" : "went offline"}.`;
-    } else if (was === void 0 && hadReport && !d2.authority) {
-      flash(node.group, "arrived");
-      $("#event").textContent = `${d2.label} paired with Spider.`;
-    }
-    node.live = !!online;
+    node.find(".node-name").textContent = d.label;
+    node.find(".node-caption").textContent = `${d.authority ? "Mac authority" : kinds[d.kind] || "Device"}${d.isThisClient ? " \xB7 you are here" : ""}`;
+    const live2 = d.instances.filter((i) => i.connected).length;
+    node.find(".node-count").textContent = `${plural(d.browsers.length, "browser")} \xB7 ${plural(d.instances.length, "saved tab")}${live2 ? ` \xB7 ${live2} connected` : ""}`;
+    node.find(".instance-total").textContent = plural(
+      d.instances.length,
+      "saved tab"
+    );
+    node.find(".device-description").textContent = d.browsers.length ? `${plural(d.browsers.length, "browser pairing")} on this device. Saved tabs resume their identity after a reload when browser storage survives.` : "The Spider runtime lives here. Open a frontend on this Mac to add a browser instance.";
+    arrange(
+      node.find(".browser-list"),
+      d.browsers.map((b) => renderBrowser(b, d, node))
+    );
+    if (document.activeElement !== node.find("input"))
+      node.find("input").value = d.label;
+    if (node.live !== void 0 && node.live !== d.connected) {
+      node.root.classList.remove("arrived", "departed");
+      void node.root.offsetWidth;
+      node.root.classList.add(d.connected ? "arrived" : "departed");
+      $("#event").textContent = `${d.label} ${d.connected ? "connected" : "went offline"}.`;
+    } else if (node.live === void 0 && hadReport)
+      $("#event").textContent = `${d.label} added to your network.`;
+    node.live = d.connected;
   }
+  arrange($("#authority"), [nodes.get("authority").root]);
+  arrange(
+    $("#device-nodes"),
+    devices.filter((d) => !d.authority).map((d) => nodes.get(d.id).root)
+  );
   for (const [id, node] of nodes)
-    if (!all.some((d2) => d2.id === id)) {
-      node.group.classList.add("leaving");
-      node.edge?.classList.add("leaving");
-      setTimeout(() => {
-        node.group.remove();
-        node.edge?.remove();
-      }, 450);
+    if (!devices.some((d) => d.id === id)) {
+      node.root.remove();
       nodes.delete(id);
     }
-  hadReport ||= devices.length > 0;
-  const liveCount = devices.filter(live).length;
-  $("#summary").textContent = state.online ? `${devices.length} paired ${devices.length === 1 ? "client" : "clients"}, linked through your Mac.` : "Your Mac is offline. This is the last known network.";
-  $("#live-count").textContent = state.online ? `${liveCount} connected` : "Offline";
+  $("#empty-devices").hidden = devices.length > 1;
+  hadReport ||= (report.devices || []).length > 0;
+  const live = devices.filter((d) => !d.authority && d.connected).length;
+  $("#summary").textContent = state.online ? "One node per device. Select a node to unfold its browser instances." : "Your Mac is offline. Showing saved devices and instance history.";
+  $("#live-count").textContent = state.online ? `${plural(devices.length, "device")} \xB7 ${live} connected to Mac` : "Offline";
   $(".live-badge").classList.toggle("offline", !state.online);
-  const d = all.find((d2) => d2.id === selected), latest = [...d.sessions || []].sort(
-    (a, b) => a.secondsAgo - b.secondsAgo
-  )[0];
-  $("#selected-icon").innerHTML = `<svg viewBox="-24 -24 48 48" aria-hidden="true">${glyphs[kind(d)]}</svg>`;
-  $("#selected-role").textContent = d.authority ? "Mac authority" : `${kindNames[kind(d)]}${d.isThisClient ? " \xB7 this browser" : ""}`;
-  $("#selected-name").textContent = d.label;
-  $("#selected-status").textContent = d.authority ? state.online ? "Your saved state lives here." : "Not reachable from this browser." : live(d) ? "Connected to your Mac." : latest ? `Last reported ${latest.secondsAgo} seconds ago.` : "Paired. Waiting for first contact.";
-  details(
-    [
-      ["Client", d.client?.browser || "Browser"],
-      ["Platform", d.client?.platform || "Not reported"],
-      [
-        "State revision",
-        d.authority ? report.authority?.revision ?? "\u2014" : latest?.appliedRevision ?? "\u2014"
-      ],
-      [
-        "Connection",
-        d.authority ? "Direct authority" : d.isThisClient ? "Observed here" : "Reported by Mac"
-      ]
-    ],
-    $("#details")
-  );
-  if (selectionBefore !== selected || document.activeElement !== $("#device-label") && lastName !== d.label)
-    $("#device-label").value = d.label;
-  selectionBefore = selected;
-  lastName = d.label;
   const local = report.local || {};
-  $("#sync").replaceChildren();
-  for (const text of [
-    `Revision ${local.revision || 0}`,
-    `${local.pending || 0} pending`,
-    `${local.conflicts || 0} conflicts kept by Mac`
-  ]) {
-    const item = document.createElement("span");
-    item.textContent = text;
-    $("#sync").append(item);
-  }
-  details(
-    Object.entries(report.permissions || {}).map(([k, v]) => [
-      fields[k] || k,
-      v
-    ]),
-    $("#permissions")
+  $("#sync").replaceChildren(
+    ...[
+      `Revision ${local.revision || 0}`,
+      `${local.pending || 0} pending`,
+      `${local.conflicts || 0} conflicts kept by Mac`
+    ].map((text) => element("span", "", text))
   );
-  resize();
+  $("#permissions").replaceChildren(
+    ...Object.entries(report.permissions || {}).map(([key, value]) => {
+      const row = element("div");
+      row.append(
+        element("dt", "", fields[key] || key),
+        element("dd", "", value)
+      );
+      return row;
+    })
+  );
+  layout();
 }
-function resize() {
-  sdk.request("resize", {
-    height: Math.ceil(
-      document.querySelector("main").getBoundingClientRect().height
-    ) + 8
-  }).catch(() => {
+function layout() {
+  cancelAnimationFrame(drawFrame);
+  drawFrame = requestAnimationFrame(() => {
+    const stage = $("#graph-stage"), bounds = stage.getBoundingClientRect(), svg = $("#edges");
+    svg.setAttribute("viewBox", `0 0 ${bounds.width} ${bounds.height}`);
+    svg.replaceChildren();
+    const origin = nodes.get("authority")?.find(".node-symbol").getBoundingClientRect();
+    if (origin)
+      for (const d of devices.filter((d2) => !d2.authority)) {
+        const target = nodes.get(d.id).find(".node-symbol").getBoundingClientRect();
+        const x1 = origin.x + origin.width / 2 - bounds.x, y1 = origin.bottom - bounds.y;
+        const x2 = target.x + target.width / 2 - bounds.x, y2 = target.top - bounds.y;
+        const path = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "path"
+        );
+        path.setAttribute(
+          "d",
+          bounds.width < 600 ? `M${x1} ${y1}V${y1 + 18}H16V${y2 + 36}H${x2 - 36}` : `M${x1} ${y1}C${x1} ${y1 + 35} ${x2} ${y2 - 35} ${x2} ${y2}`
+        );
+        path.setAttribute(
+          "class",
+          `edge${d.connected ? " live" : ""}${d.isThisClient ? " self" : ""}`
+        );
+        svg.append(path);
+      }
+    sdk.request("resize", {
+      height: Math.ceil(
+        document.querySelector("main").getBoundingClientRect().height
+      ) + 8
+    }).catch(() => {
+    });
   });
 }
-$("#rename-form").onsubmit = async (e) => {
-  e.preventDefault();
-  try {
-    await sdk.request("renameDevice", {
-      clientId: selected,
-      label: $("#device-label").value
-    });
-    $("#rename-message").textContent = current.online ? "Name saved here and queued for sync." : "Saved offline. The name will sync when you reconnect.";
-  } catch (error) {
-    $("#rename-message").textContent = error.message;
-  }
-};
-$("details").addEventListener("toggle", resize);
-window.addEventListener("resize", () => render(current));
+new ResizeObserver(layout).observe($("#graph-stage"));
+$("#access").addEventListener("toggle", layout);
+window.addEventListener("resize", layout);
 sdk.onState(render);
 </script></body>
 </html>
