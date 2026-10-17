@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ingestion · Spider</title>
+    
+    
+    
+  <style>/* Shared primitives are deliberately small; app views own their layout. */
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #203540;
+  margin: 0;
+  background: #fff;
+  font-size: 14px;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid #b58155;
+  outline-offset: 2px;
+}
+[hidden] {
+  display: none !important;
+}
+button {
+  touch-action: manipulation;
+}
+@media (pointer: coarse) {
+  button {
+    min-height: 42px;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+body { background: #fff; }
+main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+.archive-header, .conversation-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+h1 { font-size: 24px; font-weight: 650; letter-spacing: -.6px; margin: 0 0 7px; }
+h2 { font-size: 20px; line-height: 1.35; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+p { line-height: 1.55; }
+.archive-header p { margin: 0; color: #62777e; }
+button { border: 1px solid #cbdade; border-radius: 7px; background: #fff; padding: 9px 13px; }
+button:hover:not(:disabled) { background: #eef5f6; }
+#status { min-height: 22px; color: #526e77; margin: 18px 0 12px; }
+#status.error { color: #a33838; }
+.archive { display: grid; grid-template-columns: 272px minmax(0, 1fr); border-top: 1px solid #d9e4e7; min-height: 480px; }
+aside { padding: 18px 18px 18px 0; border-right: 1px solid #d9e4e7; }
+.tabs { display: flex; gap: 4px; padding: 3px; background: #eef4f5; border-radius: 8px; }
+.tabs button { flex: 1; padding: 8px 6px; background: transparent; border-color: transparent; }
+.tabs button[aria-pressed="true"] { background: #fff; border-color: #cbdade; color: #235b67; }
+#saved-count { font-size: 12px; margin-left: 4px; }
+.search-label { display: block; font-size: 12px; color: #62777e; margin: 18px 0 6px; }
+#search { width: 100%; min-width: 0; border: 1px solid #cbdade; padding: 10px; border-radius: 6px; background: #fff; }
+.conversation-list { margin-top: 12px; max-height: 530px; overflow-y: auto; scrollbar-gutter: stable; }
+.conversation-row { display: block; text-align: left; width: 100%; padding: 12px; margin-bottom: 3px; border: 1px solid transparent; border-radius: 6px; background: transparent; }
+.conversation-row[aria-current="true"] { border-color: #b7d2d8; background: #eaf3f5; }
+.conversation-row strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; font-weight: 550; line-height: 1.45; overflow-wrap: anywhere; }
+.conversation-row span { display: block; font-size: 12px; color: #62777e; margin-top: 5px; }
+.list-empty { padding: 10px; color: #62777e; }
+#more { width: 100%; margin-top: 10px; }
+.reader { min-width: 0; padding: 24px 0 16px 28px; }
+.empty { max-width: 430px; margin: 70px auto; color: #62777e; }
+.empty h2 { color: #203540; }
+.conversation-heading button { flex-shrink: 0; background: #2a6573; border-color: #2a6573; color: #fff; }
+.conversation-heading button:hover:not(:disabled) { background: #20515d; }
+#metadata { font-size: 12px; color: #62777e; margin: 8px 0 0; }
+.source-note { color: #526e77; font-size: 13px; margin: 17px 0; }
+.messages { max-height: 570px; overflow-y: auto; overscroll-behavior: contain; padding-right: 15px; }
+.message { padding: 20px 0; border-top: 1px solid #e0e9eb; }
+.message:first-child { padding-top: 8px; border-top: 0; }
+.message header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 9px; }
+.message strong { font-size: 12px; font-weight: 650; color: #235b67; }
+.message time { font-size: 11px; color: #6d8187; }
+.message p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; max-width: 76ch; line-height: 1.65; }
+.message.user { padding-left: 14px; border-left: 3px solid #a8c9d1; }
+details { border-top: 1px solid #d9e4e7; margin-top: 24px; padding-top: 15px; font-size: 12px; color: #526e77; }
+summary { cursor: pointer; width: fit-content; padding: 3px 0; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f3f7f8; padding: 14px; border-radius: 6px; max-height: 350px; overflow-y: auto; font: 12px/1.6 ui-monospace, monospace; }
+@media (max-width: 650px) {
+  main { padding: 16px; }
+  .archive { grid-template-columns: 1fr; }
+  aside { border-right: 0; padding: 14px 0; border-bottom: 1px solid #d9e4e7; }
+  .conversation-list { max-height: 210px; }
+  .reader { padding: 20px 0 0; }
+  .conversation-heading { flex-direction: column; gap: 10px; }
+  .messages { max-height: 520px; }
+  .empty { margin: 30px auto; }
+  h1 { font-size: 22px; }
+  .archive-header { gap: 10px; }
+  #refresh { max-width: 130px; }
+}
+</style></head>
+  <body>
+    <main>
+      <header class="archive-header">
+        <div><h1>Codex archive</h1><p id="archive-summary">Collect conversations. Keep the original words.</p></div>
+        <button id="refresh" type="button">Refresh sources</button>
+      </header>
+      <p id="status" role="status" aria-live="polite">Connecting to Spider…</p>
+      <div class="archive">
+        <aside aria-label="Conversations">
+          <div class="tabs" role="group" aria-label="Conversation collection">
+            <button id="saved-tab" type="button" aria-pressed="true">Saved <span id="saved-count">0</span></button>
+            <button id="sources-tab" type="button" aria-pressed="false">On this Mac</button>
+          </div>
+          <label class="search-label" for="search">Find a conversation</label>
+          <input id="search" type="search" placeholder="Search conversations" autocomplete="off" />
+          <div id="conversation-list" class="conversation-list"></div>
+          <button id="more" type="button" hidden>Load more sources</button>
+        </aside>
+        <section class="reader" aria-label="Conversation viewer">
+          <div id="empty" class="empty"><h2>Your raw material starts here.</h2><p>Open “On this Mac,” select a conversation, then import it to save a readable copy in Spider.</p></div>
+          <div id="conversation" hidden>
+            <div class="conversation-heading"><div><h2 id="title"></h2><p id="metadata"></p></div><button id="import" type="button">Import conversation</button></div>
+            <p id="source-note" class="source-note"></p>
+            <div id="messages" class="messages"></div>
+            <details id="raw" hidden><summary>View saved JSON</summary><pre id="raw-record" tabindex="0"></pre></details>
+          </div>
+        </section>
+      </div>
+    </main>
+  <script type="module">// sdk.js
+var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function connect() {
+  if (window.parent === window) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const ready = (e) => {
+      if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
+        return;
+      window.removeEventListener("message", ready);
+      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set();
+      let state = e.data.state;
+      port.onmessage = ({ data }) => {
+        if (data.type === "state") {
+          state = data.state;
+          for (const fn of listeners) fn(state);
+          return;
+        }
+        const task = pending.get(data.id);
+        if (task) {
+          pending.delete(data.id);
+          data.error ? task.reject(Error(data.error)) : task.resolve(data.result);
+        }
+      };
+      function request(method, args = {}) {
+        return new Promise((resolve2, reject) => {
+          const id = uid();
+          pending.set(id, { resolve: resolve2, reject });
+          port.postMessage({ id, method, args });
+        });
+      }
+      const sdk2 = {
+        context: e.data.context,
+        get state() {
+          return state;
+        },
+        read: () => state?.data || {},
+        write: (path, value) => request("write", { path, value }),
+        request,
+        onState(fn) {
+          listeners.add(fn);
+          fn(state);
+          return () => listeners.delete(fn);
+        },
+        async mount(appId, container, options = {}) {
+          const desc = await request("mount", { appId, ...options });
+          const frame = document.createElement("iframe");
+          frame.srcdoc = desc.html;
+          frame.title = desc.name;
+          frame.sandbox = "allow-scripts allow-forms";
+          frame.className = "embedded-app";
+          container.append(frame);
+          const channel = new MessageChannel();
+          channel.port1.onmessage = async (ev) => {
+            const msg = ev.data;
+            try {
+              const result = await request("child", {
+                mountId: desc.context.mountId,
+                message: msg
+              });
+              channel.port1.postMessage({ id: msg.id, result });
+            } catch (error) {
+              channel.port1.postMessage({ id: msg.id, error: error.message });
+            }
+          };
+          const ready2 = (event) => {
+            if (event.source !== frame.contentWindow || event.data?.type !== "spider:ready")
+              return;
+            window.removeEventListener("message", ready2);
+            frame.contentWindow.postMessage(
+              { type: "spider:init", context: desc.context, state: desc.state },
+              "*",
+              [channel.port2]
+            );
+          };
+          window.addEventListener("message", ready2);
+          const unsubscribe = sdk2.onState(() => {
+            request("childState", { mountId: desc.context.mountId }).then(
+              (s) => channel.port1.postMessage({ type: "state", state: s })
+            ).catch(() => {
+            });
+          });
+          return {
+            frame,
+            close() {
+              unsubscribe();
+              request("unmount", { mountId: desc.context.mountId }).catch(
+                () => {
+                }
+              );
+              frame.remove();
+              channel.port1.close();
+            }
+          };
+        }
+      };
+      resolve(sdk2);
+    };
+    window.addEventListener("message", ready);
+    parent.postMessage({ type: "spider:ready" }, "*");
+  });
+}
+
+// ../SpiderIngestion/app.js
+var sdk = await connect();
+var $ = (selector) => document.querySelector(selector);
+if (!sdk) {
+  document.body.textContent = "Open Ingestion inside Spider to collect Codex conversations.";
+  throw Error("Spider required");
+}
+var current;
+var sources = [];
+var total = 0;
+var mode = "saved";
+var selected = null;
+var importing = false;
+var loading = false;
+var listEpoch = 0;
+var timer;
+var rendered = null;
+var initialized = false;
+var records = () => Object.values(sdk.read().conversations || {});
+var when = (stamp) => stamp ? new Date(stamp).toLocaleString([], {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit"
+}) : "Date unavailable";
+var say = (text, error = false) => {
+  $("#status").textContent = text;
+  $("#status").classList.toggle("error", error);
+};
+var element = (tag, text, className) => {
+  const node = document.createElement(tag);
+  if (text !== void 0) node.textContent = text;
+  if (className) node.className = className;
+  return node;
+};
+function render() {
+  const saved = records();
+  const byId = new Map(saved.map((record2) => [record2.id, record2]));
+  $("#saved-count").textContent = saved.length;
+  $("#archive-summary").textContent = `${saved.length} saved conversation${saved.length === 1 ? "" : "s"}. Original words, ready to revisit.`;
+  $("#saved-tab").setAttribute("aria-pressed", String(mode === "saved"));
+  $("#sources-tab").setAttribute("aria-pressed", String(mode === "sources"));
+  $("#refresh").disabled = loading || !current?.online;
+  const query = $("#search").value.toLowerCase();
+  const rows = mode === "sources" ? sources : saved.filter((record2) => `${record2.title}
+${record2.messages.map((m) => m.content).join("\n")}`.toLowerCase().includes(query)).sort((a, b) => b.sourceModifiedAt.localeCompare(a.sourceModifiedAt));
+  $("#conversation-list").replaceChildren(...rows.map((record2) => {
+    const button = element("button", void 0, "conversation-row");
+    button.type = "button";
+    button.setAttribute("aria-current", String(record2.id === selected));
+    button.append(element("strong", record2.title));
+    const imported = byId.get(record2.id);
+    const label = mode === "saved" ? `${record2.messageCount} messages` : imported ? "Saved" : record2.archived ? "Archived in Codex" : "On Mac";
+    button.append(element("span", `${when(record2.modifiedAt || record2.sourceModifiedAt)} \xB7 ${label}`));
+    button.onclick = () => {
+      selected = record2.id;
+      render();
+    };
+    return button;
+  }));
+  if (!rows.length) $("#conversation-list").append(element("p", loading ? "Loading sources\u2026" : query ? "No matching conversations." : mode === "saved" ? "No saved conversations yet." : "No conversations found on the core.", "list-empty"));
+  $("#more").hidden = mode !== "sources" || sources.length >= total;
+  $("#more").disabled = loading;
+  const savedRecord = byId.get(selected);
+  const source = sources.find((record2) => record2.id === selected);
+  const record = savedRecord || source;
+  $("#empty").hidden = !!record;
+  $("#conversation").hidden = !record;
+  if (!record) {
+    rendered = null;
+    return;
+  }
+  $("#title").textContent = record.title;
+  $("#metadata").textContent = savedRecord ? `${savedRecord.messageCount} messages \xB7 Imported ${when(savedRecord.importedAt)}` : `${Math.ceil(source.sourceBytes / 1024).toLocaleString()} KB source log \xB7 Updated ${when(source.modifiedAt)}`;
+  $("#import").textContent = importing ? "Importing\u2026" : savedRecord ? "Update saved copy" : "Import conversation";
+  $("#import").disabled = importing || !current?.online;
+  $("#source-note").textContent = savedRecord ? `Saved in Spider. ${savedRecord.incompleteTail ? "The source was still being written; update again to collect new messages." : "Update the saved copy to collect new messages from Codex."}` : "Import this conversation to save its user and assistant text in Spider.";
+  $("#raw").hidden = !savedRecord;
+  const key = savedRecord ? `${savedRecord.id}:${savedRecord.sourceHash}` : source.id;
+  if (key !== rendered) {
+    rendered = key;
+    $("#raw").open = false;
+    $("#raw-record").textContent = "";
+    $("#messages").replaceChildren(...(savedRecord?.messages || []).map((message) => {
+      const article = element("article", void 0, `message ${message.role}`);
+      const header = element("header");
+      header.append(element("strong", message.role === "user" ? "You" : "Codex"));
+      const time = element("time", when(message.timestamp));
+      if (message.timestamp) time.dateTime = message.timestamp;
+      header.append(time);
+      article.append(header, element("p", message.content));
+      return article;
+    }));
+    $("#messages").scrollTop = 0;
+  }
+}
+async function loadSources(append = false) {
+  const epoch = ++listEpoch;
+  loading = true;
+  render();
+  try {
+    const result = await sdk.request("codex", {
+      action: "list",
+      query: $("#search").value,
+      offset: append ? sources.length : 0,
+      limit: 50
+    });
+    if (epoch !== listEpoch) return;
+    sources = append ? [...sources, ...result.sources] : result.sources;
+    total = result.total;
+    say(`${total} Codex conversation${total === 1 ? "" : "s"} available on the core.`);
+  } catch (error) {
+    if (epoch === listEpoch) say(error.message, true);
+  } finally {
+    if (epoch === listEpoch) {
+      loading = false;
+      render();
+    }
+  }
+}
+$("#saved-tab").onclick = () => {
+  mode = "saved";
+  $("#search").value = "";
+  render();
+};
+$("#sources-tab").onclick = () => {
+  mode = "sources";
+  $("#search").value = "";
+  render();
+  loadSources();
+};
+$("#refresh").onclick = () => loadSources();
+$("#more").onclick = () => loadSources(true);
+$("#search").oninput = () => {
+  clearTimeout(timer);
+  if (mode === "sources") timer = setTimeout(() => loadSources(), 250);
+  else render();
+};
+$("#import").onclick = async () => {
+  if (!selected || importing) return;
+  importing = true;
+  const id = selected;
+  render();
+  try {
+    const result = await sdk.request("codex", { action: "import", sourceId: id });
+    selected = id;
+    mode = "saved";
+    $("#search").value = "";
+    say(result.unchanged ? "Saved copy is already up to date." : `Imported ${result.messageCount} messages. Saved on the core.`);
+  } catch (error) {
+    say(error.message, true);
+  } finally {
+    importing = false;
+    render();
+  }
+};
+$("#raw").ontoggle = () => {
+  $("#raw-record").textContent = $("#raw").open ? JSON.stringify(records().find((record) => record.id === selected), null, 2) : "";
+};
+sdk.onState((state) => {
+  current = state;
+  render();
+  if (!initialized) {
+    const saved = records().sort((a, b) => b.importedAt.localeCompare(a.importedAt));
+    if (saved.length) {
+      initialized = true;
+      selected = saved[0].id;
+      render();
+      say("Saved conversations are ready to read.");
+    } else if (state.online) {
+      initialized = true;
+      mode = "sources";
+      loadSources();
+    }
+  }
+  if (!state.online) say("The core is offline. Saved conversations remain available; reconnect to import.");
+});
+var lastHeight = 0;
+new ResizeObserver(() => {
+  const height = Math.ceil($("main").getBoundingClientRect().height) + 8;
+  if (height !== lastHeight) {
+    lastHeight = height;
+    sdk.request("resize", { height }).catch(() => {
+    });
+  }
+}).observe($("main"));
+</script></body>
+</html>

@@ -1,6 +1,6 @@
 const base = new URL(".", self.location.href);
 const hosted = base.pathname !== "/";
-const CACHE = "spider-code-v5:" + base.pathname;
+const CACHE = "spider-code-v6:" + base.pathname;
 const shell = hosted
   ? [
       ".",
@@ -20,7 +20,7 @@ const shell = hosted
       "apps/spider.frontend/export.js",
       "apps/spider.frontend/connection.js",
     ];
-const bundles = ["spider.chat", "spider.calculator", "spider.connections"].map(
+const bundles = ["spider.chat", "spider.calculator", "spider.connections", "spider.ingestion"].map(
   (id) => `apps/${id}/dist/index.html`,
 );
 self.addEventListener("install", (event) =>

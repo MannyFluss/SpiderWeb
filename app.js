@@ -476,6 +476,19 @@ async function dispatch(ctx, msg) {
       if (!apps.find((a) => a.id === ctx.appId)?.services?.includes("ollama"))
         throw Error("Ollama is not declared by this app");
       return api("/api/models");
+    case "codex": {
+      if (!apps.find((a) => a.id === ctx.appId)?.services?.includes("codex"))
+        throw Error("Codex import is not declared by this app");
+      if (!online) throw Error("Reconnect to the core to browse or import Codex conversations");
+      const result = await api("/api/service/codex", {
+        ...args,
+        appId: ctx.appId,
+        sessionId: ctx.sessionId,
+        workspaceId: ctx.workspaceId,
+      });
+      if (args.action === "import") await refresh();
+      return result;
+    }
     case "ollama":
       if (!apps.find((a) => a.id === ctx.appId)?.services?.includes("ollama"))
         throw Error("Ollama is not declared by this app");

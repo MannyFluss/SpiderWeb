@@ -201,7 +201,8 @@ h2 {
 .app-window[data-app="spider.connections"] .app-frame {
   height: 530px;
 }
-.app-window[data-app="spider.connections"] {
+.app-window[data-app="spider.connections"],
+.app-window[data-app="spider.ingestion"] {
   grid-column: 1/-1;
 }
 .notice {
