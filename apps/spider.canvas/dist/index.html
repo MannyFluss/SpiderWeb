@@ -1,0 +1,390 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Context Canvas · Spider</title><style>/* Shared primitives are deliberately small; app views own their layout. */
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #203540;
+  margin: 0;
+  background: #fff;
+  font-size: 14px;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid #b58155;
+  outline-offset: 2px;
+}
+[hidden] {
+  display: none !important;
+}
+button {
+  touch-action: manipulation;
+}
+@media (pointer: coarse) {
+  button {
+    min-height: 42px;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+body { background:#fff; color:#203540; }
+main { padding:24px; max-width:1280px; margin:auto; }
+.app-header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+h1 { margin:0 0 7px; font-size:25px; font-weight:650; letter-spacing:-.6px; }
+h2 { margin:0 0 10px; font-size:19px; font-weight:600; }
+h3 { font-size:15px; }
+p { line-height:1.6; }
+.app-header p { margin:0; color:#617880; max-width:70ch; }
+.actions, .toolbar { display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+button, input, select, textarea { border:1px solid #c8dade; border-radius:7px; background:#fff; padding:9px 12px; }
+button:hover:not(:disabled) { background:#edf5f6; }
+button.primary { background:#2b6673; border-color:#2b6673; color:#fff; }
+button.primary:hover:not(:disabled) { background:#225460; }
+textarea { width:100%; resize:vertical; line-height:1.5; }
+input[type="checkbox"] { width:17px; height:17px; accent-color:#2b6673; }
+label { display:flex; flex-direction:column; gap:6px; font-size:13px; color:#536e77; }
+label.check { flex-direction:row; align-items:center; }
+#status { margin:18px 0; min-height:22px; font-size:13px; color:#536e77; }
+#status.error { color:#a13c3c; }
+.muted { color:#657c84; font-size:13px; }
+.empty { color:#657c84; padding:45px 20px; text-align:center; }
+details { border-top:1px solid #d9e5e8; padding:14px 0; margin-top:16px; }
+summary { cursor:pointer; font-size:13px; width:fit-content; }
+details form { margin-top:15px; }
+.schedule-fields { display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin:12px 0; }
+.schedule-fields input[type="number"] { width:90px; }
+#model { max-width:190px; }
+.source-tools { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:14px 0; }
+.source-tools button { padding:6px 10px; font-size:12px; }
+#source-info { color:#657c84; font-size:12px; }
+.two-pane { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; border-top:1px solid #d9e5e8; padding-top:18px; }
+.item-list { display:flex; flex-direction:column; gap:5px; max-height:510px; overflow-y:auto; }
+.item-list button { text-align:left; border-color:transparent; padding:12px; }
+.item-list button[aria-current="true"] { background:#eaf4f5; border-color:#b8d4da; }
+.item-list strong,.item-list span { display:block; }
+.item-list span { font-size:12px; margin-top:6px; color:#657c84; }
+.prose { white-space:pre-wrap; line-height:1.7; max-width:76ch; overflow-wrap:anywhere; }
+.chips { display:flex; gap:7px; flex-wrap:wrap; }
+.chips button { border-radius:18px; padding:6px 11px; font-size:12px; }
+.divider { border-top:1px solid #d9e5e8; margin:20px 0; }
+@media(max-width:650px) { main{padding:16px}.app-header{flex-direction:column;gap:14px}.two-pane{grid-template-columns:1fr}.item-list{max-height:200px}.schedule-fields{gap:10px}h1{font-size:23px} }
+
+.scene{position:relative;margin:20px 0;border:1px solid #d2e1e6;border-radius:12px;overflow:hidden;background:#f0f7f8;min-height:320px}#canvas{width:100%;height:450px;display:block}#canvas text{font:2px -apple-system,BlinkMacSystemFont,sans-serif;fill:#233d49}#empty{position:absolute;inset:35% 10% auto}#history{max-width:310px}#description{margin-bottom:24px;color:#536e77}
+@media(max-width:650px){#canvas{height:320px}.scene{min-height:280px}}
+</style></head><body><main><header class="app-header"><div><h1>Context Canvas</h1><p>A visual interpretation of what has been occupying your attention.</p></div><div class="actions"><select id="model" aria-label="Model"></select><button id="update" class="primary" data-core>Update now</button></div></header><p id="status" role="status" aria-live="polite"></p><div class="toolbar"><label>Saved canvases<select id="history"><option value="latest">Latest</option></select></label><span class="muted">Last 24h of conversations and code, plus current app state</span></div><section class="scene"><svg id="canvas" viewBox="0 0 100 64" role="img" aria-label="Recent context canvas"></svg><p id="empty" class="empty">Update now to create a canvas from recent context.</p></section><h2 id="scene-title"></h2><p id="description" class="prose"></p><details id="schedule"></details><div class="source-tools"><button id="sources">Inspect context scope</button><span id="source-info"></span></div></main><script type="module">// sdk.js
+var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function connect() {
+  if (window.parent === window) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const ready = (e) => {
+      if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
+        return;
+      window.removeEventListener("message", ready);
+      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set();
+      let state = e.data.state;
+      port.onmessage = ({ data }) => {
+        if (data.type === "state") {
+          state = data.state;
+          for (const fn of listeners) fn(state);
+          return;
+        }
+        const task = pending.get(data.id);
+        if (task) {
+          pending.delete(data.id);
+          data.error ? task.reject(Error(data.error)) : task.resolve(data.result);
+        }
+      };
+      function request(method, args = {}) {
+        return new Promise((resolve2, reject) => {
+          const id = uid();
+          pending.set(id, { resolve: resolve2, reject });
+          port.postMessage({ id, method, args });
+        });
+      }
+      const sdk = {
+        context: e.data.context,
+        get state() {
+          return state;
+        },
+        read: () => state?.data || {},
+        write: (path, value) => request("write", { path, value }),
+        request,
+        onState(fn) {
+          listeners.add(fn);
+          fn(state);
+          return () => listeners.delete(fn);
+        },
+        async mount(appId, container, options = {}) {
+          const desc = await request("mount", { appId, ...options });
+          const frame = document.createElement("iframe");
+          frame.srcdoc = desc.html;
+          frame.title = desc.name;
+          frame.sandbox = "allow-scripts allow-forms";
+          frame.className = "embedded-app";
+          container.append(frame);
+          const channel = new MessageChannel();
+          channel.port1.onmessage = async (ev) => {
+            const msg = ev.data;
+            try {
+              const result = await request("child", {
+                mountId: desc.context.mountId,
+                message: msg
+              });
+              channel.port1.postMessage({ id: msg.id, result });
+            } catch (error) {
+              channel.port1.postMessage({ id: msg.id, error: error.message });
+            }
+          };
+          const ready2 = (event) => {
+            if (event.source !== frame.contentWindow || event.data?.type !== "spider:ready")
+              return;
+            window.removeEventListener("message", ready2);
+            frame.contentWindow.postMessage(
+              { type: "spider:init", context: desc.context, state: desc.state },
+              "*",
+              [channel.port2]
+            );
+          };
+          window.addEventListener("message", ready2);
+          const unsubscribe = sdk.onState(() => {
+            request("childState", { mountId: desc.context.mountId }).then(
+              (s) => channel.port1.postMessage({ type: "state", state: s })
+            ).catch(() => {
+            });
+          });
+          return {
+            frame,
+            close() {
+              unsubscribe();
+              request("unmount", { mountId: desc.context.mountId }).catch(
+                () => {
+                }
+              );
+              frame.remove();
+              channel.port1.close();
+            }
+          };
+        }
+      };
+      resolve(sdk);
+    };
+    window.addEventListener("message", ready);
+    parent.postMessage({ type: "spider:ready" }, "*");
+  });
+}
+
+// app-kit.js
+var $ = (s) => document.querySelector(s);
+function el(tag, text, cls) {
+  const node2 = document.createElement(tag);
+  if (text !== void 0) node2.textContent = text;
+  if (cls) node2.className = cls;
+  return node2;
+}
+var when = (date) => date ? new Date(date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Not yet";
+async function app({ context = false } = {}) {
+  const sdk = await connect();
+  if (!sdk) {
+    document.body.textContent = "Open this app inside Spider.";
+    throw Error("Spider required");
+  }
+  let state, lastSchedule = "", lastStatus = "", modelsLoaded = false;
+  const listeners = /* @__PURE__ */ new Set();
+  const status = (text, error = false) => {
+    if ($("#status")) {
+      $("#status").textContent = text;
+      $("#status").classList.toggle("error", error);
+    }
+  };
+  const request = async (service, args) => {
+    try {
+      return await sdk.request(service, args);
+    } catch (error) {
+      status(error.message, true);
+      throw error;
+    }
+  };
+  async function run(args = {}) {
+    status("Working on the core. You can close this view and return later.");
+    return request("agent", { requestId: uid(), model: $("#model")?.value || sdk.read().model || "gemma4:cloud", ...args });
+  }
+  if (context && $("#schedule")) {
+    $("#schedule").innerHTML = `<summary>Heartbeat schedule</summary><form id="schedule-form"><div class="schedule-fields"><label class="check"><input id="schedule-enabled" type="checkbox"/>Automatic updates</label><label>Every <input id="interval" type="number" min="5" max="1440" value="60"/> minutes</label></div><label class="check"><input id="extra-enabled" type="checkbox"/>Extra runs during work hours</label><div class="schedule-fields"><label>Start<input id="work-start" type="time" value="09:00"/></label><label>End<input id="work-end" type="time" value="17:00"/></label><label>Every (minutes)<input id="work-every" type="number" min="5" max="240" value="15"/></label><label>Days (Mon=1, Sun=7)<input id="work-days" value="1,2,3,4,5"/></label></div><p class="muted">Times follow the core\u2019s local clock. Manual updates are always available.</p><button type="submit">Save schedule</button><span id="schedule-saved" role="status"></span></form>`;
+    $("#schedule-form").onsubmit = async (event) => {
+      event.preventDefault();
+      try {
+        const extra = $("#extra-enabled").checked ? [{ start: $("#work-start").value, end: $("#work-end").value, everyMinutes: Number($("#work-every").value), days: $("#work-days").value.split(",").map(Number) }] : [];
+        await request("context", { action: "schedule", schedule: { enabled: $("#schedule-enabled").checked, intervalMinutes: Number($("#interval").value), extraWindows: extra } });
+        $("#schedule-saved").textContent = " Schedule saved on the core.";
+      } catch {
+      }
+    };
+  }
+  if (context && $("#sources")) {
+    $("#sources").onclick = async () => {
+      try {
+        const result = await request("context", { action: "list" });
+        $("#source-info").textContent = `${result.total} indexed source records. Each update receives at most ${result.limits.contextCharacters.toLocaleString()} context characters and uses one model request.`;
+      } catch {
+      }
+    };
+  }
+  sdk.onState((value) => {
+    state = value;
+    const data = sdk.read();
+    const busy = Object.values(value.jobs || {}).some((job) => job.status === "running");
+    for (const node2 of document.querySelectorAll("[data-core]")) node2.disabled = !value.online || busy;
+    const run2 = data.lastRun;
+    const signature = JSON.stringify([value.online, run2]);
+    if (signature !== lastStatus) {
+      lastStatus = signature;
+      if (!value.online) status("Core offline. Your saved work is still here.");
+      else if (run2?.status === "running") status("Working on the core. This run continues if you close the app.");
+      else if (run2?.status === "error") status(run2.error || "The last run failed. Try Update now.", true);
+      else if (run2?.status === "complete") status(`Updated ${when(run2.at)}${run2.requests ? ` using ${run2.requests} model request${run2.requests === 1 ? "" : "s"}` : ""}.`);
+      else if (run2?.status === "skipped") status(run2.reason || "No changed context to process. Manual updates are available.");
+      else status("Ready.");
+    }
+    if ($("#schedule-enabled") && JSON.stringify(data.schedule) !== lastSchedule && !$("#schedule-form").contains(document.activeElement)) {
+      lastSchedule = JSON.stringify(data.schedule);
+      const sch = data.schedule || { enabled: false, intervalMinutes: 60 };
+      $("#schedule-enabled").checked = !!sch.enabled;
+      $("#interval").value = sch.intervalMinutes;
+      const extra = sch.extraWindows?.[0];
+      $("#extra-enabled").checked = !!extra;
+      if (extra) {
+        $("#work-start").value = extra.start;
+        $("#work-end").value = extra.end;
+        $("#work-every").value = extra.everyMinutes;
+        $("#work-days").value = extra.days.join(",");
+      }
+    }
+    if ($("#model") && value.online && !modelsLoaded) {
+      modelsLoaded = true;
+      sdk.request("models").then(({ models }) => {
+        $("#model").replaceChildren(...models.map((name) => {
+          const option = el("option", name);
+          option.value = name;
+          return option;
+        }));
+        if (models.includes(data.model || "gemma4:cloud")) $("#model").value = data.model || "gemma4:cloud";
+      }).catch((error) => {
+        modelsLoaded = false;
+        status(error.message, true);
+      });
+    }
+    for (const listener of listeners) listener(data, value);
+  });
+  let lastHeight = 0;
+  new ResizeObserver(() => {
+    const height = Math.ceil($("main").getBoundingClientRect().height) + 8;
+    if (height !== lastHeight) {
+      lastHeight = height;
+      sdk.request("resize", { height }).catch(() => {
+      });
+    }
+  }).observe($("main"));
+  return { sdk, request, run, status, get state() {
+    return state;
+  }, onState(fn) {
+    listeners.add(fn);
+    fn(sdk.read(), state);
+  } };
+}
+
+// ../SpiderCanvas/app.js
+var ui = await app({ context: true });
+var saved = {};
+var last = "";
+var ns = "http://www.w3.org/2000/svg";
+var color = (s, fallback) => /^#[0-9a-f]{6}$/i.test(s || "") ? s : fallback;
+function node(tag, attrs) {
+  const e = document.createElementNS(ns, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+function render() {
+  const scene = $("#history").value === "latest" ? saved.scene : saved.history?.[Number($("#history").value)]?.scene;
+  const svg = $("#canvas");
+  svg.replaceChildren();
+  $("#empty").hidden = !!scene;
+  $("#scene-title").textContent = scene?.title || "";
+  $("#description").textContent = scene?.description || "";
+  if (!scene) return;
+  svg.style.background = color(scene.background, "#edf5f8");
+  svg.setAttribute("aria-label", `${scene.title}. ${scene.description}`);
+  const shapes = scene.shapes || [];
+  for (const edge of scene.connections || []) {
+    const a = shapes[edge.from], b = shapes[edge.to];
+    if (a && b) svg.append(node("line", { x1: a.x, y1: a.y * 0.64, x2: b.x, y2: b.y * 0.64, stroke: "#7e9da8", "stroke-width": 0.25, opacity: 0.5 }));
+  }
+  shapes.forEach((s) => {
+    const x = s.x, y = s.y * 0.64, w = Math.max(1, s.w), h = Math.max(1, s.h * 0.64);
+    let e;
+    if (s.kind === "circle") e = node("ellipse", { cx: x, cy: y, rx: w / 2, ry: h / 2 });
+    else if (s.kind === "line") e = node("line", { x1: x, y1: y, x2: Math.min(100, x + w), y2: Math.min(64, y + h), "stroke-width": 0.5, stroke: color(s.color, "#7babb6") });
+    else e = node("rect", { x: Math.max(0, x - w / 2), y: Math.max(0, y - h / 2), width: w, height: h, rx: 2 });
+    if (s.kind !== "line") {
+      e.setAttribute("fill", color(s.color, "#b8d5dc"));
+      e.setAttribute("opacity", ".85");
+    }
+    svg.append(e);
+    if (s.label) {
+      const t = node("text", { x, y: Math.min(62, y + h / 2 + 3), "text-anchor": "middle" });
+      t.textContent = String(s.label).slice(0, 42);
+      svg.append(t);
+    }
+  });
+}
+$("#update").onclick = () => ui.run({ action: "update" }).catch(() => {
+});
+$("#history").onchange = render;
+ui.onState((data) => {
+  saved = data;
+  const key = JSON.stringify(data.history || []);
+  if (key !== last) {
+    last = key;
+    const selected = $("#history").value;
+    $("#history").replaceChildren();
+    const latest = document.createElement("option");
+    latest.value = "latest";
+    latest.textContent = "Latest";
+    $("#history").append(latest);
+    (data.history || []).forEach((entry, i) => {
+      const option = document.createElement("option");
+      option.value = i;
+      option.textContent = `${when(entry.at)} \u2014 ${entry.scene.title}`;
+      $("#history").append(option);
+    });
+    if ([...$("#history").options].some((o) => o.value === selected)) $("#history").value = selected;
+    render();
+  }
+});
+</script></body></html>

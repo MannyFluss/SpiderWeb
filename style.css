@@ -202,7 +202,12 @@ h2 {
   height: 530px;
 }
 .app-window[data-app="spider.connections"],
-.app-window[data-app="spider.ingestion"] {
+.app-window[data-app="spider.ingestion"],
+.app-window[data-app="spider.encyclopedia"],
+.app-window[data-app="spider.canvas"],
+.app-window[data-app="spider.experiments"],
+.app-window[data-app="spider.reader"],
+.app-window[data-app="spider.sandbox"] {
   grid-column: 1/-1;
 }
 .notice {

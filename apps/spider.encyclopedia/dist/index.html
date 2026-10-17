@@ -1,0 +1,512 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Encyclopedia · Spider</title><style>/* Shared primitives are deliberately small; app views own their layout. */
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #203540;
+  margin: 0;
+  background: #fff;
+  font-size: 14px;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid #b58155;
+  outline-offset: 2px;
+}
+[hidden] {
+  display: none !important;
+}
+button {
+  touch-action: manipulation;
+}
+@media (pointer: coarse) {
+  button {
+    min-height: 42px;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+body { background:#fff; color:#203540; }
+main { padding:24px; max-width:1280px; margin:auto; }
+.app-header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+h1 { margin:0 0 7px; font-size:25px; font-weight:650; letter-spacing:-.6px; }
+h2 { margin:0 0 10px; font-size:19px; font-weight:600; }
+h3 { font-size:15px; }
+p { line-height:1.6; }
+.app-header p { margin:0; color:#617880; max-width:70ch; }
+.actions, .toolbar { display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+button, input, select, textarea { border:1px solid #c8dade; border-radius:7px; background:#fff; padding:9px 12px; }
+button:hover:not(:disabled) { background:#edf5f6; }
+button.primary { background:#2b6673; border-color:#2b6673; color:#fff; }
+button.primary:hover:not(:disabled) { background:#225460; }
+textarea { width:100%; resize:vertical; line-height:1.5; }
+input[type="checkbox"] { width:17px; height:17px; accent-color:#2b6673; }
+label { display:flex; flex-direction:column; gap:6px; font-size:13px; color:#536e77; }
+label.check { flex-direction:row; align-items:center; }
+#status { margin:18px 0; min-height:22px; font-size:13px; color:#536e77; }
+#status.error { color:#a13c3c; }
+.muted { color:#657c84; font-size:13px; }
+.empty { color:#657c84; padding:45px 20px; text-align:center; }
+details { border-top:1px solid #d9e5e8; padding:14px 0; margin-top:16px; }
+summary { cursor:pointer; font-size:13px; width:fit-content; }
+details form { margin-top:15px; }
+.schedule-fields { display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin:12px 0; }
+.schedule-fields input[type="number"] { width:90px; }
+#model { max-width:190px; }
+.source-tools { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:14px 0; }
+.source-tools button { padding:6px 10px; font-size:12px; }
+#source-info { color:#657c84; font-size:12px; }
+.two-pane { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; border-top:1px solid #d9e5e8; padding-top:18px; }
+.item-list { display:flex; flex-direction:column; gap:5px; max-height:510px; overflow-y:auto; }
+.item-list button { text-align:left; border-color:transparent; padding:12px; }
+.item-list button[aria-current="true"] { background:#eaf4f5; border-color:#b8d4da; }
+.item-list strong,.item-list span { display:block; }
+.item-list span { font-size:12px; margin-top:6px; color:#657c84; }
+.prose { white-space:pre-wrap; line-height:1.7; max-width:76ch; overflow-wrap:anywhere; }
+.chips { display:flex; gap:7px; flex-wrap:wrap; }
+.chips button { border-radius:18px; padding:6px 11px; font-size:12px; }
+.divider { border-top:1px solid #d9e5e8; margin:20px 0; }
+@media(max-width:650px) { main{padding:16px}.app-header{flex-direction:column;gap:14px}.two-pane{grid-template-columns:1fr}.item-list{max-height:200px}.schedule-fields{gap:10px}h1{font-size:23px} }
+
+.atlas { display:grid; grid-template-columns:minmax(0,1fr) 285px; margin-top:18px; border:1px solid #d3e3e7; border-radius:10px; overflow:hidden; min-height:450px; }
+.map { position:relative; background:#f2f8fa; min-width:0; }
+#graph { display:block; width:100%; height:480px; touch-action:pan-y; }
+#graph line { stroke:#b4d0d8; stroke-width:1.4; }
+#graph circle { fill:#d9ecee; stroke:#79a9b7; stroke-width:1.5; }
+#graph g[aria-pressed="true"] circle { fill:#cce7da; stroke:#4e8a70; stroke-width:2.5; }
+#graph g { cursor:grab; }
+#graph g:focus { outline:none; }
+#graph g:focus circle { stroke:#a77845; stroke-width:3; }
+#graph text { fill:#264a58; font:14px -apple-system,BlinkMacSystemFont,sans-serif; pointer-events:none; paint-order:stroke; stroke:#f2f8fa; stroke-width:3px; }
+.definition { padding:22px; border-left:1px solid #d3e3e7; max-height:520px; overflow-y:auto; }
+.definition p { font-size:14px; }
+.definition h3 { margin-top:24px; }
+.source-link { display:block; text-align:left; border:0; padding:4px 0; color:#356d7b; font-size:12px; overflow-wrap:anywhere; }
+#empty { position:absolute; inset:35% 10% auto; pointer-events:none; }
+#search { width:270px; max-width:100%; }
+dialog { border:1px solid #c8dade; border-radius:10px; width:min(90vw,760px); }
+dialog pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:60vh; overflow:auto; font:12px/1.6 ui-monospace,monospace; }
+@media(max-width:800px){.atlas{grid-template-columns:1fr}.definition{border-left:0;border-top:1px solid #d3e3e7;max-height:none}#graph{height:350px}}
+</style></head><body><main>
+<header class="app-header"><div><h1>Encyclopedia</h1><p>A growing map of the language and ideas in your work.</p></div><div class="actions"><select id="model" aria-label="Model"></select><button id="update" class="primary" data-core>Update now</button></div></header>
+<p id="status" role="status" aria-live="polite"></p><div class="toolbar"><input id="search" type="search" placeholder="Find a term" aria-label="Find a term"/><span id="term-count" class="muted"></span></div>
+<div class="atlas"><section class="map" aria-label="Knowledge map"><svg id="graph" viewBox="0 0 900 540" aria-label="Terms and their relationships"></svg><p id="empty" class="empty">Run an update to build a map from your context.</p></section><section id="detail" class="definition"><h2>Follow an idea.</h2><p class="muted">Select a term to read its definition, explore its connections, or generate more around it.</p></section></div>
+<p id="summary" class="muted"></p><details id="schedule"></details><div class="source-tools"><button id="sources">Inspect context scope</button><span id="source-info"></span></div>
+<dialog id="source-dialog"><button id="close-source">Close</button><h2 id="source-title"></h2><pre id="source-text"></pre></dialog>
+</main><script type="module">// sdk.js
+var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function connect() {
+  if (window.parent === window) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const ready = (e) => {
+      if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
+        return;
+      window.removeEventListener("message", ready);
+      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set();
+      let state = e.data.state;
+      port.onmessage = ({ data }) => {
+        if (data.type === "state") {
+          state = data.state;
+          for (const fn of listeners) fn(state);
+          return;
+        }
+        const task = pending.get(data.id);
+        if (task) {
+          pending.delete(data.id);
+          data.error ? task.reject(Error(data.error)) : task.resolve(data.result);
+        }
+      };
+      function request(method, args = {}) {
+        return new Promise((resolve2, reject) => {
+          const id = uid();
+          pending.set(id, { resolve: resolve2, reject });
+          port.postMessage({ id, method, args });
+        });
+      }
+      const sdk = {
+        context: e.data.context,
+        get state() {
+          return state;
+        },
+        read: () => state?.data || {},
+        write: (path, value) => request("write", { path, value }),
+        request,
+        onState(fn) {
+          listeners.add(fn);
+          fn(state);
+          return () => listeners.delete(fn);
+        },
+        async mount(appId, container, options = {}) {
+          const desc = await request("mount", { appId, ...options });
+          const frame2 = document.createElement("iframe");
+          frame2.srcdoc = desc.html;
+          frame2.title = desc.name;
+          frame2.sandbox = "allow-scripts allow-forms";
+          frame2.className = "embedded-app";
+          container.append(frame2);
+          const channel = new MessageChannel();
+          channel.port1.onmessage = async (ev) => {
+            const msg = ev.data;
+            try {
+              const result = await request("child", {
+                mountId: desc.context.mountId,
+                message: msg
+              });
+              channel.port1.postMessage({ id: msg.id, result });
+            } catch (error) {
+              channel.port1.postMessage({ id: msg.id, error: error.message });
+            }
+          };
+          const ready2 = (event) => {
+            if (event.source !== frame2.contentWindow || event.data?.type !== "spider:ready")
+              return;
+            window.removeEventListener("message", ready2);
+            frame2.contentWindow.postMessage(
+              { type: "spider:init", context: desc.context, state: desc.state },
+              "*",
+              [channel.port2]
+            );
+          };
+          window.addEventListener("message", ready2);
+          const unsubscribe = sdk.onState(() => {
+            request("childState", { mountId: desc.context.mountId }).then(
+              (s) => channel.port1.postMessage({ type: "state", state: s })
+            ).catch(() => {
+            });
+          });
+          return {
+            frame: frame2,
+            close() {
+              unsubscribe();
+              request("unmount", { mountId: desc.context.mountId }).catch(
+                () => {
+                }
+              );
+              frame2.remove();
+              channel.port1.close();
+            }
+          };
+        }
+      };
+      resolve(sdk);
+    };
+    window.addEventListener("message", ready);
+    parent.postMessage({ type: "spider:ready" }, "*");
+  });
+}
+
+// app-kit.js
+var $ = (s) => document.querySelector(s);
+function el(tag, text, cls) {
+  const node = document.createElement(tag);
+  if (text !== void 0) node.textContent = text;
+  if (cls) node.className = cls;
+  return node;
+}
+var when = (date) => date ? new Date(date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Not yet";
+async function app({ context = false } = {}) {
+  const sdk = await connect();
+  if (!sdk) {
+    document.body.textContent = "Open this app inside Spider.";
+    throw Error("Spider required");
+  }
+  let state, lastSchedule = "", lastStatus = "", modelsLoaded = false;
+  const listeners = /* @__PURE__ */ new Set();
+  const status = (text, error = false) => {
+    if ($("#status")) {
+      $("#status").textContent = text;
+      $("#status").classList.toggle("error", error);
+    }
+  };
+  const request = async (service, args) => {
+    try {
+      return await sdk.request(service, args);
+    } catch (error) {
+      status(error.message, true);
+      throw error;
+    }
+  };
+  async function run(args = {}) {
+    status("Working on the core. You can close this view and return later.");
+    return request("agent", { requestId: uid(), model: $("#model")?.value || sdk.read().model || "gemma4:cloud", ...args });
+  }
+  if (context && $("#schedule")) {
+    $("#schedule").innerHTML = `<summary>Heartbeat schedule</summary><form id="schedule-form"><div class="schedule-fields"><label class="check"><input id="schedule-enabled" type="checkbox"/>Automatic updates</label><label>Every <input id="interval" type="number" min="5" max="1440" value="60"/> minutes</label></div><label class="check"><input id="extra-enabled" type="checkbox"/>Extra runs during work hours</label><div class="schedule-fields"><label>Start<input id="work-start" type="time" value="09:00"/></label><label>End<input id="work-end" type="time" value="17:00"/></label><label>Every (minutes)<input id="work-every" type="number" min="5" max="240" value="15"/></label><label>Days (Mon=1, Sun=7)<input id="work-days" value="1,2,3,4,5"/></label></div><p class="muted">Times follow the core\u2019s local clock. Manual updates are always available.</p><button type="submit">Save schedule</button><span id="schedule-saved" role="status"></span></form>`;
+    $("#schedule-form").onsubmit = async (event) => {
+      event.preventDefault();
+      try {
+        const extra = $("#extra-enabled").checked ? [{ start: $("#work-start").value, end: $("#work-end").value, everyMinutes: Number($("#work-every").value), days: $("#work-days").value.split(",").map(Number) }] : [];
+        await request("context", { action: "schedule", schedule: { enabled: $("#schedule-enabled").checked, intervalMinutes: Number($("#interval").value), extraWindows: extra } });
+        $("#schedule-saved").textContent = " Schedule saved on the core.";
+      } catch {
+      }
+    };
+  }
+  if (context && $("#sources")) {
+    $("#sources").onclick = async () => {
+      try {
+        const result = await request("context", { action: "list" });
+        $("#source-info").textContent = `${result.total} indexed source records. Each update receives at most ${result.limits.contextCharacters.toLocaleString()} context characters and uses one model request.`;
+      } catch {
+      }
+    };
+  }
+  sdk.onState((value) => {
+    state = value;
+    const data = sdk.read();
+    const busy = Object.values(value.jobs || {}).some((job) => job.status === "running");
+    for (const node of document.querySelectorAll("[data-core]")) node.disabled = !value.online || busy;
+    const run2 = data.lastRun;
+    const signature = JSON.stringify([value.online, run2]);
+    if (signature !== lastStatus) {
+      lastStatus = signature;
+      if (!value.online) status("Core offline. Your saved work is still here.");
+      else if (run2?.status === "running") status("Working on the core. This run continues if you close the app.");
+      else if (run2?.status === "error") status(run2.error || "The last run failed. Try Update now.", true);
+      else if (run2?.status === "complete") status(`Updated ${when(run2.at)}${run2.requests ? ` using ${run2.requests} model request${run2.requests === 1 ? "" : "s"}` : ""}.`);
+      else if (run2?.status === "skipped") status(run2.reason || "No changed context to process. Manual updates are available.");
+      else status("Ready.");
+    }
+    if ($("#schedule-enabled") && JSON.stringify(data.schedule) !== lastSchedule && !$("#schedule-form").contains(document.activeElement)) {
+      lastSchedule = JSON.stringify(data.schedule);
+      const sch = data.schedule || { enabled: false, intervalMinutes: 60 };
+      $("#schedule-enabled").checked = !!sch.enabled;
+      $("#interval").value = sch.intervalMinutes;
+      const extra = sch.extraWindows?.[0];
+      $("#extra-enabled").checked = !!extra;
+      if (extra) {
+        $("#work-start").value = extra.start;
+        $("#work-end").value = extra.end;
+        $("#work-every").value = extra.everyMinutes;
+        $("#work-days").value = extra.days.join(",");
+      }
+    }
+    if ($("#model") && value.online && !modelsLoaded) {
+      modelsLoaded = true;
+      sdk.request("models").then(({ models }) => {
+        $("#model").replaceChildren(...models.map((name) => {
+          const option = el("option", name);
+          option.value = name;
+          return option;
+        }));
+        if (models.includes(data.model || "gemma4:cloud")) $("#model").value = data.model || "gemma4:cloud";
+      }).catch((error) => {
+        modelsLoaded = false;
+        status(error.message, true);
+      });
+    }
+    for (const listener of listeners) listener(data, value);
+  });
+  let lastHeight = 0;
+  new ResizeObserver(() => {
+    const height = Math.ceil($("main").getBoundingClientRect().height) + 8;
+    if (height !== lastHeight) {
+      lastHeight = height;
+      sdk.request("resize", { height }).catch(() => {
+      });
+    }
+  }).observe($("main"));
+  return { sdk, request, run, status, get state() {
+    return state;
+  }, onState(fn) {
+    listeners.add(fn);
+    fn(sdk.read(), state);
+  } };
+}
+
+// ../SpiderEncyclopedia/app.js
+var ui = await app({ context: true });
+var terms = [];
+var selected = null;
+var key = "";
+var frame;
+var points = /* @__PURE__ */ new Map();
+var ns = "http://www.w3.org/2000/svg";
+function svg(tag, attrs = {}) {
+  const node = document.createElementNS(ns, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  return node;
+}
+$("#update").onclick = () => ui.run({ action: "update" }).catch(() => {
+});
+$("#search").oninput = draw;
+$("#close-source").onclick = () => $("#source-dialog").close();
+function detail(term) {
+  selected = term?.id || null;
+  if (!term) return;
+  const root = $("#detail");
+  root.replaceChildren(el("h2", term.label), el("p", term.definition, "prose"));
+  const explore = el("button", "Explore from this term", "primary");
+  explore.disabled = !ui.state?.online;
+  explore.onclick = () => ui.run({ action: "update", focus: term.label }).catch(() => {
+  });
+  root.append(explore);
+  root.append(el("h3", "Related ideas"));
+  const chips = el("div", void 0, "chips");
+  for (const label of term.related || []) {
+    const button = el("button", label);
+    button.onclick = () => {
+      const match = terms.find((t) => t.label.toLowerCase() === label.toLowerCase());
+      if (match) {
+        detail(match);
+        draw();
+      } else ui.run({ action: "update", focus: label }).catch(() => {
+      });
+    };
+    chips.append(button);
+  }
+  root.append(chips);
+  if (term.sources?.length) {
+    root.append(el("h3", "Source material"));
+    for (const source of new Map(term.sources.map((source2) => [source2.id, source2])).values()) {
+      const button = el("button", source.label, "source-link");
+      button.onclick = async () => {
+        try {
+          const value = await ui.request("context", { action: "read", sourceId: source.id });
+          $("#source-title").textContent = value.label + (value.hash !== source.hash ? " (changed since this definition)" : "");
+          $("#source-text").textContent = value.text;
+          $("#source-dialog").showModal();
+        } catch {
+        }
+      };
+      root.append(button);
+    }
+  }
+}
+function draw() {
+  cancelAnimationFrame(frame);
+  const query = $("#search").value.toLowerCase();
+  const visible = terms.filter((t) => !query || `${t.label} ${t.definition}`.toLowerCase().includes(query)).slice(0, 90);
+  $("#term-count").textContent = `${terms.length} terms${visible.length < terms.length ? ` \xB7 showing ${visible.length}` : ""}`;
+  $("#empty").hidden = !!visible.length;
+  const graph = $("#graph");
+  graph.replaceChildren();
+  const ids = new Map(visible.map((t) => [t.label.toLowerCase(), t.id]));
+  visible.forEach((term, i) => {
+    if (!points.has(term.id)) {
+      const angle = i * 2.39996;
+      const r = 55 + 30 * Math.sqrt(i);
+      points.set(term.id, { x: 450 + Math.cos(angle) * r, y: 270 + Math.sin(angle) * r });
+    }
+  });
+  const links = [];
+  for (const term of visible) for (const related of term.related || []) {
+    const other = ids.get(related.toLowerCase());
+    if (other && other !== term.id) {
+      const line = svg("line");
+      graph.append(line);
+      links.push({ a: term.id, b: other, line });
+    }
+  }
+  const nodes = visible.map((term) => {
+    const g = svg("g", { role: "button", tabindex: 0, "aria-label": term.label, "aria-pressed": String(term.id === selected) });
+    const circle = svg("circle", { r: 19 + Math.min(term.related?.length || 0, 8) * 1.5 });
+    const text = svg("text", { "text-anchor": "middle", y: 42 });
+    text.textContent = term.label.length > 25 ? term.label.slice(0, 24) + "\u2026" : term.label;
+    g.append(circle, text);
+    graph.append(g);
+    const choose = () => {
+      detail(term);
+      for (const node of graph.querySelectorAll("g")) node.setAttribute("aria-pressed", String(node === g));
+    };
+    g.onclick = choose;
+    g.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        choose();
+      }
+    };
+    let dragging = false;
+    g.onpointerdown = (e) => {
+      if (e.pointerType === "touch") return;
+      dragging = true;
+      g.setPointerCapture(e.pointerId);
+    };
+    g.onpointermove = (e) => {
+      if (!dragging) return;
+      const p = graph.createSVGPoint();
+      p.x = e.clientX;
+      p.y = e.clientY;
+      const local = p.matrixTransform(graph.getScreenCTM().inverse());
+      const point = points.get(term.id);
+      point.x = Math.max(35, Math.min(865, local.x));
+      point.y = Math.max(35, Math.min(485, local.y));
+      paint();
+    };
+    g.onpointerup = () => dragging = false;
+    return { term, g };
+  });
+  function paint() {
+    for (const { term, g } of nodes) {
+      const p = points.get(term.id);
+      g.setAttribute("transform", `translate(${p.x},${p.y})`);
+    }
+    for (const { a, b, line } of links) {
+      const p = points.get(a), q = points.get(b);
+      for (const [k, v] of Object.entries({ x1: p.x, y1: p.y, x2: q.x, y2: q.y })) line.setAttribute(k, v);
+    }
+  }
+  let ticks = 0;
+  function settle() {
+    for (let i = 0; i < nodes.length; i++) {
+      const a = points.get(nodes[i].term.id);
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = points.get(nodes[j].term.id);
+        let dx = a.x - b.x, dy = a.y - b.y, d = Math.max(15, Math.hypot(dx, dy));
+        const force = Math.min(2, 220 / (d * d));
+        a.x += dx / d * force;
+        b.x -= dx / d * force;
+        a.y += dy / d * force;
+        b.y -= dy / d * force;
+      }
+      a.x += (450 - a.x) * 2e-3;
+      a.y += (260 - a.y) * 2e-3;
+      a.x = Math.max(40, Math.min(860, a.x));
+      a.y = Math.max(35, Math.min(475, a.y));
+    }
+    paint();
+    if (++ticks < 80) frame = requestAnimationFrame(settle);
+  }
+  paint();
+  settle();
+}
+ui.onState((data) => {
+  const next = JSON.stringify(data.terms || {});
+  if (next !== key) {
+    key = next;
+    terms = Object.values(data.terms || {}).sort((a, b) => a.label.localeCompare(b.label));
+    draw();
+    const active = terms.find((t) => t.id === selected);
+    if (active) detail(active);
+  }
+  $("#summary").textContent = data.summary || "";
+});
+</script></body></html>

@@ -356,6 +356,17 @@ function showWorkspace() {
   if (!snapshot) return;
   $("#pair-screen").hidden = true;
   $("#workspace").hidden = false;
+  const launcher = $(".app-launcher");
+  const launcherKey = apps.filter((app) => !app.rootOnly).map((app) => app.id + app.name).join();
+  if (launcher.dataset.registry !== launcherKey) {
+    launcher.dataset.registry = launcherKey;
+    launcher.replaceChildren(...apps.filter((app) => !app.rootOnly).map((app) => {
+      const button = document.createElement("button");
+      button.dataset.app = app.id;
+      button.textContent = app.name;
+      return button;
+    }));
+  }
   $("#client-label").textContent =
     projected("spider.connections", "directory").names?.[clientId] ||
     snapshot.devices?.[clientId]?.label ||
@@ -402,7 +413,7 @@ function makeContext(
     mountId,
     workspaceId: snapshot.id,
     appId,
-    sessionId: sessionId || uid(),
+    sessionId: sessionId || app.defaultSession || uid(),
     ancestors: [...ancestors, appId],
     parentId,
   };
@@ -487,6 +498,20 @@ async function dispatch(ctx, msg) {
         workspaceId: ctx.workspaceId,
       });
       if (args.action === "import") await refresh();
+      return result;
+    }
+    case "agent":
+    case "context":
+    case "reader": {
+      if (!apps.find((a) => a.id === ctx.appId)?.services?.includes(method))
+        throw Error(`${method} is not declared by this app`);
+      if (!online) throw Error("Reconnect to the core to use this action");
+      await flush();
+      if (ctx.workspaceId !== snapshot?.id) throw Error("Workspace changed before submission");
+      if (local.pending.some((op) => op.appId === ctx.appId && op.sessionId === ctx.sessionId))
+        throw Error("Wait for this app to finish syncing");
+      const result = await api(`/api/service/${method}`, { ...args, appId:ctx.appId, sessionId:ctx.sessionId, workspaceId:ctx.workspaceId });
+      await refresh();
       return result;
     }
     case "ollama":
@@ -816,9 +841,11 @@ $("#pair-form").onsubmit = (e) => {
   e.preventDefault();
   pairBrowser($("#pair-code").value.trim());
 };
-for (const button of document.querySelectorAll("[data-app]"))
-  button.onclick = () => {
-    const v = { id: uid(), appId: button.dataset.app, sessionId: uid() };
+document.querySelector(".app-launcher").onclick = (event) => {
+    const button = event.target.closest("button[data-app]");
+    if (!button) return;
+    const manifest = apps.find((app) => app.id === button.dataset.app);
+    const v = { id: uid(), appId: button.dataset.app, sessionId: manifest?.defaultSession || uid() };
     local.views.push(v);
     renderView(v);
     saveLayout();
