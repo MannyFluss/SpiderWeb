@@ -1,3 +1,4 @@
+import {downloadSpec,p5ReferenceUrl} from "./download.js";
 import { portableView } from "./export.js";
 import { uid } from "./sdk.js";
 import {
@@ -482,6 +483,16 @@ async function dispatch(ctx, msg) {
             ),
           ) + "px";
       return { ok: true };
+    }
+    case "download": {
+      if(!apps.find(app=>app.id===ctx.appId)?.services?.includes("download"))throw Error("Downloads are not declared by this app");
+      const {blob,filename}=downloadSpec(args),url=URL.createObjectURL(blob),link=document.createElement("a");
+      link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+      return{filename,bytes:blob.size};
+    }
+    case "p5-reference": {
+      if(!apps.find(app=>app.id===ctx.appId)?.services?.includes("p5-reference"))throw Error("p5 references are not declared by this app");
+      window.open(p5ReferenceUrl(args.url),"_blank","noopener,noreferrer");return{requested:true};
     }
     case "models":
       if (!apps.find((a) => a.id === ctx.appId)?.services?.includes("ollama"))
