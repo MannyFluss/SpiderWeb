@@ -121,10 +121,30 @@ dialog pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:60vh; over
 <div class="atlas"><section class="map" aria-label="Knowledge map"><svg id="graph" viewBox="0 0 900 540" aria-label="Terms and their relationships"></svg><p id="empty" class="empty">Run an update to build a map from your context.</p></section><section id="detail" class="definition"><h2>Follow an idea.</h2><p class="muted">Select a term to read its definition, explore its connections, or generate more around it.</p></section></div>
 <p id="summary" class="muted"></p><details id="schedule"></details><div class="source-tools"><button id="sources">Inspect context scope</button><span id="source-info"></span></div>
 <dialog id="source-dialog"><button id="close-source">Close</button><h2 id="source-title"></h2><pre id="source-text"></pre></dialog>
-</main><script type="module">// sdk.js
+</main><script type="module">// gestures.js
+var installed = /* @__PURE__ */ new WeakSet();
+function isolatePageZoom(doc = document) {
+  if (installed.has(doc)) return;
+  installed.add(doc);
+  const view = doc.defaultView;
+  const action = view.getComputedStyle(doc.documentElement).touchAction;
+  if (action === "auto" || action === "manipulation") doc.documentElement.style.touchAction = "pan-x pan-y";
+  else if (action.includes("pinch-zoom")) doc.documentElement.style.touchAction = action.replace(/\bpinch-zoom\b/g, "").trim() || "none";
+  const preventNativeZoom = (event) => {
+    if (event.cancelable) event.preventDefault();
+  };
+  view.addEventListener("wheel", (event) => {
+    if (event.ctrlKey || event.metaKey) preventNativeZoom(event);
+  }, { passive: false });
+  for (const type of ["gesturestart", "gesturechange", "gestureend"])
+    view.addEventListener(type, preventNativeZoom, { passive: false });
+}
+
+// sdk.js
 var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 function connect() {
   if (window.parent === window) return Promise.resolve(null);
+  isolatePageZoom(document);
   return new Promise((resolve) => {
     const ready = (e) => {
       if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])

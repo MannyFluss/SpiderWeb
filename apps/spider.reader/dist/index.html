@@ -120,10 +120,30 @@ var __privateWrapper = (obj, member, setter, getter) => ({
   }
 });
 
+// gestures.js
+var installed = /* @__PURE__ */ new WeakSet();
+function isolatePageZoom(doc2 = document) {
+  if (installed.has(doc2)) return;
+  installed.add(doc2);
+  const view = doc2.defaultView;
+  const action = view.getComputedStyle(doc2.documentElement).touchAction;
+  if (action === "auto" || action === "manipulation") doc2.documentElement.style.touchAction = "pan-x pan-y";
+  else if (action.includes("pinch-zoom")) doc2.documentElement.style.touchAction = action.replace(/\bpinch-zoom\b/g, "").trim() || "none";
+  const preventNativeZoom = (event) => {
+    if (event.cancelable) event.preventDefault();
+  };
+  view.addEventListener("wheel", (event) => {
+    if (event.ctrlKey || event.metaKey) preventNativeZoom(event);
+  }, { passive: false });
+  for (const type of ["gesturestart", "gesturechange", "gestureend"])
+    view.addEventListener(type, preventNativeZoom, { passive: false });
+}
+
 // sdk.js
 var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 function connect() {
   if (window.parent === window) return Promise.resolve(null);
+  isolatePageZoom(document);
   return new Promise((resolve) => {
     const ready = (e3) => {
       if (e3.source !== parent || e3.data?.type !== "spider:init" || !e3.ports[0])

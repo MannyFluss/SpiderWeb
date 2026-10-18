@@ -1,8 +1,10 @@
+import {isolatePageZoom} from './gestures.js';
 export const uid = () =>
   globalThis.crypto?.randomUUID?.() ||
   `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 export function connect() {
   if (window.parent === window) return Promise.resolve(null);
+  isolatePageZoom(document);
   return new Promise((resolve) => {
     const ready = (e) => {
       if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])

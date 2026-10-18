@@ -1,3 +1,4 @@
+import {isolatePageZoom} from './gestures.js';
 // Window geometry is stored with each view; moving a window never remounts its app.
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const number = (value, fallback) => Number.isFinite(value) ? value : fallback;
@@ -20,14 +21,15 @@ function worldRect(rect) {
   return {x:clamp(number(rect?.x,0),-LIMIT,LIMIT),y:clamp(number(rect?.y,0),-LIMIT,LIMIT),width:clamp(number(rect?.width,720),320,4000),height:clamp(number(rect?.height,580),240,4000)};
 }
 export function createDesktop({container, onChange, onCamera, onFocus, onState}) {
+  isolatePageZoom(container.ownerDocument);
   const windows = new Map();
-  let active = null, fullscreen = null, order = 0, gesture = null, camera=normalizeCamera(), navigation=null, panMode=false, saveTimer, cameraDirty=false, leaving=false;
+  let active = null, fullscreen = null, order = 0, gesture = null, camera=normalizeCamera(), navigation=null, panMode=false, saveTimer, cameraDirty=false, leaving=false, legacyZoom=null;
   const contacts = new Map();
   const bounds = () => ({width: Math.max(1, container.clientWidth), height: Math.max(1, container.clientHeight)});
   const background=document.createElement('div'); background.className='desktop-background'; background.setAttribute('aria-hidden','true');
   const world=document.createElement('div'); world.className='desktop-world';
   const tools=document.createElement('nav'); tools.className='desktop-tools'; tools.setAttribute('aria-label','Canvas navigation');
-  tools.innerHTML='<button type="button" data-pan aria-pressed="false" title="Drag anywhere to move the canvas">Pan</button><select aria-label="Go to window"><option value="">Go to…</option></select><button type="button" data-zoom-out aria-label="Zoom canvas out">−</button><button type="button" data-actual aria-label="Canvas at 100 percent">100%</button><button type="button" data-zoom-in aria-label="Zoom canvas in">+</button><button type="button" data-fit>Fit all</button>';
+  tools.innerHTML='<button type="button" data-pan aria-pressed="false" title="Drag empty space or window bars to move the canvas">Pan</button><select aria-label="Go to window"><option value="">Go to…</option></select><button type="button" data-zoom-out aria-label="Zoom canvas out">−</button><button type="button" data-actual aria-label="Canvas at 100 percent">100%</button><button type="button" data-zoom-in aria-label="Zoom canvas in">+</button><button type="button" data-fit>Fit all</button>';
   const chooser=tools.querySelector('select'), zoomLabel=tools.querySelector('[data-actual]'), panButton=tools.querySelector('[data-pan]');
   container.append(background,world,tools);
   container.tabIndex=0;
@@ -176,12 +178,16 @@ export function createDesktop({container, onChange, onCamera, onFocus, onState})
     if(moved)saveCamera();
   }
   container.addEventListener('pointerdown',event=>{
+    if(gesture && event.pointerType==='touch' && event.pointerId!==gesture.pointerId){
+      gesture.entry.view.rect=gesture.rect;paint(gesture.entry);finishGesture();event.preventDefault();return;
+    }
     if(fullscreen || gesture || event.target.closest('.desktop-tools') || ![0,1].includes(event.button))return;
     if(!panMode && event.button!==1 && event.target.closest('.app-window'))return;
     event.preventDefault();event.stopPropagation();container.focus({preventScroll:true});
     const point=localPoint(event);contacts.set(event.pointerId,point);container.setPointerCapture(event.pointerId);
-    if(contacts.size===1)navigation={kind:'pan',start:point,camera:{...camera},moved:false};
+    if(contacts.size===1)navigation={kind:'pan',start:point,camera:{...camera},moved:false,zoomable:!event.target.closest('.app-window')};
     else if(contacts.size===2){
+      if(!navigation.zoomable){camera={...navigation.camera};paintCamera();finishNavigation();return;}
       const [a,b]=contacts.values();navigation={kind:'pinch',start:{x:(a.x+b.x)/2,y:(a.y+b.y)/2},distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),camera:{...camera},moved:false};
     }
     container.classList.add('is-navigating');
@@ -199,13 +205,27 @@ export function createDesktop({container, onChange, onCamera, onFocus, onState})
   for(const type of ['pointerup','pointercancel','lostpointercapture'])container.addEventListener(type,finishNavigation);
   container.addEventListener('wheel',event=>{
     if(fullscreen || gesture || navigation || event.defaultPrevented || event.target.closest('.desktop-tools'))return;
-    if(!panMode && !event.ctrlKey && !event.metaKey && event.target.closest('.app-window'))return;
+    if(event.target.closest('.app-window'))return;
     event.preventDefault();
     const factor=event.deltaMode===1?16:event.deltaMode===2?bounds().height:1;
     if(event.ctrlKey || event.metaKey)camera=zoomAt(camera,localPoint(event),camera.zoom*Math.exp(-clamp(event.deltaY*factor,-500,500)*.002));
     else camera=normalizeCamera({...camera,x:camera.x-event.deltaX*factor,y:camera.y-event.deltaY*factor});
     cameraDirty=true;paintCamera();clearTimeout(saveTimer);saveTimer=setTimeout(saveCamera,180);
   },{passive:false});
+  // Safari trackpads can report GestureEvent instead of Ctrl+wheel. Touch
+  // pointers already own touchscreen pinches; never handle one gesture twice.
+  container.addEventListener('gesturestart',event=>{
+    if(fullscreen || gesture || navigation || event.target.closest('.app-window,.desktop-tools'))return;
+    const area=bounds(),point=Number.isFinite(event.clientX)?localPoint(event):{x:area.width/2,y:area.height/2};
+    legacyZoom={camera:{...camera},point,scale:Number(event.scale)||1};event.preventDefault();
+  },{passive:false});
+  container.addEventListener('gesturechange',event=>{
+    if(!legacyZoom || fullscreen || gesture || navigation)return;
+    event.preventDefault();camera=zoomAt(legacyZoom.camera,legacyZoom.point,legacyZoom.camera.zoom*(Number(event.scale)||1)/legacyZoom.scale);
+    cameraDirty=true;paintCamera();
+  },{passive:false});
+  function finishLegacyZoom(){if(legacyZoom){legacyZoom=null;saveCamera();}}
+  container.addEventListener('gestureend',finishLegacyZoom);
   container.addEventListener('keydown',event=>{
     if(fullscreen || event.target!==container || event.ctrlKey || event.metaKey || event.altKey)return;
     const step=event.shiftKey?160:48;
@@ -216,8 +236,8 @@ export function createDesktop({container, onChange, onCamera, onFocus, onState})
     }
   });
   container.addEventListener('scroll',()=>{container.scrollTop=0;container.scrollLeft=0;},{passive:true});
-  window.addEventListener('blur',()=>{finishGesture();finishNavigation();});
-  window.addEventListener('pagehide',()=>{leaving=true;finishGesture();finishNavigation();saveCamera();});
+  window.addEventListener('blur',()=>{finishGesture();finishNavigation();finishLegacyZoom();});
+  window.addEventListener('pagehide',()=>{leaving=true;finishGesture();finishNavigation();finishLegacyZoom();saveCamera();});
   window.addEventListener('pageshow',()=>{leaving=false;});
   const observer = new ResizeObserver(paintAll);
   observer.observe(container);

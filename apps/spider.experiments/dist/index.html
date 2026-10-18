@@ -97,10 +97,30 @@ details form { margin-top:15px; }
 @media(max-width:650px) { main{padding:16px}.app-header{flex-direction:column;gap:14px}.two-pane{grid-template-columns:1fr}.item-list{max-height:200px}.schedule-fields{gap:10px}h1{font-size:23px} }
 
 #new-experiment{border-top:1px solid #d9e5e8;padding:18px 0;margin-top:12px}#new-experiment .actions{margin-top:10px}#detail{min-width:0}#detail h3{margin:23px 0 8px}.experiment-state{font-size:12px;color:#52747d;margin:8px 0 18px}.observation{border-left:3px solid #a8cbd4;padding:0 0 0 13px;margin:14px 0}.observation time{font-size:12px;color:#657c84}#observation-form{margin-top:18px}.question{padding:8px 0;color:#536e77}.review{background:#f0f7f8;padding:18px;border-radius:8px;margin-top:20px}.review p{margin-bottom:0}.lifecycle{margin:16px 0}
-</style></head><body><main><header class="app-header"><div><h1>Experiment Lab</h1><p>Turn a hunch into a question you can test over time.</p></div><select id="model" aria-label="Model"></select></header><p id="status" role="status" aria-live="polite"></p><form id="new-experiment"><label>What would you like to investigate?<textarea id="prompt" rows="2" placeholder="Does a short walk before studying help me focus?"></textarea></label><div class="actions"><button class="primary" data-core>Plan experiment</button><button id="suggest" type="button" data-core>Suggest from context</button></div></form><div class="two-pane"><aside><h2>Experiments</h2><div id="experiments" class="item-list"></div></aside><section id="detail"><p class="empty">Create a plan or ask Hermes to suggest an experiment from your context.</p></section></div><div class="source-tools"><button id="sources">Inspect context scope</button><span id="source-info"></span></div></main><script type="module">// sdk.js
+</style></head><body><main><header class="app-header"><div><h1>Experiment Lab</h1><p>Turn a hunch into a question you can test over time.</p></div><select id="model" aria-label="Model"></select></header><p id="status" role="status" aria-live="polite"></p><form id="new-experiment"><label>What would you like to investigate?<textarea id="prompt" rows="2" placeholder="Does a short walk before studying help me focus?"></textarea></label><div class="actions"><button class="primary" data-core>Plan experiment</button><button id="suggest" type="button" data-core>Suggest from context</button></div></form><div class="two-pane"><aside><h2>Experiments</h2><div id="experiments" class="item-list"></div></aside><section id="detail"><p class="empty">Create a plan or ask Hermes to suggest an experiment from your context.</p></section></div><div class="source-tools"><button id="sources">Inspect context scope</button><span id="source-info"></span></div></main><script type="module">// gestures.js
+var installed = /* @__PURE__ */ new WeakSet();
+function isolatePageZoom(doc = document) {
+  if (installed.has(doc)) return;
+  installed.add(doc);
+  const view = doc.defaultView;
+  const action = view.getComputedStyle(doc.documentElement).touchAction;
+  if (action === "auto" || action === "manipulation") doc.documentElement.style.touchAction = "pan-x pan-y";
+  else if (action.includes("pinch-zoom")) doc.documentElement.style.touchAction = action.replace(/\bpinch-zoom\b/g, "").trim() || "none";
+  const preventNativeZoom = (event) => {
+    if (event.cancelable) event.preventDefault();
+  };
+  view.addEventListener("wheel", (event) => {
+    if (event.ctrlKey || event.metaKey) preventNativeZoom(event);
+  }, { passive: false });
+  for (const type of ["gesturestart", "gesturechange", "gestureend"])
+    view.addEventListener(type, preventNativeZoom, { passive: false });
+}
+
+// sdk.js
 var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 function connect() {
   if (window.parent === window) return Promise.resolve(null);
+  isolatePageZoom(document);
   return new Promise((resolve) => {
     const ready = (e) => {
       if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])

@@ -21,10 +21,30 @@
 </form></section>
 <aside class="history-panel"><div class="history-heading"><h2>Change history</h2><span id="history-count">0</span></div><p class="hint">Every request, from first attempt to merge.</p><div id="history-list"></div><div id="empty-history"><div class="empty-symbol" aria-hidden="true">⌘</div><h3>Your app’s story starts here</h3><p>Send your first request. Its plan, checks, and outcome will appear here while the builder works.</p></div><section id="job-detail" hidden aria-live="polite"></section></aside>
 </div><div class="scope-note"><span aria-hidden="true">◇</span> Built for Spider apps <span class="divider">/</span> Jobs continue on the Mac when you close this view</div>
-</main><script type="module">// sdk.js
+</main><script type="module">// gestures.js
+var installed = /* @__PURE__ */ new WeakSet();
+function isolatePageZoom(doc = document) {
+  if (installed.has(doc)) return;
+  installed.add(doc);
+  const view = doc.defaultView;
+  const action = view.getComputedStyle(doc.documentElement).touchAction;
+  if (action === "auto" || action === "manipulation") doc.documentElement.style.touchAction = "pan-x pan-y";
+  else if (action.includes("pinch-zoom")) doc.documentElement.style.touchAction = action.replace(/\bpinch-zoom\b/g, "").trim() || "none";
+  const preventNativeZoom = (event) => {
+    if (event.cancelable) event.preventDefault();
+  };
+  view.addEventListener("wheel", (event) => {
+    if (event.ctrlKey || event.metaKey) preventNativeZoom(event);
+  }, { passive: false });
+  for (const type of ["gesturestart", "gesturechange", "gestureend"])
+    view.addEventListener(type, preventNativeZoom, { passive: false });
+}
+
+// sdk.js
 var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 function connect() {
   if (window.parent === window) return Promise.resolve(null);
+  isolatePageZoom(document);
   return new Promise((resolve) => {
     const ready = (e) => {
       if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])

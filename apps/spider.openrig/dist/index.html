@@ -320,10 +320,30 @@ nav button[aria-pressed=true]:hover:not(:disabled){background:#254f80;color:#fff
 <section id="terminal-panel"><div class="terminal-heading"><div><h2>OpenRig terminal</h2><p class="hint">Use OpenRig’s dashboard or type commands on the Mac.</p></div><span id="terminal-state" role="status">Disconnected</span></div><div class="terminal-actions"><label>Interface<select id="terminal-view"><option value="dashboard">OpenRig dashboard</option><option value="cli">CLI prompt</option></select></label><button id="terminal-connect" class="primary">Connect terminal</button><button id="terminal-disconnect" disabled>Disconnect</button></div><div class="terminal-scroll"><div id="terminal-screen" aria-label="OpenRig interactive terminal"></div></div><div id="terminal-keys" class="terminal-keys"><button data-key="Escape">Esc</button><button data-key="Up" aria-label="Arrow up">↑</button><button data-key="Down" aria-label="Arrow down">↓</button><button data-key="Left" aria-label="Arrow left">←</button><button data-key="Right" aria-label="Arrow right">→</button><button data-key="Enter">Enter</button><button data-key="C-c">Ctrl+C</button><button id="terminal-fullscreen">Full screen</button></div><form id="terminal-command" hidden><label for="cli-command">Command on your Mac</label><div class="search"><input id="cli-command" placeholder="rig --help" autocomplete="off" spellcheck="false" maxlength="12000"><button class="primary">Run command</button></div></form><p class="hint">Keyboard input goes directly to this Mac terminal. Closing this view leaves the tmux session running. On a small screen, scroll sideways to see all 90 columns.</p></section><section class="toolbar" hidden><div><h2 id="section-title">Managed teams</h2><p id="section-help">Inspect agents, read their output, and send work.</p></div><button id="refresh">Refresh</button></section>
 <div class="workspace" hidden><aside aria-label="Sessions"><form id="search-form" hidden><label for="search">Find a Codex conversation</label><div class="search"><input id="search" type="search" maxlength="200" placeholder="Title or conversation ID"><button>Search</button></div></form><div id="session-list"></div><button id="more" hidden>Load more conversations</button></aside><section id="detail" aria-live="polite"><div class="empty"><div class="network" aria-hidden="true">⌘</div><h2>Your agents, in one place</h2><p>Start OpenRig to find terminal sessions, or browse Codex history from this Mac.</p></div></section></div>
 <footer><span id="last-updated">Waiting for the Mac</span><span>OpenRig 0.6.11 · Apache 2.0</span></footer>
-</main><script type="module">// sdk.js
+</main><script type="module">// gestures.js
+var installed = /* @__PURE__ */ new WeakSet();
+function isolatePageZoom(doc = document) {
+  if (installed.has(doc)) return;
+  installed.add(doc);
+  const view = doc.defaultView;
+  const action = view.getComputedStyle(doc.documentElement).touchAction;
+  if (action === "auto" || action === "manipulation") doc.documentElement.style.touchAction = "pan-x pan-y";
+  else if (action.includes("pinch-zoom")) doc.documentElement.style.touchAction = action.replace(/\bpinch-zoom\b/g, "").trim() || "none";
+  const preventNativeZoom = (event) => {
+    if (event.cancelable) event.preventDefault();
+  };
+  view.addEventListener("wheel", (event) => {
+    if (event.ctrlKey || event.metaKey) preventNativeZoom(event);
+  }, { passive: false });
+  for (const type of ["gesturestart", "gesturechange", "gestureend"])
+    view.addEventListener(type, preventNativeZoom, { passive: false });
+}
+
+// sdk.js
 var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 function connect() {
   if (window.parent === window) return Promise.resolve(null);
+  isolatePageZoom(document);
   return new Promise((resolve) => {
     const ready = (e) => {
       if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])

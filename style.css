@@ -165,7 +165,7 @@ h2 {
 .desktop-tools [data-actual] { width:55px; font-variant-numeric:tabular-nums; }
 .desktop-tools [aria-pressed=true] { background:#295b72; color:white; }
 .desktop-tools button:hover { background:#dbe6ea; }
-.pan-mode .app-frame,.is-navigating .app-frame { pointer-events:none; }
+.is-navigating .app-frame { pointer-events:none; }
 .pan-mode .app-window { touch-action:none; cursor:grab; }
 .is-navigating,.is-navigating * { cursor:grabbing !important; user-select:none !important; }
 .mounts:focus-visible { outline:3px solid #ba824e; outline-offset:-3px; }
