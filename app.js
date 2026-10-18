@@ -541,6 +541,7 @@ async function dispatch(ctx, msg, transferPort) {
       return result;
     }
     case "builder":
+    case "github-readme":
     case "openrig":
     case "agent":
     case "context":

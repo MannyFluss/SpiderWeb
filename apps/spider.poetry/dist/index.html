@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Poetry</title>
+  
+<style>:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#26354b;background:#f9fafc;font-synthesis:none;color-scheme:light}
+*{box-sizing:border-box}body{margin:0}main{max-width:880px;margin:0 auto;padding:28px 30px 20px}header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:30px}h1{font:normal 30px/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.6px;margin:0 0 8px}a{font-size:12px;color:#62508c;text-decoration:none;overflow-wrap:anywhere}a:hover{text-decoration:underline}button{font:500 13px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:40px;padding:9px 15px;border:1px solid #dce1eb;border-radius:6px;background:white;color:#26354b;cursor:pointer;flex-shrink:0}button:hover:not(:disabled){background:#eef0f6}button:disabled{opacity:.5;cursor:default}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #8d7eae;outline-offset:3px}.file{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;font-size:12px;color:#6d7585}.file label{color:#26354b;font-weight:600}textarea{display:block;width:100%;min-height:370px;height:56vh;max-height:1000px;resize:vertical;padding:22px 24px;background:white;border:1px solid #dce1eb;border-radius:6px;color:#26354b;font:18px/1.65 Georgia,"Times New Roman",serif;tab-size:4;white-space:pre-wrap}textarea:focus{outline:2px solid #8d7eae;outline-offset:1px}textarea:disabled{background:#f0f2f7}footer{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:18px}footer p{margin:0;color:#6d7585;font-size:13px;line-height:1.5}.primary{color:#fff;background:#62508c;border-color:#62508c;padding:11px 20px}.primary:hover:not(:disabled){background:#514077}.hint{font-size:11px;color:#6d7585;line-height:1.5;margin:14px 0 0}.error{color:#a13147!important}aside{padding:14px 16px;background:#f0edf6;border-radius:6px;font-size:13px;margin-top:14px}aside p{margin:0 0 12px}summary{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:16px/1.6 Georgia,serif;max-height:300px;overflow:auto}aside button{margin-top:14px}.restore{font-size:11px;border:0;padding:4px 0;min-height:30px;background:transparent;color:#62508c}[hidden]{display:none!important}@media(max-width:540px){main{padding:20px 16px 16px}header{margin-bottom:24px;align-items:flex-start}h1{font-size:25px}a{font-size:11px}textarea{padding:16px;font-size:17px;min-height:330px}footer{align-items:flex-start;gap:12px}footer p{font-size:12px}.primary{padding:11px 14px}}
+</style></head>
+<body>
+  <main>
+    <header>
+      <div><h1>Poems for onlookers</h1><a href="https://github.com/MannyFluss/PoemsForOnlookers" target="_blank" rel="noopener noreferrer">MannyFluss / PoemsForOnlookers</a></div>
+      <button id="reload" type="button" disabled>Reload</button>
+    </header>
+    <div class="file"><label for="readme">README.md</label><span id="draft-state">Loading…</span></div>
+    <textarea id="readme" aria-label="README.md" spellcheck="true" autocapitalize="sentences" placeholder="Loading your poetry…" disabled></textarea>
+    <aside id="conflict" hidden>
+      <p>GitHub has newer changes. Your draft is still in the editor.</p>
+      <details><summary>View GitHub’s version</summary><pre id="remote-content"></pre></details>
+      <button id="use-remote" type="button">Use GitHub’s version</button>
+    </aside>
+    <footer>
+      <p id="status" role="status" aria-live="polite">Connecting to Spider…</p>
+      <button id="update" class="primary" type="button" disabled>Update GitHub</button>
+    </footer>
+    <p class="hint">Drafts stay in Spider. Update GitHub saves to your repository.</p>
+    <button id="restore" class="restore" type="button" hidden>Restore replaced draft</button>
+  </main>
+  
+<script type="module">// sdk.js
+var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function connect() {
+  if (window.parent === window) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const ready = (e) => {
+      if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
+        return;
+      window.removeEventListener("message", ready);
+      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set(), focusListeners = /* @__PURE__ */ new Set();
+      let state = e.data.state;
+      port.onmessage = ({ data }) => {
+        if (data.type === "focus") {
+          window.focus();
+          for (const fn of focusListeners) fn();
+          return;
+        }
+        if (data.type === "state") {
+          state = data.state;
+          for (const fn of listeners) fn(state);
+          return;
+        }
+        const task = pending.get(data.id);
+        if (task) {
+          pending.delete(data.id);
+          data.error ? task.reject(Error(data.error)) : task.resolve(data.result);
+        }
+      };
+      function request(method, args = {}, transfers = []) {
+        return new Promise((resolve2, reject) => {
+          const id = uid();
+          pending.set(id, { resolve: resolve2, reject });
+          port.postMessage({ id, method, args }, transfers);
+        });
+      }
+      const sdk2 = {
+        context: e.data.context,
+        get state() {
+          return state;
+        },
+        read: () => state?.data || {},
+        write: (path, value) => request("write", { path, value }),
+        request,
+        onFocus(fn) {
+          focusListeners.add(fn);
+          return () => focusListeners.delete(fn);
+        },
+        async openTerminal(options, onEvent) {
+          const channel = new MessageChannel();
+          channel.port1.onmessage = ({ data }) => onEvent(data);
+          try {
+            await request("openrig-terminal", options, [channel.port2]);
+          } catch (error) {
+            channel.port1.close();
+            throw error;
+          }
+          return {
+            send: (frame) => channel.port1.postMessage(frame),
+            close: () => {
+              channel.port1.postMessage({ type: "disconnect" });
+              channel.port1.close();
+            }
+          };
+        },
+        onState(fn) {
+          listeners.add(fn);
+          fn(state);
+          return () => listeners.delete(fn);
+        },
+        async mount(appId, container, options = {}) {
+          const desc = await request("mount", { appId, ...options });
+          const frame = document.createElement("iframe");
+          frame.srcdoc = desc.html;
+          frame.title = desc.name;
+          frame.sandbox = "allow-scripts allow-forms";
+          frame.allowFullscreen = true;
+          frame.className = "embedded-app";
+          container.append(frame);
+          const channel = new MessageChannel();
+          channel.port1.onmessage = async (ev) => {
+            const msg = ev.data;
+            try {
+              const result = await request("child", {
+                mountId: desc.context.mountId,
+                message: msg
+              }, ev.ports);
+              channel.port1.postMessage({ id: msg.id, result });
+            } catch (error) {
+              channel.port1.postMessage({ id: msg.id, error: error.message });
+            }
+          };
+          const ready2 = (event) => {
+            if (event.source !== frame.contentWindow || event.data?.type !== "spider:ready")
+              return;
+            window.removeEventListener("message", ready2);
+            frame.contentWindow.postMessage(
+              { type: "spider:init", context: desc.context, state: desc.state },
+              "*",
+              [channel.port2]
+            );
+          };
+          window.addEventListener("message", ready2);
+          const unsubscribe = sdk2.onState(() => {
+            request("childState", { mountId: desc.context.mountId }).then(
+              (s) => channel.port1.postMessage({ type: "state", state: s })
+            ).catch(() => {
+            });
+          });
+          const unfocus = sdk2.onFocus(() => {
+            if (document.activeElement === frame) channel.port1.postMessage({ type: "focus" });
+          });
+          return {
+            frame,
+            close() {
+              unsubscribe();
+              unfocus();
+              request("unmount", { mountId: desc.context.mountId }).catch(
+                () => {
+                }
+              );
+              frame.remove();
+              channel.port1.close();
+            }
+          };
+        }
+      };
+      const activate = () => request("activate").catch(() => {
+      });
+      document.addEventListener("pointerdown", activate, { capture: true, passive: true });
+      document.addEventListener("focusin", activate);
+      resolve(sdk2);
+    };
+    window.addEventListener("message", ready);
+    parent.postMessage({ type: "spider:ready" }, "*");
+  });
+}
+
+// ../SpiderPoetry/model.js
+var dirty = (doc2) => !!doc2 && doc2.content !== doc2.baseContent;
+function reconcile(doc2, remote) {
+  if (!doc2 || !dirty(doc2) || doc2.content === remote.content)
+    return { content: remote.content, baseContent: remote.content, sha: remote.sha };
+  if (doc2.sha === remote.sha) {
+    if (!doc2.remote) return doc2;
+    const { remote: previousRemote, ...draft } = doc2;
+    return draft;
+  }
+  return { ...doc2, remote: { content: remote.content, sha: remote.sha } };
+}
+
+// ../SpiderPoetry/app.js
+var $ = (selector) => document.querySelector(selector);
+var sdk = await connect();
+if (!sdk) {
+  document.body.textContent = "Open Poetry inside Spider.";
+  throw Error("Spider required");
+}
+var doc = sdk.read().document || null;
+var online = false;
+var busy = false;
+var started = false;
+var writes = 0;
+var failed = false;
+var savedSignature = JSON.stringify(doc);
+var message = (text, error = false) => {
+  $("#status").textContent = text;
+  $("#status").classList.toggle("error", error);
+};
+function render() {
+  if ($("#readme").value !== (doc?.content || "")) $("#readme").value = doc?.content || "";
+  $("#readme").disabled = !doc;
+  $("#readme").readOnly = busy;
+  $("#reload").disabled = !online || busy || writes > 0;
+  $("#update").disabled = !online || busy || writes > 0 || !dirty(doc) || !!doc?.remote || failed;
+  $("#draft-state").textContent = busy ? "Working\u2026" : writes ? "Saving draft\u2026" : !doc ? "Not loaded" : dirty(doc) ? "Unpublished draft" : "Up to date";
+  $("#conflict").hidden = !doc?.remote;
+  $("#remote-content").textContent = doc?.remote?.content || "";
+  $("#restore").hidden = !sdk.read().replacedDraft;
+}
+async function persist() {
+  const value = structuredClone(doc);
+  savedSignature = JSON.stringify(value);
+  writes++;
+  render();
+  try {
+    await sdk.write(["document"], value);
+  } catch (error) {
+    message(`Draft could not be saved: ${error.message}`, true);
+  } finally {
+    writes--;
+    render();
+  }
+}
+async function reload() {
+  if (!online || busy || writes) return;
+  busy = true;
+  message("Loading GitHub\u2026");
+  render();
+  try {
+    const remote = await sdk.request("github-readme", { action: "read" });
+    doc = reconcile(doc, remote);
+    failed = false;
+    await persist();
+    message(doc.remote ? "Compare the GitHub version below before updating." : dirty(doc) ? "Your draft is ready to update." : "Loaded from GitHub.");
+  } catch (error) {
+    message(error.message, true);
+  } finally {
+    busy = false;
+    render();
+  }
+}
+$("#readme").addEventListener("input", () => {
+  doc = { ...doc, content: $("#readme").value };
+  message(online ? "Draft kept in Spider." : "Mac offline. Draft kept on this device; reconnect to update GitHub.");
+  void persist();
+});
+$("#reload").onclick = reload;
+$("#update").onclick = async () => {
+  if ($("#update").disabled) return;
+  busy = true;
+  message("Updating GitHub\u2026");
+  render();
+  try {
+    const result = await sdk.request("github-readme", { action: "update", content: doc.content, sha: doc.sha, requestId: uid() });
+    doc = { content: doc.content, baseContent: doc.content, sha: result.sha };
+    await persist();
+    message(result.unchanged ? "GitHub already has this version." : "Updated on GitHub.");
+  } catch (error) {
+    failed = true;
+    message(`${error.message} Use Reload before updating again.`, true);
+  } finally {
+    busy = false;
+    render();
+  }
+};
+$("#use-remote").onclick = async () => {
+  if (!doc?.remote || busy || writes) return;
+  const remote = doc.remote;
+  await sdk.write(["replacedDraft"], structuredClone(doc));
+  doc = { content: remote.content, baseContent: remote.content, sha: remote.sha };
+  await persist();
+  message("Loaded GitHub\u2019s version. You can restore the replaced draft below.");
+  render();
+};
+$("#restore").onclick = async () => {
+  if (busy || writes) return;
+  const backup = sdk.read().replacedDraft;
+  if (!backup) return;
+  const current = doc;
+  doc = reconcile(backup, { content: current.baseContent, sha: current.sha });
+  await sdk.write(["replacedDraft"], current);
+  await persist();
+  message("Draft restored.");
+  render();
+};
+document.addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === "s") {
+    event.preventDefault();
+    $("#update").click();
+  }
+});
+sdk.onState((state) => {
+  online = !!state.online;
+  const incoming = sdk.read().document, signature = JSON.stringify(incoming || null);
+  if (!busy && !writes && signature !== savedSignature && document.activeElement !== $("#readme")) {
+    doc = incoming || null;
+    savedSignature = signature;
+  }
+  if (!online && !busy) message("Mac offline. Drafts stay on this device until you reconnect.");
+  render();
+  if (online && !started) {
+    started = true;
+    void reload();
+  }
+});
+var lastHeight = 0;
+new ResizeObserver(() => {
+  const height = Math.ceil($("main").getBoundingClientRect().height) + 8;
+  if (height !== lastHeight) {
+    lastHeight = height;
+    sdk.request("resize", { height }).catch(() => {
+    });
+  }
+}).observe($("main"));
+</script></body>
+</html>
