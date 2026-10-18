@@ -9557,6 +9557,7 @@ var Dl = class extends D {
 
 // ../SpiderOpenRig/terminal-input.js
 function inputFrames(data) {
+  if (/^\x1b\[(?:[?>][0-9;]*c|[0-9]+;[0-9]+R|[0-9]+n|[0-9]+;[0-9]+;[0-9]+t)$/.test(data) || /^\x1b\](?:4|10|11|12);[\s\S]*(?:\x07|\x1b\\)$/.test(data) || /^\x1bP[\s\S]*(?:\x1b\\)$/.test(data)) return [];
   if (data.startsWith("\x1B[200~") && data.endsWith("\x1B[201~")) return [{ type: "text", text: data.slice(6, -6) }];
   const named = { "\r": "Enter", "\n": "Enter", "	": "Tab", "\x7F": "BSpace", "\x1B": "Escape", "\x1B[A": "Up", "\x1B[B": "Down", "\x1B[C": "Right", "\x1B[D": "Left", "\x1B[H": "Home", "\x1B[F": "End", "\x1B[3~": "DC", "\x1B[5~": "PageUp", "\x1B[6~": "PageDown", "\x1B[Z": "BTab" };
   if (named[data]) return [{ type: "keys", keys: [named[data]] }];
