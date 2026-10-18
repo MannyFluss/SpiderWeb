@@ -82,6 +82,11 @@ report = local.report || null;
 const desktop = createDesktop({
   container: $("#mounts"),
   onChange: saveLayout,
+  onCamera: (camera,options) => {
+    local.camera=camera;
+    persist();
+    if(clientId && snapshot)write(APP,clientId,["camera"],camera,options).catch(e=>notice(e.message));
+  },
   onState: broadcast,
   onFocus: id => ports.get(id)?.postMessage({type:"focus"}),
 });
@@ -209,7 +214,7 @@ function broadcast() {
   $("#sync-status").textContent =
     `Revision ${snapshot?.revision || 0} · ${local.pending.length} pending${local.conflicts.length ? " · " + local.conflicts.length + " resolved to Mac" : ""}`;
 }
-async function write(app, sid, path, value) {
+async function write(app, sid, path, value, {defer=false}={}) {
   if (!snapshot) throw Error("Connect to Spider first");
   if (
     !Array.isArray(path) ||
@@ -228,7 +233,7 @@ async function write(app, sid, path, value) {
       (o) => o.key === key && o.workspaceId === snapshot.id && !o.attempted,
     );
   if (previous) {
-    previous.value = value;
+    previous.value = structuredClone(value);
   } else {
     const predecessor = [...local.pending]
       .reverse()
@@ -238,8 +243,8 @@ async function write(app, sid, path, value) {
       workspaceId: snapshot.id,
       appId: app,
       sessionId: sid,
-      path,
-      value,
+      path: [...path],
+      value: structuredClone(value),
       baseVersion: targetVersion(key),
       key,
       predecessor: predecessor?.id,
@@ -247,7 +252,7 @@ async function write(app, sid, path, value) {
   }
   persist();
   broadcast();
-  flush();
+  if(!defer)flush();
   return { pending: true };
 }
 function payload(op) {
@@ -295,6 +300,15 @@ async function flush() {
         online = false;
         break;
       }
+      if(result.status === "applied") {
+        // Publish this receipt before dropping its pending operation. A new
+        // edit can arrive while refresh awaits the next full snapshot.
+        snapshot.versions[op.key] = result.targetVersion;
+        snapshot.revision = Math.max(snapshot.revision, result.revision);
+        const sessions = snapshot.apps[op.appId].sessions;
+        sessions[op.sessionId] ||= {data:{}};
+        setPath(sessions[op.sessionId].data, op.path, op.value);
+      }
       local.pending.splice(pendingIndex, 1);
       for (const next of local.pending) {
         if (next.predecessor === op.id) {
@@ -326,11 +340,13 @@ async function refresh(shouldFlush = true) {
         "A different workspace is active. Pending changes remain preserved.",
       );
     if (snapshot && snapshot.id !== data.state.id) {
+      desktop.reset();
+      for (const id of [...contexts.keys()]) dispose(id);
       for (const p of ports.values()) p.close();
       ports.clear();
       contexts.clear();
-      $("#mounts").replaceChildren();
       local.views = [];
+      local.camera = null;
       rendered = false;
       report = null;
     }
@@ -387,7 +403,9 @@ function showWorkspace() {
     "Paired browser";
   if (!rendered) {
     rendered = true;
-    const serverViews = snapshot.apps?.[APP]?.sessions?.[clientId]?.data?.views;
+    const layout = projected(APP,clientId);
+    const serverViews = layout.views;
+    desktop.restoreCamera(layout.camera || local.camera);
     local.views = Array.isArray(serverViews)
       ? serverViews
       : local.views?.length
@@ -401,11 +419,11 @@ function showWorkspace() {
     saveLayout();
   }
 }
-function saveLayout() {
+function saveLayout(options) {
   persist();
   $("#empty").hidden = !!local.views.length;
   if (clientId && snapshot)
-    write(APP, clientId, ["views"], local.views).catch((e) =>
+    write(APP, clientId, ["views"], local.views, options).catch((e) =>
       notice(e.message),
     );
 }
@@ -703,7 +721,7 @@ async function renderView(view) {
     frame.allowFullscreen = true;
     const html = loadAppHtml(app);
     panel.append(bar, frame);
-    $("#mounts").append(panel);
+    desktop.world.append(panel);
     desktop.attach(view, panel, {bar, frame, name:app.name, close});
     const channel = new MessageChannel();
     ports.set(view.id, channel.port1);
