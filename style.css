@@ -574,3 +574,8 @@ code {
     min-height: 44px;
   }
 }
+
+.app-window[data-app="spider.builder"] {
+  grid-column: 1 / -1;
+  max-width: 1200px;
+}

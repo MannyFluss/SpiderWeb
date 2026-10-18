@@ -26,11 +26,11 @@ export function connect() {
             : task.resolve(data.result);
         }
       };
-      function request(method, args = {}) {
+      function request(method, args = {}, transfers = []) {
         return new Promise((resolve, reject) => {
           const id = uid();
           pending.set(id, { resolve, reject });
-          port.postMessage({ id, method, args });
+          port.postMessage({ id, method, args }, transfers);
         });
       }
       const sdk = {
@@ -41,6 +41,16 @@ export function connect() {
         read: () => state?.data || {},
         write: (path, value) => request("write", { path, value }),
         request,
+        async openTerminal(options, onEvent) {
+          const channel = new MessageChannel();
+          channel.port1.onmessage = ({data}) => onEvent(data);
+          try { await request("openrig-terminal", options, [channel.port2]); }
+          catch(error) { channel.port1.close(); throw error; }
+          return {
+            send: frame => channel.port1.postMessage(frame),
+            close: () => { channel.port1.postMessage({type:"disconnect"}); channel.port1.close(); },
+          };
+        },
         onState(fn) {
           listeners.add(fn);
           fn(state);
@@ -52,6 +62,7 @@ export function connect() {
           frame.srcdoc = desc.html;
           frame.title = desc.name;
           frame.sandbox = "allow-scripts allow-forms";
+          frame.allowFullscreen = true;
           frame.className = "embedded-app";
           container.append(frame);
           const channel = new MessageChannel();
@@ -61,7 +72,7 @@ export function connect() {
               const result = await request("child", {
                 mountId: desc.context.mountId,
                 message: msg,
-              });
+              }, ev.ports);
               channel.port1.postMessage({ id: msg.id, result });
             } catch (error) {
               channel.port1.postMessage({ id: msg.id, error: error.message });

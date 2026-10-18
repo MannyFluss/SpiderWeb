@@ -23,7 +23,8 @@ const ownClient = clientInfo(navigator);
 const $ = (s) => document.querySelector(s),
   APP = "spider.frontend",
   ports = new Map(),
-  contexts = new Map();
+  contexts = new Map(),
+  terminalConnections = new Map();
 let flushWaiters = [];
 let snapshot = null,
   clientId = null,
@@ -427,13 +428,36 @@ function childContext(parent, id) {
     throw Error("View does not belong to this parent");
   return ctx;
 }
-async function dispatch(ctx, msg) {
+async function dispatch(ctx, msg, transferPort) {
   if (ctx.workspaceId !== snapshot?.id || contexts.get(ctx.mountId) !== ctx)
     throw Error(
       "This view belongs to a previous workspace. Reopen it before continuing.",
     );
   const { method, args = {} } = msg;
   switch (method) {
+    case "openrig-terminal": {
+      if (!apps.find(a=>a.id===ctx.appId)?.services?.includes("openrig-terminal")) throw Error("Terminal access is not declared by this app");
+      if (!online || !transferPort) throw Error("Reconnect to the Mac to open a terminal");
+      if (terminalConnections.size>=16) throw Error("Close another terminal view first");
+      const sessionId=ctx.sessionId, workspaceId=ctx.workspaceId;
+      const prepared=await api("/api/service/openrig-terminal",{...args,appId:ctx.appId,sessionId,workspaceId});
+      if(contexts.get(ctx.mountId)!==ctx||ctx.sessionId!==sessionId||snapshot?.id!==workspaceId)throw Error("View changed while connecting");
+      const url=new URL("/api/openrig/terminal",nodeBase);url.protocol=url.protocol==="https:"?"wss:":"ws:";url.searchParams.set("ticket",prepared.ticket);
+      const socket=new WebSocket(url),connectionId=uid();
+      const close=()=>{socket.close();transferPort.close();terminalConnections.delete(connectionId);};
+      terminalConnections.set(connectionId,{mountId:ctx.mountId,close});
+      socket.onmessage=event=>{try{transferPort.postMessage(JSON.parse(event.data));}catch{close();}};
+      socket.onerror=()=>transferPort.postMessage({type:"closed",reason:"Terminal connection failed. Check the Mac connection and reconnect."});
+      socket.onclose=()=>{transferPort.postMessage({type:"closed",reason:"Terminal disconnected. Input is not replayed."});transferPort.close();terminalConnections.delete(connectionId);};
+      transferPort.onmessage=({data})=>{
+        if(data?.type==="disconnect"){close();return;}
+        if(contexts.get(ctx.mountId)!==ctx||ctx.sessionId!==sessionId||snapshot?.id!==workspaceId||!online){close();return;}
+        if(socket.readyState!==WebSocket.OPEN){transferPort.postMessage({type:"input-rejected",reason:"Terminal is not connected; this input was not sent."});return;}
+        if(socket.bufferedAmount>128000){transferPort.postMessage({type:"input-rejected",reason:"Terminal connection is busy; this input was not sent."});return;}
+        socket.send(JSON.stringify(data));
+      };
+      return {connected:true};
+    }
     case "write":
       return write(ctx.appId, ctx.sessionId, args.path, args.value);
     case "renameDevice": {
@@ -511,6 +535,8 @@ async function dispatch(ctx, msg) {
       if (args.action === "import") await refresh();
       return result;
     }
+    case "builder":
+    case "openrig":
     case "agent":
     case "context":
     case "reader": {
@@ -567,7 +593,7 @@ async function dispatch(ctx, msg) {
       };
     }
     case "child":
-      return dispatch(childContext(ctx, args.mountId), args.message);
+      return dispatch(childContext(ctx, args.mountId), args.message, transferPort);
     case "childState":
       return contextState(childContext(ctx, args.mountId));
     case "unmount": {
@@ -580,6 +606,7 @@ async function dispatch(ctx, msg) {
   }
 }
 function dispose(id) {
+  for(const entry of terminalConnections.values())if(entry.mountId===id)entry.close();
   for (const c of contexts.values()) if (c.parentId === id) dispose(c.mountId);
   ports.get(id)?.close();
   ports.delete(id);
@@ -595,10 +622,18 @@ async function loadAppHtml(app) {
     cache = await caches.open("spider-code-v1");
   } catch {}
   try {
-    const response = await fetch(url);
-    if (!response.ok) throw Error("App code is unavailable");
-    if (cache) await cache.put(url, response.clone());
-    return await response.text();
+    const candidates = hosted && online
+      ? [nodeBase + `/apps/${app.id}/${app.entry || "index.html"}`, url]
+      : [url];
+    for (const candidate of candidates) {
+      try {
+        const response = await fetch(candidate);
+        if (!response.ok) continue;
+        if (cache) await cache.put(url, response.clone());
+        return await response.text();
+      } catch {}
+    }
+    throw Error("App code is unavailable");
   } catch (e) {
     const response = await cache?.match(url);
     if (response) return response.text();
@@ -649,6 +684,7 @@ async function renderView(view) {
     picker.className = "session-picker";
     picker.setAttribute("aria-label", app.name + " session");
     picker.onchange = () => {
+      for(const entry of terminalConnections.values())if(entry.mountId===c.mountId)entry.close();
       const sid = picker.value === "new" ? uid() : picker.value;
       c.sessionId = sid;
       view.sessionId = sid;
@@ -661,14 +697,15 @@ async function renderView(view) {
     frame.className = "app-frame";
     frame.title = app.name;
     frame.sandbox = "allow-scripts allow-forms";
+    frame.allowFullscreen = true;
     const html = loadAppHtml(app);
     panel.append(bar, frame);
     $("#mounts").append(panel);
     const channel = new MessageChannel();
     ports.set(view.id, channel.port1);
-    channel.port1.onmessage = async ({ data }) => {
+    channel.port1.onmessage = async ({ data, ports: transfers }) => {
       try {
-        const result = await dispatch(c, data);
+        const result = await dispatch(c, data, transfers?.[0]);
         channel.port1.postMessage({ id: data.id, result });
       } catch (e) {
         channel.port1.postMessage({ id: data.id, error: e.message });
