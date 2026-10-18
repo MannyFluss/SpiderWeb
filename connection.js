@@ -71,6 +71,7 @@ export async function requestNode(
   path,
   {
     hosted = false,
+    access = false,
     token,
     body,
     method,
@@ -92,17 +93,22 @@ export async function requestNode(
   try {
     const response = await fetchImpl(node + path, {
       method: method || (body ? "POST" : "GET"),
-      credentials: hosted ? "omit" : "same-origin",
+      credentials: hosted ? "include" : "same-origin",
+      ...((hosted || access) ? {redirect: "manual"} : {}),
       headers,
       body: body ? JSON.stringify(body) : undefined,
       cache: "no-store",
       signal: controller.signal,
     });
+    if (response.type === "opaqueredirect" || (response.status >= 300 && response.status < 400))
+      throw new NodeRequestError("Sign into Cloudflare Access to continue.", {kind:"access",status:response.status || undefined});
     let result;
     try {
       result = await response.json();
     } catch (error) {
       if (controller.signal.aborted) throw error;
+      if (access && [200,401,403].includes(response.status))
+        throw new NodeRequestError("Sign into Cloudflare Access to continue.", {kind:"access",status:response.status});
       throw new NodeRequestError(
         `The address answered with an unreadable response (HTTP ${response.status}). Check that it is the Spider Mac address.`,
         { kind: "response", status: response.status },
@@ -116,6 +122,8 @@ export async function requestNode(
     return result;
   } catch (error) {
     if (error instanceof NodeRequestError) throw error;
+    if (access)
+      throw new NodeRequestError("Cloudflare sign-in or the Mac connection could not be confirmed. Sign in, then check that the Mac is awake and online.", {kind:"access-or-network"});
     throw new NodeRequestError(
       controller.signal.aborted
         ? "The request to the Mac timed out."
@@ -128,6 +136,7 @@ export async function requestNode(
 }
 
 export function connectionMessage(error) {
+  if (error.kind === "access" || error.kind === "access-or-network") return error.message;
   if (error.status === 401)
     return "The Mac is reachable. Enter a fresh pairing code to connect this browser.";
   if (error.kind === "server")
@@ -201,10 +210,9 @@ export async function checkConnection(node, options = {}) {
     );
     return {
       ...report,
-      status: "blocked",
+      status: error.kind === "access" ? "access" : "blocked",
       httpStatus: error.status,
-      message:
-        "The browser could not confirm a connection. Follow the checks below.",
+      message: options.access ? connectionMessage(error) : "The browser could not confirm a connection. Follow the checks below.",
     };
   }
   try {

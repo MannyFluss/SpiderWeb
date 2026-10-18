@@ -1,6 +1,6 @@
 const base = new URL(".", self.location.href);
-const hosted = base.pathname !== "/";
-const CACHE = "spider-code-v16:" + base.pathname;
+const hosted = true;
+const CACHE = "spider-code-v17:" + base.pathname;
 const shell = hosted
   ? [
       ".",
@@ -15,6 +15,7 @@ const shell = hosted
       "export.js",
       "download.js",
       "connection.js",
+      "site-config.js",
     ]
   : [
       ".",
@@ -29,6 +30,7 @@ const shell = hosted
       "apps/spider.frontend/export.js",
       "apps/spider.frontend/download.js",
       "apps/spider.frontend/connection.js",
+      "apps/spider.frontend/site-config.js",
     ];
 const bundles = ["spider.chat", "spider.calculator", "spider.connections", "spider.ingestion", "spider.encyclopedia", "spider.canvas", "spider.experiments", "spider.reader", "spider.sandbox", "spider.builder", "spider.openrig", "spider.poetry"].map(
   (id) => `apps/${id}/dist/index.html`,

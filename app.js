@@ -4,6 +4,7 @@ import { uid } from "./sdk.js";
 import { createDesktop } from "./desktop.js";
 import { createLauncher } from "./launcher.js";
 import { clientStorage } from "./client-storage.js";
+import { siteConfig } from "./site-config.js";
 import {
   normalizeNode,
   clientInfo,
@@ -14,7 +15,7 @@ import {
 const fragment = new URLSearchParams(location.hash.slice(1));
 const hosted = document.documentElement.dataset.hosting === "static";
 let nodeBase = hosted
-  ? localStorage.getItem("spider.node") || ""
+  ? localStorage.getItem("spider.node") || siteConfig.runtimeUrl || ""
   : location.origin;
 try {
   if (fragment.has("node")) nodeBase = normalizeNode(fragment.get("node"));
@@ -22,6 +23,8 @@ try {
 try {if (nodeBase) localStorage.setItem("spider.node", nodeBase);} catch {}
 const trustKey = () => "spider.trust:" + nodeBase;
 let deviceToken = hosted ? localStorage.getItem(trustKey()) : null;
+const accessRequired = hosted && siteConfig.access && nodeBase === siteConfig.runtimeUrl;
+let accessPaused = false, accessError = null, accessWindow = null;
 const ownClient = clientInfo(navigator);
 const $ = (s) => document.querySelector(s),
   APP = "spider.frontend",
@@ -85,12 +88,22 @@ function notice(message) {
   $("#notice").hidden = !message;
 }
 async function api(path, body, method) {
-  return requestNode(nodeBase, path, {
+  if (accessPaused) throw accessError || Error("Sign into Cloudflare Access to continue.");
+  try {return await requestNode(nodeBase, path, {
     body,
     method,
     hosted,
+    access: accessRequired,
     token: deviceToken,
-  });
+  });} catch(error) {
+    if (accessRequired && ["access", "access-or-network"].includes(error.kind)) {
+      accessPaused = true; accessError = error;
+      for (const entry of terminalConnections.values()) entry.close();
+      $("#access-status").textContent = connectionMessage(error);
+      if (snapshot) notice(connectionMessage(error)+" Unsent edits remain saved in this browser.");
+    }
+    throw error;
+  }
 }
 const versionKey = (app, sid, path) =>
   [app, sid, ...path]
@@ -613,15 +626,19 @@ async function loadAppHtml(app) {
     : `/apps/${app.id}/${app.entry || "index.html"}`;
   let cache;
   try {
-    cache = await caches.open("spider-code-v1");
+    cache = await caches.open("spider-code-v2");
   } catch {}
   try {
     const candidates = hosted && online
-      ? [nodeBase + `/apps/${app.id}/${app.entry || "index.html"}`, url]
+      ? [url, nodeBase + `/apps/${app.id}/${app.entry || "index.html"}`]
       : [url];
     for (const candidate of candidates) {
       try {
-        const response = await fetch(candidate);
+        const response = await fetch(candidate, {
+          credentials: hosted && candidate.startsWith(nodeBase + "/") ? "include" : "same-origin",
+          ...(hosted ? {redirect: "manual"} : {}),
+        });
+        if (response.type === "opaqueredirect" || response.redirected) continue;
         if (!response.ok) continue;
         if (cache) await cache.put(url, response.clone());
         return await response.text();
@@ -781,6 +798,7 @@ async function pairBrowser(code) {
       deviceToken = paired.deviceToken;
       localStorage.setItem(trustKey(), deviceToken);
     }
+    try {sessionStorage.removeItem("spider.pendingPair:"+nodeBase);}catch{}
     const recovered = [...(local.recoveredChanges || []), ...local.pending];
     local = {
       recoveredChanges: recovered,
@@ -798,6 +816,46 @@ async function pairBrowser(code) {
     $("#pair-error").textContent = connectionMessage(e);
   }
 }
+const pendingPairKey = "spider.pendingPair:" + nodeBase;
+function pendingPair() {
+  try {const saved=JSON.parse(sessionStorage.getItem(pendingPairKey));
+    if(saved?.expires>Date.now())return saved.code;
+    sessionStorage.removeItem(pendingPairKey);
+  }catch{}
+}
+async function resumeAccess() {
+  accessPaused=false; accessError=null;
+  try {
+    await api('/health');
+    $('#access-status').textContent='Cloudflare Access connected. Spider pairing is checked separately.';
+    const code=pendingPair();
+    if(code && !deviceToken)await pairBrowser(code);
+    await refresh();
+  }catch(error){$('#access-status').textContent=connectionMessage(error);}
+}
+for(const button of document.querySelectorAll('[data-access-login]')) {
+  button.hidden=!accessRequired;
+  button.onclick=()=>{
+    persist();
+    accessWindow=window.open(nodeBase+'/access/return','spider-access');
+    if(!accessWindow)$('#access-status').textContent='Allow this sign-in popup, then try again. Your edits remain saved.';
+  };
+}
+window.addEventListener('message',event=>{
+  if(event.origin===nodeBase && event.source===accessWindow && event.data?.type==='spider:access-return')resumeAccess();
+});
+for(const button of document.querySelectorAll('[data-access-retry]')) {
+  button.hidden=!accessRequired;button.onclick=resumeAccess;
+}
+$('#access-signout').hidden=!accessRequired;
+$('#access-signout').onclick=()=>{
+  persist();
+  for(const entry of terminalConnections.values())entry.close();
+  accessPaused=true;accessError=Object.assign(Error('Sign into Cloudflare Access to continue.'),{kind:'access'});
+  online=false;broadcast();
+  $('#access-status').textContent='Signed out in this tab. Complete Cloudflare logout in the opened tab. Spider pairing and unsent edits are preserved.';
+  window.open(nodeBase+'/cdn-cgi/access/logout','spider-access');
+};
 function guessLabel() {
   return /iPad/.test(navigator.userAgent) ||
     (/Mac/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
@@ -845,7 +903,7 @@ async function runConnectionCheck() {
   try {
     if (normalizeNode(entered) === nodeBase) checkToken = deviceToken;
   } catch {}
-  const result = await checkConnection(entered, { hosted, token: checkToken });
+  const result = await checkConnection(entered, { hosted, token: checkToken, access: accessRequired });
   if (run !== diagnosticRun) return;
   diagnosticReport = {
     ...result,
@@ -898,7 +956,7 @@ $('#settings-toggle').onclick=async()=>{
   $('#settings-address').textContent=nodeBase;
   $('#settings-storage').textContent=`${local.pending.length} unsent edits · ${local.recoveredChanges?.length||0} recovered edits available in export`;
   $('#settings-dialog').showModal();
-  try {const remote=await api('/api/service/cloudflare',{action:'status'});$('#settings-remote').textContent=remote.publicUrl ? `Cloudflare address: ${remote.publicUrl}` : 'No permanent Cloudflare address configured. On the Mac, run spider remote setup with your Cloudflare hostname.';}
+  try {const remote=await api('/api/service/cloudflare',{action:'status'});$('#settings-remote').textContent=remote.publicUrl ? `Configured address: ${remote.publicUrl}. ${remote.accessRequired?'Cloudflare Access is required.':'Access protection is not configured.'} This status does not verify the remote connection.` : 'No permanent Cloudflare address configured. On the Mac, complete Cloudflare Access setup before running spider remote setup.';}
   catch{$('#settings-remote').textContent=endpoints.public ? `Cloudflare address: ${endpoints.public}` : 'Reconnect to your Mac to check remote access.';}
 };
 for (const button of document.querySelectorAll("[data-close]"))
@@ -965,8 +1023,9 @@ downloadLink.onclick = (e) => {
 };
 // Keep connection help usable while the first network probe is pending.
 if (!snapshot) $("#pair-screen").hidden = false;
-const pairing = fragment.get("pair");
+const pairing = fragment.get("pair") || pendingPair();
 if (pairing) {
+  try {if(fragment.has('pair'))sessionStorage.setItem(pendingPairKey,JSON.stringify({code:pairing,expires:Date.now()+600000}));}catch{}
   history.replaceState(null, "", location.pathname);
   $("#pair-screen").hidden = false;
   if (hosted && !deviceToken) await pairBrowser(pairing);

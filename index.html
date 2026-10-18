@@ -45,6 +45,9 @@
           ><button class="primary">Connect to Spider</button>
         </form>
         <p id="pair-error" role="alert"></p>
+        <button type="button" data-access-login hidden>Sign into Cloudflare Access</button>
+        <button type="button" id="access-retry" data-access-retry hidden>I’ve signed in — retry connection</button>
+        <p id="access-status" role="status"></p>
         <button
           type="button"
           data-connection-help
@@ -111,6 +114,7 @@
       <h2 id="settings-title">Settings</h2>
       <section class="settings-section"><h3>Connection</h3><p id="settings-address" class="settings-address"></p><button data-connection-help>Connection help</button><button id="add-device">Add device</button></section>
       <section class="settings-section"><h3>Remote access</h3><p id="settings-remote" role="status">Checking remote access…</p><p class="quiet">Your workspace and apps run on your Mac. Cloudflare connects your devices to it from anywhere while the Mac is awake.</p></section>
+      <section class="settings-section"><h3>Cloudflare login</h3><button data-access-login hidden>Sign into Cloudflare Access</button><button data-access-retry hidden>I’ve signed in — retry connection</button><button id="access-signout" hidden>Sign out of Cloudflare Access</button><p>Spider pairing is separate. Signing out keeps this browser’s unsent edits.</p></section>
       <section class="settings-section"><h3>Storage</h3><p>Saved work lives on your Mac. This browser keeps connection details, window preferences and unsent edits. Reconnect to load your workspace after closing this page.</p><p id="settings-storage" role="status"></p><button id="state-toggle">Inspect or export source state</button></section>
       <section class="settings-section"><h3>Keyboard</h3><p><kbd>⌥ Space</kbd> Search apps · <kbd>Tab</kbd> Complete name · <kbd>Enter</kbd> Open</p></section>
     </dialog>
