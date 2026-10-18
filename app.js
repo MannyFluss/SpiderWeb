@@ -2,6 +2,8 @@ import {downloadSpec,p5ReferenceUrl} from "./download.js";
 import { portableView } from "./export.js";
 import { uid } from "./sdk.js";
 import { createDesktop } from "./desktop.js";
+import { createLauncher } from "./launcher.js";
+import { clientStorage } from "./client-storage.js";
 import {
   normalizeNode,
   clientInfo,
@@ -17,7 +19,7 @@ let nodeBase = hosted
 try {
   if (fragment.has("node")) nodeBase = normalizeNode(fragment.get("node"));
 } catch {}
-if (nodeBase) localStorage.setItem("spider.node", nodeBase);
+try {if (nodeBase) localStorage.setItem("spider.node", nodeBase);} catch {}
 const trustKey = () => "spider.trust:" + nodeBase;
 let deviceToken = hosted ? localStorage.getItem(trustKey()) : null;
 const ownClient = clientInfo(navigator);
@@ -44,41 +46,14 @@ try {
 } catch {
   instanceId = uid();
 }
-let cacheKey = "spider.client.v1:" + instanceId + ":" + nodeBase,
-  local;
-try {
-  local = JSON.parse(
-    localStorage.getItem(cacheKey) ||
-      (!hosted && localStorage.getItem("spider.client.v1:" + instanceId)) ||
-      "null",
-  );
-} catch {}
-if (!local) {
-  try {
-    const previous = localStorage.getItem("spider.lastCache");
-    const cached = JSON.parse(
-      localStorage.getItem(previous || "spider.client.v1") || "null",
-    );
-    if (cached)
-      if (!hosted || cached.nodeBase === nodeBase)
-        local = { ...cached, pending: previous ? [] : cached.pending || [] };
-  } catch {}
-}
-try {
-  localStorage.setItem("spider.lastCache", cacheKey);
-} catch {}
-local ||= {
-  snapshot: null,
-  clientId: null,
-  pending: [],
-  conflicts: [],
-  views: [],
-  workspaceId: null,
-};
-snapshot = local.snapshot;
+const cacheKey = "spider.client.v1:" + instanceId + ":" + nodeBase;
+let journal;
+try {journal=await clientStorage({key:cacheKey,nodeBase});}
+catch {journal={local:{pending:[],conflicts:[],views:[],recoveredChanges:[]},save:async()=>{throw Error('Browser cannot save unsent edits');},kind:'unavailable'};}
+let local=journal.local;
 clientId = local.clientId;
-apps = local.apps || [];
-report = local.report || null;
+let endpoints={};
+const launcher=createLauncher({dialog:$('#app-dialog'),input:$('#app-search'),results:$('#app-results'),onLaunch:openApp});
 const desktop = createDesktop({
   container: $("#mounts"),
   onChange: saveLayout,
@@ -94,16 +69,14 @@ function rootMount(ctx) {
   while (ctx.parentId && contexts.has(ctx.parentId)) ctx = contexts.get(ctx.parentId);
   return ctx.mountId;
 }
-function persist() {
+async function persist() {
   try {
     local.nodeBase = nodeBase;
-    local.snapshot = snapshot;
     local.clientId = clientId;
-    local.apps = apps;
-    localStorage.setItem(cacheKey, JSON.stringify(local));
+    await journal.save(local);
   } catch {
     notice(
-      "Browser storage is full. Export source state before closing this page.",
+      "Unsent edits could not be saved on this browser. Keep this page open until they sync, or export source state in Settings.",
     );
   }
 }
@@ -209,7 +182,7 @@ function broadcast() {
     ? local.pending.length
       ? "Syncing"
       : "Connected to Mac"
-    : "Offline · edits saved here";
+    : "Mac unreachable · reconnect to sync";
   $("#connection-status").classList.toggle("offline", !online);
   $("#sync-status").textContent =
     `Revision ${snapshot?.revision || 0} · ${local.pending.length} pending${local.conflicts.length ? " · " + local.conflicts.length + " resolved to Mac" : ""}`;
@@ -250,7 +223,7 @@ async function write(app, sid, path, value, {defer=false}={}) {
       predecessor: predecessor?.id,
     });
   }
-  persist();
+  await persist();
   broadcast();
   if(!defer)flush();
   return { pending: true };
@@ -287,7 +260,7 @@ async function flush() {
       }
       op.sending = true;
       op.attempted = true;
-      persist();
+      await persist();
       let result;
       try {
         result = await api("/api/patch", payload(op));
@@ -358,6 +331,7 @@ async function refresh(shouldFlush = true) {
       snapshot = data.state;
     clientId = data.clientId;
     apps = data.apps;
+    endpoints=data.endpoints || {};
     local.workspaceId = snapshot.id;
     online = true;
     persist();
@@ -372,7 +346,7 @@ async function refresh(shouldFlush = true) {
         $("#workspace").hidden = true;
       } else
         notice(
-          "This browser needs pairing again. Your cached work and pending changes remain here.",
+        "This browser needs pairing again. Unsent edits remain available for export in Settings.",
         );
     } else if (!snapshot) {
       $("#pair-screen").hidden = false;
@@ -386,17 +360,7 @@ function showWorkspace() {
   if (!snapshot) return;
   $("#pair-screen").hidden = true;
   $("#workspace").hidden = false;
-  const launcher = $(".app-launcher");
-  const launcherKey = apps.filter((app) => !app.rootOnly).map((app) => app.id + app.name).join();
-  if (launcher.dataset.registry !== launcherKey) {
-    launcher.dataset.registry = launcherKey;
-    launcher.replaceChildren(...apps.filter((app) => !app.rootOnly).map((app) => {
-      const button = document.createElement("button");
-      button.dataset.app = app.id;
-      button.textContent = app.name;
-      return button;
-    }));
-  }
+  launcher.update(apps);
   $("#client-label").textContent =
     projected("spider.connections", "directory").names?.[clientId] ||
     snapshot.devices?.[clientId]?.label ||
@@ -465,6 +429,11 @@ async function dispatch(ctx, msg, transferPort) {
     );
   const { method, args = {} } = msg;
   switch (method) {
+    case "launcher":
+      launcher.open('search'); return {ok:true};
+    case "cloudflare":
+      if (!apps.find(a=>a.id===ctx.appId)?.services?.includes('cloudflare'))throw Error('Remote access is not declared by this app');
+      return api('/api/service/cloudflare',{action:args.action});
     case "activate":
       return {active: desktop.activate(rootMount(ctx), !!args.focus)};
     case "fullscreen":
@@ -912,15 +881,26 @@ $("#pair-form").onsubmit = (e) => {
   e.preventDefault();
   pairBrowser($("#pair-code").value.trim());
 };
-document.querySelector(".app-launcher").onclick = (event) => {
-    const button = event.target.closest("button[data-app]");
-    if (!button) return;
-    const manifest = apps.find((app) => app.id === button.dataset.app);
-    const v = { id: uid(), appId: button.dataset.app, sessionId: manifest?.defaultSession || uid() };
+function openApp(appId) {
+    const manifest = apps.find((app) => app.id === appId && !app.rootOnly);
+    if(!manifest)return;
+    const v = { id: uid(), appId, sessionId: manifest.defaultSession || uid() };
     local.views.push(v);
     renderView(v);
     saveLayout();
-  };
+  }
+$('#app-menu-toggle').onclick=()=>launcher.open();
+$('#search-apps').onclick=()=>launcher.open('search');
+document.addEventListener('keydown',event=>{
+  if(event.altKey && !event.ctrlKey && !event.metaKey && event.code==='Space' && !event.repeat && snapshot){event.preventDefault();launcher.open('search');}
+},true);
+$('#settings-toggle').onclick=async()=>{
+  $('#settings-address').textContent=nodeBase;
+  $('#settings-storage').textContent=`${local.pending.length} unsent edits · ${local.recoveredChanges?.length||0} recovered edits available in export`;
+  $('#settings-dialog').showModal();
+  try {const remote=await api('/api/service/cloudflare',{action:'status'});$('#settings-remote').textContent=remote.publicUrl ? `Cloudflare address: ${remote.publicUrl}` : 'No permanent Cloudflare address configured. On the Mac, run spider remote setup with your Cloudflare hostname.';}
+  catch{$('#settings-remote').textContent=endpoints.public ? `Cloudflare address: ${endpoints.public}` : 'Reconnect to your Mac to check remote access.';}
+};
 for (const button of document.querySelectorAll("[data-close]"))
   button.onclick = () => $("#" + button.dataset.close).close();
 $("#add-device").onclick = async () => {

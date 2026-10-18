@@ -1,10 +1,12 @@
 const base = new URL(".", self.location.href);
 const hosted = base.pathname !== "/";
-const CACHE = "spider-code-v15:" + base.pathname;
+const CACHE = "spider-code-v16:" + base.pathname;
 const shell = hosted
   ? [
       ".",
       "app.js",
+      "launcher.js",
+      "client-storage.js",
       "desktop.js",
       "gestures.js",
       "style.css",
@@ -17,6 +19,8 @@ const shell = hosted
   : [
       ".",
       "apps/spider.frontend/app.js",
+      "apps/spider.frontend/launcher.js",
+      "apps/spider.frontend/client-storage.js",
       "apps/spider.frontend/desktop.js",
       "apps/spider.frontend/gestures.js",
       "apps/spider.frontend/style.css",
@@ -42,7 +46,7 @@ self.addEventListener("install", (event) =>
   ),
 );
 self.addEventListener("activate", (event) =>
-  event.waitUntil(self.clients.claim()),
+  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('spider-code-') && key.endsWith(':'+base.pathname) && key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())),
 );
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);

@@ -424,6 +424,14 @@ function connect() {
       });
       document.addEventListener("pointerdown", activate, { capture: true, passive: true });
       document.addEventListener("focusin", activate);
+      document.addEventListener("keydown", (event) => {
+        if (event.altKey && !event.ctrlKey && !event.metaKey && event.code === "Space" && !event.repeat) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          request("launcher").catch(() => {
+          });
+        }
+      }, true);
       resolve(sdk2);
     };
     window.addEventListener("message", ready);
@@ -438,6 +446,7 @@ var current = null;
 var models = [];
 var loading = false;
 var draftTimer;
+var draftDirty = false;
 var embedded = null;
 var sending = false;
 var renderKey = "";
@@ -479,6 +488,10 @@ function latestJob() {
 }
 function render(state) {
   const switched = current?.sessionId !== state.sessionId;
+  if (switched) {
+    clearTimeout(draftTimer);
+    draftDirty = false;
+  }
   current = state;
   const data = state.data || {};
   if (state.online) loadModels();
@@ -487,7 +500,7 @@ function render(state) {
     option.textContent = data.model || "Ollama Cloud \xB7 offline";
     $("#model").replaceChildren(option);
   }
-  if (switched || document.activeElement !== $("#draft"))
+  if (switched || !draftDirty && document.activeElement !== $("#draft"))
     $("#draft").value = data.draft || "";
   if (models.includes(data.model)) $("#model").value = data.model;
   const messages = Object.entries(data.messages || {}).sort(
@@ -538,11 +551,14 @@ function render(state) {
 }
 sdk.onState(render);
 $("#draft").oninput = () => {
+  draftDirty = true;
   clearTimeout(draftTimer);
-  draftTimer = setTimeout(
-    () => sdk.write(["draft"], $("#draft").value).catch((e) => $("#status").textContent = e.message),
-    180
-  );
+  draftTimer = setTimeout(() => {
+    const text = $("#draft").value;
+    sdk.write(["draft"], text).then(() => {
+      if ($("#draft").value === text) draftDirty = false;
+    }).catch((e) => $("#status").textContent = e.message);
+  }, 180);
 };
 $("#model").onchange = () => sdk.write(["model"], $("#model").value);
 $("#composer").onsubmit = async (e) => {

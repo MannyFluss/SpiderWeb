@@ -247,6 +247,14 @@ function connect() {
       });
       document.addEventListener("pointerdown", activate, { capture: true, passive: true });
       document.addEventListener("focusin", activate);
+      document.addEventListener("keydown", (event) => {
+        if (event.altKey && !event.ctrlKey && !event.metaKey && event.code === "Space" && !event.repeat) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          request("launcher").catch(() => {
+          });
+        }
+      }, true);
       resolve(sdk);
     };
     window.addEventListener("message", ready);

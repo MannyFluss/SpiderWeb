@@ -78,19 +78,8 @@
           ><span class="spider-mark">✳</span> Spider</a
         ><span id="connection-status" class="status-pill">Connecting</span>
         <div class="header-actions">
-          <button
-            data-connection-help
-            title="Check the Mac address and connection"
-          >
-            Connection help</button
-          ><button id="add-device">Add device</button
-          ><button
-            id="state-toggle"
-            class="icon-button"
-            title="Inspect and copy source state"
-          >
-            { }
-          </button>
+          <button id="app-menu-toggle" class="app-menu-toggle" aria-label="Open apps" title="Apps (Option–Space to search)" aria-haspopup="dialog" aria-controls="app-dialog" aria-expanded="false"><span aria-hidden="true">●</span></button>
+          <button id="settings-toggle" class="settings-toggle" aria-label="Settings" title="Settings" aria-haspopup="dialog"><span aria-hidden="true">⚙</span></button>
         </div>
       </header>
       <div id="notice" class="notice" role="status" hidden></div>
@@ -100,16 +89,7 @@
             <p class="quiet" id="client-label">Your workspace</p>
             <h1>Desktop</h1>
           </div>
-          <div class="app-launcher" aria-label="Open an app">
-            <button data-app="spider.chat"><span>↗</span> Chat</button
-            ><button data-app="spider.calculator">
-              <span>＋</span> Calculator</button
-            ><button data-app="spider.connections">
-              <span>⌁</span> Connections
-            </button><button data-app="spider.ingestion">
-              <span>↓</span> Ingestion
-            </button>
-          </div>
+          <button id="search-apps" class="search-apps">Search apps <kbd>⌥ Space</kbd></button>
         </div>
         <div id="mounts" class="mounts"><div id="empty" class="empty" hidden>
           <span class="spider-mark">✳</span>
@@ -121,6 +101,19 @@
         ><span>Independent views. Shared work.</span>
       </footer>
     </div>
+    <dialog id="app-dialog" class="launcher-dialog" aria-label="Apps">
+      <div class="launcher-search"><span aria-hidden="true">⌕</span><input id="app-search" role="combobox" aria-label="Search apps" aria-autocomplete="list" aria-controls="app-results" aria-expanded="true" placeholder="Search apps…" autocomplete="off" spellcheck="false" /><button class="launcher-close" data-close="app-dialog" aria-label="Close apps">×</button></div>
+      <div id="app-results" class="app-results" aria-label="Apps"></div>
+      <div class="launcher-footer"><span>↑ ↓ select · Tab complete · Enter open</span><kbd>esc</kbd></div>
+    </dialog>
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
+      <button class="dialog-close" data-close="settings-dialog" aria-label="Close settings">×</button>
+      <h2 id="settings-title">Settings</h2>
+      <section class="settings-section"><h3>Connection</h3><p id="settings-address" class="settings-address"></p><button data-connection-help>Connection help</button><button id="add-device">Add device</button></section>
+      <section class="settings-section"><h3>Remote access</h3><p id="settings-remote" role="status">Checking remote access…</p><p class="quiet">Your workspace and apps run on your Mac. Cloudflare connects your devices to it from anywhere while the Mac is awake.</p></section>
+      <section class="settings-section"><h3>Storage</h3><p>Saved work lives on your Mac. This browser keeps connection details, window preferences and unsent edits. Reconnect to load your workspace after closing this page.</p><p id="settings-storage" role="status"></p><button id="state-toggle">Inspect or export source state</button></section>
+      <section class="settings-section"><h3>Keyboard</h3><p><kbd>⌥ Space</kbd> Search apps · <kbd>Tab</kbd> Complete name · <kbd>Enter</kbd> Open</p></section>
+    </dialog>
     <dialog id="connection-dialog" aria-labelledby="connection-check-title">
       <button
         class="dialog-close"
