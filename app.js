@@ -1,6 +1,7 @@
 import {downloadSpec,p5ReferenceUrl} from "./download.js";
 import { portableView } from "./export.js";
 import { uid } from "./sdk.js";
+import { createDesktop } from "./desktop.js";
 import {
   normalizeNode,
   clientInfo,
@@ -78,6 +79,16 @@ snapshot = local.snapshot;
 clientId = local.clientId;
 apps = local.apps || [];
 report = local.report || null;
+const desktop = createDesktop({
+  container: $("#mounts"),
+  onChange: saveLayout,
+  onState: broadcast,
+  onFocus: id => ports.get(id)?.postMessage({type:"focus"}),
+});
+function rootMount(ctx) {
+  while (ctx.parentId && contexts.has(ctx.parentId)) ctx = contexts.get(ctx.parentId);
+  return ctx.mountId;
+}
 function persist() {
   try {
     local.nodeBase = nodeBase;
@@ -148,6 +159,7 @@ function contextState(ctx) {
     data: projected(ctx.appId, ctx.sessionId),
     online,
     revision: snapshot?.revision || 0,
+    window: desktop.state(rootMount(ctx)),
     jobs: Object.fromEntries(
       Object.entries(snapshot?.jobs || {}).filter(
         ([, j]) => j.appId === ctx.appId && j.sessionId === ctx.sessionId,
@@ -435,6 +447,10 @@ async function dispatch(ctx, msg, transferPort) {
     );
   const { method, args = {} } = msg;
   switch (method) {
+    case "activate":
+      return {active: desktop.activate(rootMount(ctx), !!args.focus)};
+    case "fullscreen":
+      return {ok: desktop.fullscreen(rootMount(ctx), args.enabled ?? !desktop.state(rootMount(ctx)).fullscreen)};
     case "openrig-terminal": {
       if (!apps.find(a=>a.id===ctx.appId)?.services?.includes("openrig-terminal")) throw Error("Terminal access is not declared by this app");
       if (!online || !transferPort) throw Error("Reconnect to the Mac to open a terminal");
@@ -494,19 +510,8 @@ async function dispatch(ctx, msg, transferPort) {
       );
     }
     case "resize": {
-      const frame = document.querySelector(
-        '[data-mount="' + ctx.mountId + '"] iframe',
-      );
-      if (frame)
-        frame.style.height =
-          Math.max(
-            350,
-            Math.min(
-              ctx.appId === "spider.connections" ? 1800 : 1000,
-              Number(args.height) || 500,
-            ),
-          ) + "px";
-      return { ok: true };
+      // Desktop windows own their size. Content scrolls inside the live iframe.
+      return { ok: true, managed: true };
     }
     case "download": {
       if(!apps.find(app=>app.id===ctx.appId)?.services?.includes("download"))throw Error("Downloads are not declared by this app");
@@ -606,6 +611,7 @@ async function dispatch(ctx, msg, transferPort) {
   }
 }
 function dispose(id) {
+  if (contexts.get(id)?.parentId === null) desktop.remove(id);
   for(const entry of terminalConnections.values())if(entry.mountId===id)entry.close();
   for (const c of contexts.values()) if (c.parentId === id) dispose(c.mountId);
   ports.get(id)?.close();
@@ -657,17 +663,13 @@ async function renderView(view) {
     tag.className = "window-tag";
     tag.textContent =
       app.id === "spider.connections" ? "Device graph" : "App session";
-    const close = document.createElement("button");
-    close.className = "close";
-    close.textContent = "×";
-    close.setAttribute("aria-label", `Close ${app.name}`);
-    close.onclick = () => {
+    const close = () => {
       dispose(view.id);
       panel.remove();
       local.views = local.views.filter((v) => v.id !== view.id);
       saveLayout();
     };
-    bar.append(label, tag, close);
+    bar.append(label, tag);
     if (app.id === "spider.calculator") {
       const link = document.createElement("a");
       link.href = hosted
@@ -678,7 +680,7 @@ async function renderView(view) {
       link.textContent = "↗";
       link.title = "Open Calculator standalone";
       link.className = "standalone-link";
-      bar.insertBefore(link, close);
+      bar.append(link);
     }
     const picker = document.createElement("select");
     picker.className = "session-picker";
@@ -691,7 +693,7 @@ async function renderView(view) {
       saveLayout();
       broadcast();
     };
-    if (app.id !== "spider.connections") bar.insertBefore(picker, close);
+    if (app.id !== "spider.connections") bar.append(picker);
     panel.dataset.mount = view.id;
     const frame = document.createElement("iframe");
     frame.className = "app-frame";
@@ -701,6 +703,7 @@ async function renderView(view) {
     const html = loadAppHtml(app);
     panel.append(bar, frame);
     $("#mounts").append(panel);
+    desktop.attach(view, panel, {bar, frame, name:app.name, close});
     const channel = new MessageChannel();
     ports.set(view.id, channel.port1);
     channel.port1.onmessage = async ({ data, ports: transfers }) => {
@@ -723,6 +726,7 @@ async function renderView(view) {
         "*",
         [channel.port2],
       );
+      if (desktop.state(view.id).active) desktop.activate(view.id, true);
     };
     window.addEventListener("message", ready);
     const contents = await html;

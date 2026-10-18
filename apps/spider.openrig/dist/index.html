@@ -329,9 +329,14 @@ function connect() {
       if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
         return;
       window.removeEventListener("message", ready);
-      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set();
+      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set(), focusListeners = /* @__PURE__ */ new Set();
       let state = e.data.state;
       port.onmessage = ({ data }) => {
+        if (data.type === "focus") {
+          window.focus();
+          for (const fn2 of focusListeners) fn2();
+          return;
+        }
         if (data.type === "state") {
           state = data.state;
           for (const fn2 of listeners) fn2(state);
@@ -358,6 +363,10 @@ function connect() {
         read: () => state?.data || {},
         write: (path, value) => request("write", { path, value }),
         request,
+        onFocus(fn2) {
+          focusListeners.add(fn2);
+          return () => focusListeners.delete(fn2);
+        },
         async openTerminal(options, onEvent) {
           const channel = new MessageChannel();
           channel.port1.onmessage = ({ data }) => onEvent(data);
@@ -419,10 +428,14 @@ function connect() {
             ).catch(() => {
             });
           });
+          const unfocus = sdk2.onFocus(() => {
+            if (document.activeElement === frame) channel.port1.postMessage({ type: "focus" });
+          });
           return {
             frame,
             close() {
               unsubscribe();
+              unfocus();
               request("unmount", { mountId: desc.context.mountId }).catch(
                 () => {
                 }
@@ -433,6 +446,10 @@ function connect() {
           };
         }
       };
+      const activate = () => request("activate").catch(() => {
+      });
+      document.addEventListener("pointerdown", activate, { capture: true, passive: true });
+      document.addEventListener("focusin", activate);
       resolve(sdk2);
     };
     window.addEventListener("message", ready);
@@ -9570,6 +9587,10 @@ function inputFrames(data) {
 function setupTerminal(sdk2, { online: online2, status: status2, notice: notice2 }) {
   const $3 = (s15) => document.querySelector(s15);
   let terminal2 = null, connection = null, connecting = false, connected = false, generation = 0, currentView = null;
+  function focus() {
+    if (connected && !$3("#terminal-panel").hidden) terminal2?.focus();
+  }
+  sdk2.onFocus?.(focus);
   function controls() {
     $3("#terminal-connect").disabled = !online2() || !status2().running || connecting;
     $3("#terminal-disconnect").disabled = !connection && !connecting;
@@ -9639,6 +9660,7 @@ function setupTerminal(sdk2, { online: online2, status: status2, notice: notice2
           terminal2.options.disableStdin = false;
           $3("#terminal-state").textContent = "Connected";
           controls();
+          if (sdk2.state.window?.active !== false) focus();
         } else if (event.type === "closed") {
           connected = false;
           connecting = false;
@@ -9683,14 +9705,10 @@ function setupTerminal(sdk2, { online: online2, status: status2, notice: notice2
     send({ type: "keys", keys: ["Enter"] });
     $3("#cli-command").value = "";
   };
-  $3("#terminal-fullscreen").onclick = async () => {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await $3("#terminal-panel").requestFullscreen();
-    } catch {
-      notice2("Full screen is unavailable in this browser. You can scroll the terminal sideways.");
-    }
-  };
+  $3("#terminal-fullscreen").onclick = () => sdk2.request("fullscreen").then(focus).catch((error) => notice2(error.message, true));
+  sdk2.onState((state) => {
+    $3("#terminal-fullscreen").textContent = state.window?.fullscreen ? "Restore window" : "Full screen";
+  });
   window.addEventListener("pagehide", disconnect);
   return { connect: connect2, disconnect, update: () => {
     if (!online2() && (connection || connecting)) disconnect();

@@ -10,9 +10,15 @@ export function connect() {
       window.removeEventListener("message", ready);
       const port = e.ports[0],
         pending = new Map(),
-        listeners = new Set();
+        listeners = new Set(),
+        focusListeners = new Set();
       let state = e.data.state;
       port.onmessage = ({ data }) => {
+        if (data.type === "focus") {
+          window.focus();
+          for (const fn of focusListeners) fn();
+          return;
+        }
         if (data.type === "state") {
           state = data.state;
           for (const fn of listeners) fn(state);
@@ -41,6 +47,10 @@ export function connect() {
         read: () => state?.data || {},
         write: (path, value) => request("write", { path, value }),
         request,
+        onFocus(fn) {
+          focusListeners.add(fn);
+          return () => focusListeners.delete(fn);
+        },
         async openTerminal(options, onEvent) {
           const channel = new MessageChannel();
           channel.port1.onmessage = ({data}) => onEvent(data);
@@ -99,10 +109,14 @@ export function connect() {
               )
               .catch(() => {});
           });
+          const unfocus = sdk.onFocus(() => {
+            if (document.activeElement === frame) channel.port1.postMessage({type:"focus"});
+          });
           return {
             frame,
             close() {
               unsubscribe();
+              unfocus();
               request("unmount", { mountId: desc.context.mountId }).catch(
                 () => {},
               );
@@ -112,6 +126,11 @@ export function connect() {
           };
         },
       };
+      // App gestures activate their owning desktop window without moving focus
+      // away from the field or terminal the person actually clicked.
+      const activate = () => request("activate").catch(() => {});
+      document.addEventListener("pointerdown", activate, {capture:true, passive:true});
+      document.addEventListener("focusin", activate);
       resolve(sdk);
     };
     window.addEventListener("message", ready);

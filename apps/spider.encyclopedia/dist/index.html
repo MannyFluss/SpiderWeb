@@ -130,9 +130,14 @@ function connect() {
       if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
         return;
       window.removeEventListener("message", ready);
-      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set();
+      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set(), focusListeners = /* @__PURE__ */ new Set();
       let state = e.data.state;
       port.onmessage = ({ data }) => {
+        if (data.type === "focus") {
+          window.focus();
+          for (const fn of focusListeners) fn();
+          return;
+        }
         if (data.type === "state") {
           state = data.state;
           for (const fn of listeners) fn(state);
@@ -159,6 +164,10 @@ function connect() {
         read: () => state?.data || {},
         write: (path, value) => request("write", { path, value }),
         request,
+        onFocus(fn) {
+          focusListeners.add(fn);
+          return () => focusListeners.delete(fn);
+        },
         async openTerminal(options, onEvent) {
           const channel = new MessageChannel();
           channel.port1.onmessage = ({ data }) => onEvent(data);
@@ -220,10 +229,14 @@ function connect() {
             ).catch(() => {
             });
           });
+          const unfocus = sdk.onFocus(() => {
+            if (document.activeElement === frame2) channel.port1.postMessage({ type: "focus" });
+          });
           return {
             frame: frame2,
             close() {
               unsubscribe();
+              unfocus();
               request("unmount", { mountId: desc.context.mountId }).catch(
                 () => {
                 }
@@ -234,6 +247,10 @@ function connect() {
           };
         }
       };
+      const activate = () => request("activate").catch(() => {
+      });
+      document.addEventListener("pointerdown", activate, { capture: true, passive: true });
+      document.addEventListener("focusin", activate);
       resolve(sdk);
     };
     window.addEventListener("message", ready);
