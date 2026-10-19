@@ -542,6 +542,7 @@ async function dispatch(ctx, msg, transferPort) {
     }
     case "builder":
     case "github-readme":
+    case "apple-notes":
     case "openrig":
     case "agent":
     case "context":
