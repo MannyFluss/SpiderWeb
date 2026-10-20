@@ -7,16 +7,8 @@
   <title>OS Playground</title>
 
 
-<style>:root{font-family:"Avenir Next",Avenir,"Trebuchet MS",sans-serif;color:#1c2b4b;background:#c7d6ed;font-synthesis:none;font-size:14px;line-height:1.45;color-scheme:light}
-*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.45}button{border:0;background:none}button,textarea,input{-webkit-tap-highlight-color:transparent}button:focus-visible,input:focus-visible,textarea:focus-visible,.titlebar:focus-visible{outline:3px solid #3156da;outline-offset:-3px}button:hover{background-color:#1e386c0c}svg{display:block;width:20px;height:20px;flex-shrink:0}h1,h2,p{margin:0}button{touch-action:manipulation}[hidden]{display:none!important}
-#shell{--desk:#c7d6ed;--desk-line:#a3b7d9;display:grid;grid-template-columns:70px minmax(0,1fr);grid-template-rows:54px minmax(0,1fr) 52px;height:100%;width:100%;background:var(--desk)}
-.topbar{grid-column:1/-1;display:flex;align-items:center;gap:24px;padding:0 19px;background:#edf2fc;border-bottom:1px solid #1d376016;z-index:100;min-width:0}.identity{display:flex;align-items:center;gap:9px;white-space:nowrap}.identity strong{font-size:15px;font-weight:650;letter-spacing:-.4px}#brand-icon svg{width:25px;height:25px;color:#3b50a3}.experiment-tag{font-size:10px;color:#5c6b88;border-left:1px solid #c9d2e4;margin-left:3px;padding-left:11px}
-#spaces{display:flex;align-items:center;gap:3px;min-width:0;margin:auto}#spaces button{padding:7px 13px;border-radius:6px;font-size:12px;white-space:nowrap;color:#64738e}#spaces button[aria-pressed=true]{background:#dbe4f7;color:#233c8b;font-weight:650}.top-actions{display:flex;align-items:center;gap:12px}.quiet-button{display:flex;gap:7px;align-items:center;font-size:12px;padding:7px 8px;border-radius:5px}.quiet-button svg{width:16px;height:16px}.icon-button{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:5px;flex-shrink:0}.icon-button svg{width:18px;height:18px}#clock{font-size:11px;font-variant-numeric:tabular-nums;color:#53627d;white-space:nowrap}
-.rail{grid-column:1;grid-row:2;display:flex;align-items:center;flex-direction:column;gap:7px;background:#eaf0fae8;border-right:1px solid #1d376010;padding:15px 6px;z-index:60;min-height:0;overflow-y:auto}.rail-button{position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;width:54px;min-height:48px;border-radius:9px;color:#485f89;flex-shrink:0}.rail-button svg{width:23px;height:23px}.rail-label{font-size:9px;line-height:1.2;font-weight:600}.library-button{color:#2c4bc0;background:#dce5f9}.rail-divider{height:1px;width:27px;background:#ccd6e8;margin:4px 0 7px}.rail-spacer{flex:1}.rail #pinned{display:flex;flex-direction:column;gap:9px}.rail-button.is-open:after{content:"";width:3px;height:13px;position:absolute;left:-3px;top:17px;background:#536bc7;border-radius:2px}
-#desktop{grid-column:2;grid-row:2;position:relative;overflow:hidden;min-height:0;min-width:0;isolation:isolate}.wallpaper{position:absolute;inset:0;overflow:hidden;pointer-events:none;color:var(--desk-line)}.orbit{position:absolute;border:1px solid currentColor;border-radius:50%;width:920px;height:920px;right:-420px;bottom:-635px}.orbit-two{width:1160px;height:1160px;right:-540px;bottom:-755px}.orbit-three{width:1400px;height:1400px;right:-660px;bottom:-875px}.wallpaper-word{position:absolute;left:8%;top:12%;font-size:clamp(40px,7.5vw,100px);font-weight:500;line-height:1.02;letter-spacing:-.065em;opacity:.65}.wallpaper-word::selection{background:none}#shell[data-pattern=plain] .wallpaper>*{display:none}#shell[data-pattern=grid] .wallpaper>*{display:none}#shell[data-pattern=grid] .wallpaper{background-image:linear-gradient(90deg,var(--desk-line) 1px,transparent 1px),linear-gradient(var(--desk-line) 1px,transparent 1px);background-size:40px 40px;opacity:.45}
-#empty{position:absolute;bottom:35px;left:36px;z-index:1;font-size:15px;color:#3e5277}#empty button{font-size:12px;margin:10px 0 0;padding:7px 13px;border:1px solid #647da65c;border-radius:5px;background:#f3f6fc60}#windows{position:absolute;inset:0;pointer-events:none}#snap-preview{position:absolute;z-index:200;background:#edf3ff55;box-shadow:inset 0 0 0 2px #3156da99;border-radius:10px;pointer-events:none}#gesture-shield{position:absolute;inset:0;z-index:190;background:transparent}.gesturing{user-select:none;-webkit-user-select:none}.gesturing *{cursor:grabbing!important}
-.window{position:absolute;display:flex;flex-direction:column;background:#f8faff;border:1px solid #657c9d66;border-radius:11px;box-shadow:0 5px 18px #354c7020;overflow:hidden;pointer-events:auto;min-width:0;min-height:0}.window.is-active{border-color:#5b74b4a8;box-shadow:0 15px 45px #34476529,0 2px 6px #34476515}.window.is-expanded{border-radius:5px}.titlebar{display:flex;align-items:center;gap:8px;height:40px;min-height:40px;padding:0 5px 0 13px;background:#e8edf7;color:#64728d;border-bottom:1px solid #d7dfed;user-select:none;-webkit-user-select:none;touch-action:none;cursor:grab}.is-active .titlebar{background:#f4f7fd;color:#263b68}.window-mark svg{width:16px;height:16px}.window-title{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.window-controls{display:flex;align-items:center;gap:1px}.window-control{width:29px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:5px;color:#647695}.window-control svg{width:15px;height:15px}.window-control:hover{background:#cdd9ef}.close-control:hover{color:#a32f41;background:#f1d8de}.window-body{position:relative;overflow:auto;overscroll-behavior:contain;flex:1;min-height:0;min-width:0;scrollbar-width:thin}.resize-handle{position:absolute;z-index:60;touch-action:none}.edge-n,.edge-s{height:6px;left:10px;right:10px;cursor:ns-resize}.edge-n{top:0}.edge-s{bottom:0}.edge-e,.edge-w{width:6px;top:10px;bottom:10px;cursor:ew-resize}.edge-e{right:0}.edge-w{left:0}.edge-ne,.edge-nw,.edge-se,.edge-sw{width:13px;height:13px}.edge-ne{right:0;top:0;cursor:nesw-resize}.edge-sw{left:0;bottom:0;cursor:nesw-resize}.edge-nw{left:0;top:0;cursor:nwse-resize}.edge-se{right:0;bottom:0;cursor:nwse-resize}.compact .resize-handle{display:none}.compact .titlebar{cursor:default}
-.shelf{grid-column:1/-1;grid-row:3;display:flex;align-items:center;gap:10px;background:#edf2fc;border-top:1px solid #c1cfe4;padding:0 14px;min-width:0;z-index:100}.shelf-divider{height:21px;width:1px;flex-shrink:0;background:#cfdaec}#tasks{display:flex;align-items:center;gap:5px;overflow-x:auto;min-width:0;scrollbar-width:none;flex:1}.task{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:6px;white-space:nowrap;font-size:11px;position:relative}.task svg{width:17px;height:17px;color:#48649d}.task[aria-current=true]{background:#d8e3f9;color:#233e8e}.task.is-minimized{opacity:.55}.task.is-minimized:after{content:"";position:absolute;bottom:3px;left:calc(50% - 5px);width:10px;height:2px;background:#7a89a7;border-radius:2px}#save-status{font-size:10px;color:#687b99;flex-shrink:0;padding-left:10px}#save-status:before{content:"";display:inline-block;vertical-align:middle;width:5px;height:5px;border-radius:50%;background:#719890;margin-right:6px}#save-status.has-error{color:#a53c4a}#save-status.has-error:before{background:#a53c4a}
+
+<style>/* Sample-app panels and dialogs. Desktop and camera chrome live in canvas.css. */
 dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8fe;color:#1c2b4b;box-shadow:0 25px 100px #17244950;max-width:calc(100vw - 28px);max-height:calc(100dvh - 32px);overflow:auto}dialog::backdrop{background:#24395835;backdrop-filter:blur(5px)}.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.dialog-heading h1{font-size:25px;line-height:1.15;letter-spacing:-1px;font-weight:500}.dialog-heading h2{font-size:20px;letter-spacing:-.5px;font-weight:500}#app-library{width:530px}.search-field{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #c4cfe1;border-radius:7px;padding:9px 13px;margin-bottom:13px}.search-field svg{width:18px;height:18px;color:#8a9bb8}.search-field input{background:none;border:0;width:100%;outline:none;padding:2px;font-size:13px}.search-field:focus-within{outline:2px solid #5474d4}.app-choice{display:flex;align-items:center;gap:13px;text-align:left;width:100%;padding:10px 8px;border-radius:8px}.app-choice-icon{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:11px;background:#e4ebf8;color:#4561ad;flex-shrink:0}.app-choice-icon svg{width:23px;height:23px}.app-choice>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:2px}.app-choice strong{font-size:13px;font-weight:600}.app-choice span span{font-size:11px;color:#6c7b95}.app-choice>svg{width:16px;height:16px;color:#99a8c1}.dialog-hint{display:flex;justify-content:space-between;gap:12px;font-size:10px;color:#72829f;margin-top:18px}.no-matches{font-size:13px;padding:25px 8px}#window-menu,#arrange-menu{width:350px}.window-action{display:flex;align-items:center;gap:12px;padding:12px;border-radius:5px;width:100%;text-align:left}.window-action svg{width:18px;height:18px;color:#617aa7}.action-row{width:100%;text-align:left;padding:15px 10px;border-radius:7px;display:flex;flex-direction:column;gap:4px;font-weight:600}.action-row span{font-size:12px;font-weight:400;color:#6b7e9e}#notice{position:fixed;z-index:300;bottom:62px;left:85px;right:18px;background:#fff2e5;border:1px solid #dfbea0;border-radius:8px;padding:12px 17px;font-size:12px;box-shadow:0 5px 20px #31425c20;max-width:680px}
 .primary{padding:9px 17px;background:#3f59c7;color:white;border:1px solid #334db9;border-radius:6px;font-weight:600;font-size:12px}.primary:hover{background:#304ab5}.text-button{padding:9px 12px;font-size:12px;border-radius:6px;color:#526b9e}.intro{color:#647493;font-size:14px;line-height:1.55;max-width:32ch}.small-print{color:#7b89a0;font-size:10px;line-height:1.65;max-width:47ch}.guide-content{padding:24px 31px}.guide-emblem{display:flex;align-items:center;justify-content:center;width:47px;height:47px;background:#dce5fa;color:#4b63b4;border-radius:50%;margin-bottom:16px}.guide-emblem svg{width:28px;height:28px}.guide-content h1{font-size:30px;line-height:1.1;font-weight:500;letter-spacing:-1.3px;margin-bottom:10px}.guide-instructions{margin:22px 0}.guide-instructions p{display:flex;gap:12px;align-items:center;font-size:12px;color:#52698d;margin:13px 0}.guide-instructions svg{width:17px;height:17px;flex-shrink:0;color:#7c90b5}.guide-actions{display:flex;align-items:center;gap:8px;margin-bottom:17px}
 .note-content{background:#f6edbc;display:flex;flex-direction:column;overflow:hidden;padding:18px 23px 13px}.note-heading{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#95864f;border-bottom:1px solid #d9cc8b;padding-bottom:13px}.note-dot{font-size:8px;color:#c2af57}.note-editor{flex:1;min-height:70px;resize:none;border:0;background:transparent;padding:20px 0 14px;line-height:1.65;font-size:20px;font-family:"Iowan Old Style","Palatino Linotype",Palatino,serif;color:#5d522e;scrollbar-width:thin;border-radius:0}.note-editor::placeholder{color:#a29460}.note-editor:focus-visible{outline:none}.note-content:focus-within .note-heading{border-color:#ae9841}.note-footer{display:flex;justify-content:space-between;gap:10px;font-size:9px;color:#a29460;padding-top:10px;border-top:1px solid #d9cc8b}
@@ -24,40 +16,67 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
 .timer-content{text-align:center;padding:20px 20px 15px;display:flex;align-items:center;flex-direction:column;gap:16px}.timer-label{font-size:13px;color:#6c7f9e}.timer-face{position:relative;width:174px;height:174px;flex-shrink:0;display:grid;place-items:center}.timer-face svg{width:100%;height:100%;position:absolute;inset:0;transform:rotate(-90deg);fill:none;stroke-width:3}.timer-track{stroke:#e1e7f4}.timer-progress{stroke:#5873d7;stroke-dasharray:560;stroke-linecap:round}.timer-digits{font-size:44px;font-weight:400;letter-spacing:-2px;font-variant-numeric:tabular-nums;color:#3e5288}.duration-options{display:flex;gap:4px;background:#eaf0fa;border-radius:6px;padding:3px}.duration-options button{font-size:11px;padding:6px 12px;border-radius:4px;color:#8796b0}.duration-options button[aria-pressed=true]{background:white;color:#3d5bb5;box-shadow:0 1px 4px #425a8120}.timer-controls{display:flex;gap:8px;align-items:center}.timer-controls .primary{min-width:100px}.timer-status{font-size:10px;color:#8c9bb4}
 .calculator-content{padding:20px}.calculator-content form{max-width:360px;margin:0 auto}.calculator-content label{font-size:11px;color:#7284a2;display:block}.calculation-input{display:block;width:100%;border:0;border-bottom:1px solid #d5deef;background:transparent;margin:10px 0 8px;padding:6px 0;font-size:17px;line-height:1.5}.calculation-input::placeholder{color:#b5c1d5}.calculation-answer{display:block;text-align:right;font-size:35px;letter-spacing:-1px;font-variant-numeric:tabular-nums;color:#3c54a1;overflow-wrap:anywhere;line-height:1.3;min-height:55px;padding-bottom:9px}.calculator-keys{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.calculator-keys button{height:33px;background:#edf1f9;border:1px solid #e4eaf5;border-radius:5px}.calculator-keys button:hover{background:#dce5f8}.calculator-keys .operator,.calculator-actions .operator{background:#dfe7fb;color:#4664b6}.calculator-actions{display:flex;gap:5px;margin-top:7px}.calculator-actions button{height:33px;border:1px solid #d8e2f4;border-radius:5px;flex:1;font-size:12px}.calculator-actions .primary{flex:2}.calculation-error{font-size:11px;color:#b14a58;padding-top:10px;min-height:20px}
 .appearance-content{padding:26px}.appearance-content h1{font-size:26px;letter-spacing:-1px;font-weight:500;margin-bottom:7px}.appearance-content .intro{font-size:12px;margin-bottom:24px}.appearance-content fieldset{border:0;padding:0;margin:0 0 24px}.appearance-content legend{font-size:11px;color:#7587a6;margin-bottom:13px;padding:0}.theme-options{display:flex;gap:13px}.theme-option{padding:0;border-radius:8px;font-size:11px;flex:1;text-align:left}.theme-option>span:last-child{display:block;padding-top:8px}.theme-swatch{height:68px;width:100%;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid transparent}.theme-swatch svg{width:22px;height:22px;opacity:0;color:#3b5385}.theme-option[aria-pressed=true] .theme-swatch{border-color:#5c71bf;box-shadow:inset 0 0 0 3px #ffffff70}.theme-option[aria-pressed=true] svg{opacity:1}.pattern-options{display:flex;gap:7px}.pattern-options button{padding:8px 15px;border:1px solid #d0dcee;border-radius:5px;font-size:11px}.pattern-options button[aria-pressed=true]{background:#e2e9fa;border-color:#859bcd;color:#3a56a9}
-@media(max-width:1000px){.experiment-tag{display:none}.topbar{gap:10px;padding:0 12px}.top-actions{gap:5px}#clock{display:none}#save-status{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
-@media(max-width:700px){#shell{grid-template-columns:54px minmax(0,1fr);grid-template-rows:48px minmax(0,1fr) 48px}.rail{padding:10px 3px;gap:3px}.rail-button{width:46px;min-height:45px}.rail-label{font-size:8px}.identity{gap:5px}.identity strong{font-size:12px}#brand-icon svg{width:20px;height:20px}.topbar{padding:0 8px;gap:4px}.top-actions{gap:0}.quiet-button{padding:7px}.quiet-button span{display:none}#spaces{gap:0}#spaces button{font-size:10px;padding:6px 7px}.top-actions .icon-button{width:28px;height:28px}.shelf{padding:0 6px;gap:5px}#save-status{display:none}.task{padding:8px 10px;font-size:10px;gap:6px}.shelf-divider{margin:0 2px}.wallpaper-word{font-size:56px;top:9%}.guide-content{padding:22px}.guide-content h1{font-size:28px}.board-content{padding:18px}.board-lanes{grid-template-columns:1fr}.board-form{flex-wrap:wrap}.board-form input{flex-basis:100%}.board-form .primary{width:100%}.titlebar{padding-left:12px}.window-control{width:26px}.window-controls{gap:0}.window-title{font-size:11px}.note-content{padding:15px 18px}.note-editor{font-size:19px}#notice{left:63px;font-size:11px}dialog{padding:20px}.dialog-heading h1{font-size:24px}}
-@media(prefers-reduced-motion:no-preference){dialog[open]{animation:appear .14s ease-out}.window{animation:window-appear .16s ease-out}@keyframes window-appear{from{opacity:.6}to{opacity:1}}@keyframes appear{from{opacity:.6;transform:translateY(4px)}to{opacity:1;transform:none}}}
+
+@media(max-width:700px){.guide-content{padding:22px}.guide-content h1{font-size:28px}.board-content{padding:18px}.board-lanes{grid-template-columns:1fr}.board-form{flex-wrap:wrap}.board-form input{flex-basis:100%}.board-form .primary{width:100%}.note-content{padding:15px 18px}.note-editor{font-size:19px}dialog{padding:20px}.dialog-heading h1{font-size:24px}}
+
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#234453;background:#dfe8ec;font-size:14px;line-height:1.45;color-scheme:light;font-synthesis:none}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none;touch-action:manipulation}button:disabled{opacity:.4;cursor:default}button:hover{background-color:#295b7212}button:focus-visible,input:focus-visible,textarea:focus-visible,.titlebar:focus-visible{outline:3px solid #b78347;outline-offset:-3px}svg{display:block;width:20px;height:20px;flex-shrink:0}[hidden]{display:none!important}
+#shell{--desk:#dfe8ec;--desk-line:#bdcdd3;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:54px 58px minmax(0,1fr);height:100%;width:100%;background:var(--desk)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;gap:16px;border-bottom:1px solid #c2d1d8;background:#f0f5f7;min-width:0;z-index:100}.identity{display:flex;align-items:center;gap:8px}.identity strong{font-size:16px;font-weight:600;letter-spacing:-.4px}#brand-icon svg{width:26px;height:26px;color:#295b72}.experiment-tag{font-size:10px;color:#7a919c;padding-left:10px;margin-left:4px;border-left:1px solid #c6d4da}.top-actions{display:flex;align-items:center;gap:7px}.top-actions button{border-radius:8px;min-width:32px;height:34px}.icon-button{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;flex-shrink:0}.icon-button svg{width:19px;height:19px}.quiet-button{display:flex;gap:7px;align-items:center;font-size:12px;padding:7px 8px}.quiet-button svg{width:16px;height:16px}#library{color:#295b72;font-size:14px}#clock{font-size:11px;color:#6d8793;font-variant-numeric:tabular-nums}
+.work-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:8px 20px;background:#eaf1f4;border-bottom:1px solid #c1d1d8}.work-heading p{font-size:10px;color:#718c98;margin-bottom:2px}.work-heading h1{font-size:18px;font-weight:600;line-height:1.2;letter-spacing:-.3px}.work-heading>div{flex-shrink:0}#spaces{display:flex;gap:4px;margin:auto}#spaces button{padding:6px 11px;font-size:11px;border-radius:6px;color:#63818f;white-space:nowrap}#spaces [aria-pressed=true]{background:#d4e2e8;color:#295b72;font-weight:600}#search-apps{border:1px solid #bfced7;background:#f5f8f9;border-radius:7px;font-size:11px;padding:7px 10px;white-space:nowrap}kbd{font:10px inherit;background:#e6eef2;border:1px solid #d5e1e7;border-radius:3px;padding:1px 4px;margin-left:9px}
+#desktop{position:relative;overflow:hidden;isolation:isolate;min-height:0;min-width:0;touch-action:pan-x pan-y}#desktop:focus-visible{outline:3px solid #b78347;outline-offset:-3px}#desktop canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;contain:strict}#scenery{z-index:0}#ink-canvas{z-index:1}#live-ink{z-index:2}#crew{z-index:5}#canvas-surface{position:absolute;inset:0;touch-action:none;cursor:grab;z-index:3}#desktop[data-tool=draw] #canvas-surface{cursor:crosshair}#desktop[data-tool=erase] #canvas-surface{cursor:cell}#desktop.is-navigating #canvas-surface{cursor:grabbing}
+#world{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0;pointer-events:none;z-index:10}#overlay-windows{position:absolute;inset:0;pointer-events:none;z-index:100}#gesture-shield{position:absolute;inset:0;z-index:700}.gesturing{user-select:none;-webkit-user-select:none}.gesturing *{cursor:grabbing!important}#empty{position:absolute;left:25px;top:120px;z-index:6;pointer-events:none;color:#6d8995;font-size:14px}#empty button{pointer-events:auto;border:1px solid #b2c7d0;border-radius:7px;background:#f4f8f9b3;padding:7px 12px;font-size:12px;margin-top:12px}
+.window{position:absolute;left:0;top:0;display:flex;flex-direction:column;background:#f8fbfc;border:1px solid #aabfc9;border-radius:9px;box-shadow:0 8px 25px #2743511c;overflow:hidden;pointer-events:auto;min-width:0;min-height:0}.window.is-active{border-color:#6f97aa;box-shadow:0 12px 32px #27435125}.window.is-moving{will-change:transform;box-shadow:0 16px 38px #27435128}.window.is-expanded{border-radius:0}.titlebar{height:40px;min-height:40px;display:flex;align-items:center;gap:9px;padding:0 10px;background:#e7eff3;border-bottom:1px solid #cad9e1;user-select:none;-webkit-user-select:none;touch-action:none;cursor:grab;color:#6c8795}.is-active .titlebar{background:#edf4f7;color:#234453}.window-controls{display:flex;gap:6px;align-items:center;flex-shrink:0}.window-control{width:21px;height:21px;min-height:21px;padding:0;border:1px solid #0002;border-radius:50%;display:grid;place-items:center;color:#37505b;font-size:14px;line-height:1}.window-control.red{background:#f47b73}.window-control.yellow{background:#efc35e}.window-control.green{background:#76bc8a}.window-control:hover{filter:brightness(.95);border-color:#0005}.window-title{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1}.window-tag{font-size:10px;color:#8198a2;flex:1;white-space:nowrap}.window-menu-button{margin-left:auto;width:28px;height:28px;flex-shrink:0;display:grid;place-items:center;border-radius:4px;color:#6f8b98}.window-menu-button svg{width:17px;height:17px}.window-body{position:relative;overflow:auto;overscroll-behavior:contain;flex:1;min-width:0;min-height:0;scrollbar-width:thin;touch-action:pan-x pan-y}
+.resize-handle{position:absolute;z-index:60;touch-action:none}.edge-n,.edge-s{height:6px;left:10px;right:10px;cursor:ns-resize}.edge-n{top:0}.edge-s{bottom:0}.edge-e,.edge-w{width:6px;top:10px;bottom:10px;cursor:ew-resize}.edge-e{right:0}.edge-w{left:0}.edge-ne,.edge-nw,.edge-se,.edge-sw{width:13px;height:13px}.edge-ne{right:0;top:0;cursor:nesw-resize}.edge-sw{left:0;bottom:0;cursor:nesw-resize}.edge-nw{left:0;top:0;cursor:nwse-resize}.edge-se{right:0;bottom:0;cursor:nwse-resize}
+.canvas-tools,.drawing-tools{position:absolute;display:flex;align-items:center;gap:3px;padding:4px;max-width:calc(100% - 24px);border:1px solid #b8cbd3;border-radius:12px;background:#f5f8f8;box-shadow:0 4px 18px #27435118;z-index:1000}.canvas-tools{right:14px;bottom:14px}.drawing-tools{left:14px;bottom:68px}.canvas-tools button,.canvas-tools select,.drawing-tools button,.drawing-tools select{font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:8px;background:transparent;border:0;border-radius:7px;color:#234453;min-height:34px;min-width:30px}.canvas-tools select{width:136px;min-width:0}.canvas-tools #actual-size{width:54px;font-variant-numeric:tabular-nums}.canvas-tools #angle{min-width:38px;font-variant-numeric:tabular-nums}.canvas-tools button:hover,.drawing-tools button:hover{background:#dbe6ea}.drawing-tools [aria-pressed=true]{background:#295b72;color:white}.drawing-tools #pen-width{font-size:11px;min-width:0;width:76px}#ink-colors{display:flex;align-items:center;gap:3px;margin:0 6px;border-left:1px solid #d1dee3;padding-left:9px}.drawing-tools .ink-color{width:21px;height:25px;min-width:21px;min-height:25px;position:relative;padding:0;border-radius:4px}.ink-color:before{content:"";position:absolute;inset:6px 4px;background:var(--swatch);border-radius:50%;border:1px solid #0002}.drawing-tools .ink-color[aria-pressed=true]{background:#d2e1e7;outline:1px solid #9bb5c1}.has-fullscreen .canvas-tools,.has-fullscreen .drawing-tools,.has-fullscreen>#empty{visibility:hidden}.has-fullscreen>#crew{display:none}
+.shelf{position:absolute;bottom:8px;left:10px;display:flex;align-items:center;gap:5px;background:#e6eef2df;border:1px solid #c6d8df;border-radius:6px;padding:1px 6px;z-index:1100;max-width:calc(100% - 20px)}.shelf .icon-button{width:25px;height:25px}.shelf .icon-button svg{width:15px;height:15px}.shelf-divider{height:13px;width:1px;background:#bdcfd8}#save-status{font-size:10px;color:#6e8995;white-space:nowrap}#save-status.has-error{color:#aa4553}#notice{position:fixed;left:14px;right:14px;bottom:120px;font-size:12px;padding:12px 15px;border:1px solid #d8bb91;background:#fff4e5;border-radius:7px;box-shadow:0 4px 18px #27435118;max-width:650px;z-index:2000}
+@media(max-width:800px){.experiment-tag,#clock{display:none}.topbar{padding:0 12px;gap:7px}.top-actions{gap:2px}.top-actions button{min-width:29px}.quiet-button span{display:none}.work-heading{padding:7px 12px;gap:7px}.work-heading p{display:none}#spaces button{padding:6px 8px;font-size:10px}.identity strong{font-size:14px}#brand-icon svg{width:23px;height:23px}#shell{grid-template-rows:50px 48px minmax(0,1fr)}.canvas-tools{right:10px;bottom:32px;flex-wrap:wrap;justify-content:center}.canvas-tools select{width:117px}.canvas-tools button{padding:7px 6px}.drawing-tools{bottom:112px;left:10px;flex-wrap:wrap;gap:2px}.drawing-tools button{padding:7px 6px}.drawing-tools #pen-width{width:63px}#ink-colors{margin:0 3px;padding-left:5px}.drawing-tools .ink-color{min-width:18px;width:18px}.titlebar{gap:6px;padding:0 7px}.window-tag{display:none}#search-apps{font-size:10px;padding:7px}.shelf{bottom:2px;padding:0 5px}#notice{bottom:170px}}
+@media(max-width:460px){.top-actions #help{display:none}.top-actions .icon-button{width:28px}.identity strong{font-size:12px}.work-heading h1{font-size:16px}.work-heading kbd{display:none}#spaces{gap:0}#spaces button{padding:6px;font-size:10px}.drawing-tools #redo{display:none}.canvas-tools{max-width:calc(100% - 20px);gap:1px}.canvas-tools select{width:101px}.canvas-tools button{min-width:26px}.canvas-tools #angle{min-width:35px}.canvas-tools #actual-size{width:44px}.drawing-tools{max-width:calc(100% - 20px)}.drawing-tools button{font-size:11px}#save-status{font-size:9px}}
+@media(pointer:coarse){.window-control{width:26px;height:26px;min-height:26px}.titlebar{height:46px;min-height:46px}.resize-handle{min-width:10px;min-height:10px}.edge-ne,.edge-nw,.edge-se,.edge-sw{width:20px;height:20px}}
+@media(prefers-reduced-motion:no-preference){dialog[open]{animation:appear .12s ease-out}@keyframes appear{from{opacity:.5}to{opacity:1}}}
 </style></head>
 <body>
   <main id="shell" aria-label="OS Playground">
     <header class="topbar">
       <div class="identity"><span id="brand-icon"></span><strong>Playground</strong><span class="experiment-tag">OS sketch</span></div>
-      <nav id="spaces" aria-label="Workspaces"></nav>
       <div class="top-actions">
+        <button id="library" class="icon-button" aria-label="Open playground apps" title="Apps (⌘/Ctrl K)"><span aria-hidden="true">●</span></button>
+        <button id="appearance" class="icon-button" aria-label="Open Appearance" title="Appearance"></button>
+        <button id="help" class="icon-button" aria-label="Open Start here" title="Start here"></button>
         <button id="arrange" class="quiet-button" aria-label="Arrange windows"></button>
         <button id="fullscreen" class="icon-button" aria-label="Enter full screen" title="Fill the Spider window"></button>
         <time id="clock"></time>
       </div>
     </header>
-    <nav id="rail" class="rail" aria-label="Pinned apps">
-      <button id="library" class="rail-button library-button" aria-label="Open playground apps" title="Apps (⌘/Ctrl K)"></button>
-      <div class="rail-divider"></div>
-      <div id="pinned"></div>
-      <div class="rail-spacer"></div>
-      <button id="appearance" class="rail-button" aria-label="Open Appearance" title="Appearance"></button>
-      <button id="help" class="rail-button" aria-label="Open Start here" title="Start here"></button>
-    </nav>
+    <div class="work-heading"><div><p>Independent views. Room to play.</p><h1>Desktop</h1></div><nav id="spaces" aria-label="Workspaces"></nav><button id="search-apps">Search apps <kbd>⌘ K</kbd></button></div>
     <section id="desktop" aria-label="Playground desktop" tabindex="0">
-      <div class="wallpaper" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div><div class="wallpaper-word">room to<br />make things.</div></div>
+      <canvas id="scenery" aria-hidden="true"></canvas>
+      <canvas id="ink-canvas" aria-hidden="true"></canvas>
+      <canvas id="live-ink" aria-hidden="true"></canvas>
+      <canvas id="crew" aria-hidden="true"></canvas>
+      <div id="canvas-surface" aria-hidden="true"></div>
       <div id="empty" hidden><p>A little breathing room.</p><button id="empty-open">Open an app</button></div>
-      <div id="windows"></div>
-      <div id="snap-preview" hidden aria-hidden="true"></div>
+      <div id="world"></div>
+      <div id="overlay-windows"></div>
       <div id="gesture-shield" hidden aria-hidden="true"></div>
+      <nav class="drawing-tools" aria-label="Drawing tools">
+        <button id="pan" aria-label="Pan canvas" aria-pressed="false">Pan</button>
+        <button id="draw" aria-label="Draw on canvas" aria-pressed="false">Draw</button>
+        <button id="erase" aria-label="Erase drawing" aria-pressed="false">Erase</button>
+        <div id="ink-colors" aria-label="Pen colors"></div>
+        <select id="pen-width" aria-label="Pen width"><option value="2">Fine</option><option value="4" selected>Medium</option><option value="8">Broad</option></select>
+        <button id="undo" aria-label="Undo drawing" disabled>Undo</button><button id="redo" aria-label="Redo drawing" disabled>Redo</button>
+      </nav>
+      <nav class="canvas-tools" aria-label="Canvas navigation">
+        <select id="window-picker" aria-label="Go to window"><option value="">Go to…</option></select>
+        <button id="zoom-out" aria-label="Zoom canvas out">−</button><button id="actual-size" aria-label="Reset canvas view">100%</button><button id="zoom-in" aria-label="Zoom canvas in">+</button>
+        <button id="rotate-left" aria-label="Rotate canvas left 15 degrees">↶</button><button id="angle" aria-label="Reset canvas rotation">0°</button><button id="rotate-right" aria-label="Rotate canvas right 15 degrees">↷</button>
+        <button id="fit-all">Fit all</button>
+      </nav>
     </section>
     <footer class="shelf">
       <button id="show-desktop" class="icon-button" aria-label="Show desktop" title="Show desktop"></button>
       <div class="shelf-divider"></div>
-      <nav id="tasks" aria-label="Open windows"></nav>
       <span id="save-status" role="status">Connecting…</span>
     </footer>
   </main>
@@ -242,6 +261,58 @@ function connect() {
   });
 }
 
+// ../SpiderPlayground/camera.js
+var WORLD_LIMIT = 1e6;
+var MIN_ZOOM = 1e-5;
+var MAX_ZOOM = 4;
+var clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+var finite = (n, fallback) => Number.isFinite(n) ? n : fallback;
+function snapAngle(angle) {
+  return ((Math.round(finite(angle, 0) / 15) * 15 + 180) % 360 + 360) % 360 - 180;
+}
+function normalizeCamera(value) {
+  return { x: clamp(finite(value?.x, 0), -1e7, 1e7), y: clamp(finite(value?.y, 0), -1e7, 1e7), zoom: clamp(finite(value?.zoom, 1), MIN_ZOOM, MAX_ZOOM), angle: snapAngle(value?.angle) };
+}
+function worldToScreen(camera, point) {
+  const a = camera.angle * Math.PI / 180, c = Math.cos(a) * camera.zoom, s = Math.sin(a) * camera.zoom;
+  return { x: camera.x + c * point.x - s * point.y, y: camera.y + s * point.x + c * point.y };
+}
+function screenToWorld(camera, point) {
+  const a = -camera.angle * Math.PI / 180, c = Math.cos(a) / camera.zoom, s = Math.sin(a) / camera.zoom, x = point.x - camera.x, y = point.y - camera.y;
+  return { x: c * x - s * y, y: s * x + c * y };
+}
+function transformAt(camera, point, change) {
+  const world = screenToWorld(camera, point), next = normalizeCamera({ ...camera, ...change }), projected = worldToScreen({ ...next, x: 0, y: 0 }, world);
+  return normalizeCamera({ ...next, x: point.x - projected.x, y: point.y - projected.y });
+}
+function transformGesture(camera, anchor, mid, scale, rotation) {
+  const next = transformAt(camera, anchor, { zoom: camera.zoom * scale, angle: camera.angle + rotation });
+  return normalizeCamera({ ...next, x: next.x + mid.x - anchor.x, y: next.y + mid.y - anchor.y });
+}
+var angleBetween = (a, b) => Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+var angleDelta = (a, b) => (b - a + 540) % 360 - 180;
+function projectedRect(camera, rect) {
+  const points = [{ x: rect.x, y: rect.y }, { x: rect.x + rect.width, y: rect.y }, { x: rect.x, y: rect.y + rect.height }, { x: rect.x + rect.width, y: rect.y + rect.height }].map((p) => worldToScreen(camera, p));
+  const x = Math.min(...points.map((p) => p.x)), y = Math.min(...points.map((p) => p.y));
+  return { x, y, width: Math.max(...points.map((p) => p.x)) - x, height: Math.max(...points.map((p) => p.y)) - y };
+}
+function fitWorld(rects, bounds, angle = 0, margin = 48) {
+  if (!rects.length) return normalizeCamera({});
+  const rotation = normalizeCamera({ angle }), projected = rects.map((rect) => projectedRect(rotation, rect));
+  const left = Math.min(...projected.map((r) => r.x)), top = Math.min(...projected.map((r) => r.y));
+  const width = Math.max(...projected.map((r) => r.x + r.width)) - left, height = Math.max(...projected.map((r) => r.y + r.height)) - top;
+  const zoom = Math.max(MIN_ZOOM, Math.min(1, Math.max(1, bounds.width - margin * 2) / Math.max(1, width), Math.max(1, bounds.height - margin * 2) / Math.max(1, height)));
+  return normalizeCamera({ angle, zoom, x: (bounds.width - width * zoom) / 2 - left * zoom, y: (bounds.height - height * zoom) / 2 - top * zoom });
+}
+function cameraMatrix(camera, dpr = 1) {
+  const a = camera.angle * Math.PI / 180, c = Math.cos(a) * camera.zoom * dpr, s = Math.sin(a) * camera.zoom * dpr;
+  return [c, s, -s, c, camera.x * dpr, camera.y * dpr];
+}
+function visibleWorld(camera, bounds, padding = 80) {
+  const points = [{ x: -padding, y: -padding }, { x: bounds.width + padding, y: -padding }, { x: -padding, y: bounds.height + padding }, { x: bounds.width + padding, y: bounds.height + padding }].map((p) => screenToWorld(camera, p));
+  return { left: Math.min(...points.map((p) => p.x)), top: Math.min(...points.map((p) => p.y)), right: Math.max(...points.map((p) => p.x)), bottom: Math.max(...points.map((p) => p.y)) };
+}
+
 // ../SpiderPlayground/model.js
 var SPACES = [{ id: "studio", name: "Studio" }, { id: "quiet", name: "Quiet room" }];
 var APPS = [
@@ -253,34 +324,29 @@ var APPS = [
   { id: "appearance", name: "Appearance", icon: "palette", description: "Change the atmosphere", width: 400, height: 410 }
 ];
 var THEMES = {
-  tide: { name: "Tide", color: "#c7d6ed", line: "#a3b7d9" },
-  iris: { name: "Iris", color: "#d8cfea", line: "#baaad5" },
-  grove: { name: "Grove", color: "#cbded4", line: "#a1c0ae" }
+  tide: { name: "Tide", color: "#dfe8ec", line: "#bdcdd3" },
+  iris: { name: "Iris", color: "#e7e1ef", line: "#c6bcd5" },
+  grove: { name: "Grove", color: "#dce9df", line: "#b6cdbd" }
 };
-var clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-var finite = (n, fallback) => Number.isFinite(n) ? n : fallback;
+var clamp2 = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+var finite2 = (n, fallback) => Number.isFinite(n) ? n : fallback;
 var key = (value) => typeof value === "string" && /^[a-zA-Z0-9_-]{1,80}$/.test(value);
 var appById = (id) => APPS.find((app) => app.id === id);
 function boundsOf(bounds) {
-  return { width: Math.max(1, finite(bounds.width, 800)), height: Math.max(1, finite(bounds.height, 600)) };
+  return { width: Math.max(1, finite2(bounds.width, 800)), height: Math.max(1, finite2(bounds.height, 600)) };
 }
 function normalRect(rect = {}) {
   rect = rect && typeof rect === "object" ? rect : {};
   return {
-    x: clamp(finite(rect.x, 40), 0, 8e3),
-    y: clamp(finite(rect.y, 40), 0, 8e3),
-    width: clamp(finite(rect.width, 440), 280, 4e3),
-    height: clamp(finite(rect.height, 360), 210, 4e3)
+    x: clamp2(finite2(rect.x, 40), -WORLD_LIMIT, WORLD_LIMIT),
+    y: clamp2(finite2(rect.y, 40), -WORLD_LIMIT, WORLD_LIMIT),
+    width: clamp2(finite2(rect.width, 440), 280, 4e3),
+    height: clamp2(finite2(rect.height, 360), 210, 4e3)
   };
-}
-function fitRect(rect, bounds) {
-  const b = boundsOf(bounds), r = normalRect(rect);
-  const width = Math.min(r.width, b.width), height = Math.min(r.height, b.height);
-  return { x: clamp(r.x, 0, b.width - width), y: clamp(r.y, 0, b.height - height), width, height };
 }
 function displayRect(win, bounds) {
   const b = boundsOf(bounds);
-  if (b.width < 600 || win.mode === "maximized") return { x: 0, y: 0, ...b };
+  if (win.mode === "maximized") return { x: 0, y: 0, ...b };
   if (win.mode === "left" || win.mode === "right") {
     const leftWidth = Math.floor(b.width / 2);
     return {
@@ -290,38 +356,29 @@ function displayRect(win, bounds) {
       height: b.height
     };
   }
-  return fitRect(win.rect, b);
+  return normalRect(win.rect);
 }
 function moveRect(rect, dx, dy, bounds) {
-  const r = fitRect(rect, bounds), b = boundsOf(bounds);
-  return { ...r, x: clamp(r.x + dx, 0, b.width - r.width), y: clamp(r.y + dy, 0, b.height - r.height) };
+  const r = normalRect(rect);
+  return { ...r, x: clamp2(r.x + dx, -WORLD_LIMIT, WORLD_LIMIT), y: clamp2(r.y + dy, -WORLD_LIMIT, WORLD_LIMIT) };
 }
 function resizeRect(rect, edge, dx, dy, bounds) {
-  const r = fitRect(rect, bounds), b = boundsOf(bounds);
+  const r = normalRect(rect);
   let left = r.x, top = r.y, right = r.x + r.width, bottom = r.y + r.height;
-  const minWidth = Math.min(280, b.width), minHeight = Math.min(210, b.height);
-  if (edge.includes("w")) left = clamp(left + dx, 0, right - minWidth);
-  if (edge.includes("e")) right = clamp(right + dx, left + minWidth, b.width);
-  if (edge.includes("n")) top = clamp(top + dy, 0, bottom - minHeight);
-  if (edge.includes("s")) bottom = clamp(bottom + dy, top + minHeight, b.height);
+  if (edge.includes("w")) left = clamp2(left + dx, right - 4e3, right - 280);
+  if (edge.includes("e")) right = clamp2(right + dx, left + 280, left + 4e3);
+  if (edge.includes("n")) top = clamp2(top + dy, bottom - 4e3, bottom - 210);
+  if (edge.includes("s")) bottom = clamp2(bottom + dy, top + 210, top + 4e3);
   return { x: left, y: top, width: right - left, height: bottom - top };
 }
-function snapAt(point, bounds) {
-  const b = boundsOf(bounds);
-  if (b.width < 600) return null;
-  if (point.y <= 16) return "maximized";
-  if (point.x <= 22) return "left";
-  if (point.x >= b.width - 22) return "right";
-  return null;
-}
 function defaultLayout() {
-  return { version: 1, space: "studio", active: { studio: "first-note", quiet: null }, windows: [
+  return { version: 2, space: "studio", cameras: { studio: normalizeCamera(), quiet: normalizeCamera() }, active: { studio: "first-note", quiet: null }, windows: [
     { id: "first-guide", app: "guide", space: "studio", rect: { x: 48, y: 40, width: 470, height: 430 }, mode: "normal", minimized: false, order: 1 },
     { id: "first-note", app: "note", space: "studio", rect: { x: 480, y: 176, width: 440, height: 360 }, mode: "normal", minimized: false, order: 2 }
   ] };
 }
 function normalizeLayout(value) {
-  if (!value || value.version !== 1 || !Array.isArray(value.windows)) return defaultLayout();
+  if (!value || ![1, 2].includes(value.version) || !Array.isArray(value.windows)) return defaultLayout();
   const spaces = new Set(SPACES.map((space) => space.id)), ids = /* @__PURE__ */ new Set(), apps = /* @__PURE__ */ new Set(), windows = [];
   for (const raw of value.windows.slice(0, 32)) {
     if (!raw || !key(raw.id) || ids.has(raw.id) || !appById(raw.app) || !spaces.has(raw.space) || apps.has(raw.space + "/" + raw.app)) continue;
@@ -334,7 +391,9 @@ function normalizeLayout(value) {
       rect: normalRect(raw.rect),
       mode: ["normal", "maximized", "left", "right"].includes(raw.mode) ? raw.mode : "normal",
       minimized: raw.minimized === true,
-      order: finite(raw.order, windows.length)
+      expanded: raw.expanded === true,
+      restoreRect: raw.restoreRect ? normalRect(raw.restoreRect) : null,
+      order: finite2(raw.order, windows.length)
     });
   }
   windows.sort((a, b) => a.order - b.order).forEach((win, i) => win.order = i + 1);
@@ -343,11 +402,657 @@ function normalizeLayout(value) {
     const available = windows.filter((win) => win.space === space && !win.minimized);
     active[space] = available.find((win) => win.id === value.active?.[space])?.id || available.at(-1)?.id || null;
   }
-  return { version: 1, space: spaces.has(value.space) ? value.space : "studio", active, windows };
+  return { version: 2, space: spaces.has(value.space) ? value.space : "studio", cameras: { studio: normalizeCamera(value.cameras?.studio), quiet: normalizeCamera(value.cameras?.quiet) }, active, windows };
 }
 function remainingTime(timer, now = Date.now()) {
-  const duration = clamp(finite(timer?.duration, 25 * 60), 60, 60 * 60);
-  return { duration, remaining: timer?.endAt > 0 ? clamp(Math.ceil((timer.endAt - now) / 1e3), 0, duration) : clamp(finite(timer?.remaining, duration), 0, duration), running: timer?.endAt > now };
+  const duration = clamp2(finite2(timer?.duration, 25 * 60), 60, 60 * 60);
+  return { duration, remaining: timer?.endAt > 0 ? clamp2(Math.ceil((timer.endAt - now) / 1e3), 0, duration) : clamp2(finite2(timer?.remaining, duration), 0, duration), running: timer?.endAt > now };
+}
+
+// ../SpiderPlayground/frames.js
+function createFrames() {
+  const pending = /* @__PURE__ */ new Set();
+  let raf = 0, disposed = false;
+  function run(time) {
+    raf = 0;
+    const batch = [...pending];
+    pending.clear();
+    for (const fn of batch) fn(time);
+  }
+  return {
+    request(fn) {
+      if (disposed) return;
+      pending.add(fn);
+      if (!raf) raf = requestAnimationFrame(run);
+    },
+    cancel(fn) {
+      pending.delete(fn);
+      if (!pending.size && raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    },
+    destroy() {
+      disposed = true;
+      if (raf) cancelAnimationFrame(raf);
+      pending.clear();
+    }
+  };
+}
+
+// ../SpiderPlayground/navigation.js
+function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, isBlocked, isWindowMoving, cancelWindow, fitAll }) {
+  const events = new AbortController(), contacts = /* @__PURE__ */ new Map();
+  let nav = null, legacy = null, wheelTimer = 0, recentLegacy = 0;
+  const listen = (node, type, fn, options = {}) => node.addEventListener(type, fn, { ...options, signal: events.signal });
+  const point = (event, box = stage.getBoundingClientRect()) => ({ x: event.clientX - box.left, y: event.clientY - box.top });
+  const editable = (target) => target.closest(".window-body,input,textarea,select,button,a,.canvas-tools,.drawing-tools");
+  function release(id) {
+    contacts.delete(id);
+    if (stage.hasPointerCapture(id)) stage.releasePointerCapture(id);
+  }
+  function finish(cancel = false) {
+    if (!nav) return;
+    const current = nav;
+    nav = null;
+    if (current.kind === "draw" || current.kind === "erase") cancel ? ink.cancel() : ink.finish();
+    else if (cancel) setCamera(current.origin);
+    else if (current.moved) commit();
+    for (const id of [...contacts.keys()]) release(id);
+    stage.classList.remove("is-navigating");
+  }
+  function pinch() {
+    if (nav.kind === "draw" || nav.kind === "erase") ink.cancel();
+    const [a, b] = contacts.values(), mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    nav = { ...nav, kind: "pinch", camera: { ...getCamera() }, anchor: mid, distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), angle: angleBetween(a, b), rotation: 0, moved: nav.moved };
+  }
+  listen(stage, "pointerdown", (event) => {
+    if (isBlocked() || legacy || event.button > 1 || editable(event.target)) return;
+    const inWindow = event.target.closest(".window");
+    if (inWindow && getTool() !== "pan") return;
+    if (isWindowMoving()) {
+      if (event.pointerType === "touch") cancelWindow();
+      else return;
+    }
+    if (contacts.size >= 2) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (wheelTimer) {
+      clearTimeout(wheelTimer);
+      wheelTimer = 0;
+      commit();
+    }
+    const box = nav?.box || stage.getBoundingClientRect(), p = point(event, box);
+    contacts.set(event.pointerId, p);
+    stage.setPointerCapture(event.pointerId);
+    if (contacts.size === 2) {
+      pinch();
+      return;
+    }
+    stage.focus({ preventScroll: true });
+    const tool = event.button === 1 ? "pan" : getTool(), kind = tool === "draw" ? "draw" : tool === "erase" ? "erase" : "pan";
+    nav = { kind, box, start: p, camera: { ...getCamera() }, origin: { ...getCamera() }, moved: false };
+    if (kind === "draw") ink.begin(screenToWorld(getCamera(), p));
+    else if (kind === "erase") ink.erase(screenToWorld(getCamera(), p));
+    else stage.classList.add("is-navigating");
+  }, { capture: true });
+  listen(stage, "pointermove", (event) => {
+    if (!nav || !contacts.has(event.pointerId)) return;
+    event.preventDefault();
+    const p = point(event, nav.box);
+    contacts.set(event.pointerId, p);
+    if (nav.kind === "pinch" && contacts.size === 2) {
+      const [a, b] = contacts.values(), angle = angleBetween(a, b), mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      nav.rotation += angleDelta(nav.angle, angle);
+      nav.angle = angle;
+      setCamera(transformGesture(nav.camera, nav.anchor, mid, Math.hypot(a.x - b.x, a.y - b.y) / nav.distance, nav.rotation));
+      nav.moved = true;
+    } else if (nav.kind === "pan") {
+      setCamera(normalizeCamera({ ...nav.camera, x: nav.camera.x + p.x - nav.start.x, y: nav.camera.y + p.y - nav.start.y }));
+      nav.moved = true;
+    } else if (nav.kind === "draw") {
+      const samples = event.getCoalescedEvents?.() || [];
+      for (const sample of samples.length ? samples : [event]) ink.append(screenToWorld(getCamera(), point(sample, nav.box)));
+    } else if (nav.kind === "erase") ink.erase(screenToWorld(getCamera(), p));
+  }, { passive: false });
+  listen(stage, "pointerup", (event) => {
+    if (!nav || !contacts.has(event.pointerId)) return;
+    if (nav.kind === "pinch" && contacts.size === 2) {
+      release(event.pointerId);
+      const remaining = [...contacts.values()][0];
+      nav = { ...nav, kind: "pan", start: remaining, camera: { ...getCamera() } };
+    } else finish();
+  });
+  for (const type of ["pointercancel", "lostpointercapture"]) listen(stage, type, (event) => {
+    if (contacts.has(event.pointerId)) finish(true);
+  });
+  listen(stage, "wheel", (event) => {
+    if (isBlocked() || nav || legacy || isWindowMoving() || editable(event.target) || event.target.closest(".window")) return;
+    event.preventDefault();
+    if ((event.ctrlKey || event.metaKey) && performance.now() < recentLegacy) return;
+    const factor = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? stage.clientHeight : 1, camera = getCamera();
+    if (event.ctrlKey || event.metaKey) setCamera(transformAt(camera, point(event), { zoom: camera.zoom * Math.exp(-Math.max(-500, Math.min(500, event.deltaY * factor)) * 2e-3) }));
+    else setCamera({ ...camera, x: camera.x - event.deltaX * factor, y: camera.y - event.deltaY * factor });
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => {
+      wheelTimer = 0;
+      commit();
+    }, 160);
+  }, { passive: false });
+  listen(stage, "gesturestart", (event) => {
+    if (isBlocked() || nav || isWindowMoving() || event.target.closest(".window,.canvas-tools,.drawing-tools")) return;
+    const anchor = Number.isFinite(event.clientX) ? point(event) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
+    legacy = { camera: { ...getCamera() }, anchor, scale: Number(event.scale) || 1, angle: Number(event.rotation) || 0, rotation: 0 };
+    event.preventDefault();
+  }, { passive: false });
+  listen(stage, "gesturechange", (event) => {
+    if (!legacy) return;
+    event.preventDefault();
+    const angle = Number(event.rotation) || 0;
+    legacy.rotation += angleDelta(legacy.angle, angle);
+    legacy.angle = angle;
+    setCamera(transformGesture(legacy.camera, legacy.anchor, legacy.anchor, (Number(event.scale) || 1) / legacy.scale, legacy.rotation));
+  }, { passive: false });
+  function finishLegacy() {
+    if (legacy) {
+      legacy = null;
+      recentLegacy = performance.now() + 250;
+      commit();
+    }
+  }
+  listen(stage, "gestureend", finishLegacy, { passive: false });
+  listen(document, "keydown", (event) => {
+    if (event.key === "Escape" && nav) {
+      event.preventDefault();
+      finish(true);
+    }
+    if (event.target !== stage || isBlocked() || event.ctrlKey || event.metaKey || event.altKey) return;
+    const camera = getCamera(), center = { x: stage.clientWidth / 2, y: stage.clientHeight / 2 }, step = event.shiftKey ? 160 : 48;
+    if (event.key.startsWith("Arrow")) {
+      event.preventDefault();
+      setCamera({ ...camera, x: camera.x + (event.key === "ArrowLeft" ? step : event.key === "ArrowRight" ? -step : 0), y: camera.y + (event.key === "ArrowUp" ? step : event.key === "ArrowDown" ? -step : 0) });
+      commit();
+    } else if (["+", "=", "-", "0", "[", "]", "Home"].includes(event.key)) {
+      event.preventDefault();
+      if (event.key === "Home") fitAll();
+      else {
+        setCamera(transformAt(camera, center, event.key === "[" || event.key === "]" ? { angle: camera.angle + (event.key === "[" ? -15 : 15) } : event.key === "0" ? { zoom: 1, angle: 0 } : { zoom: camera.zoom * (event.key === "-" ? 1 / 1.2 : 1.2) }));
+        commit();
+      }
+    }
+  });
+  function flush() {
+    finish();
+    finishLegacy();
+    if (wheelTimer) {
+      clearTimeout(wheelTimer);
+      wheelTimer = 0;
+      commit();
+    }
+  }
+  listen(window, "blur", flush);
+  listen(window, "pagehide", flush);
+  return { get busy() {
+    return !!nav || !!legacy || !!wheelTimer;
+  }, flush, cancel() {
+    finish(true);
+    finishLegacy();
+  }, destroy() {
+    clearTimeout(wheelTimer);
+    wheelTimer = 0;
+    legacy = null;
+    finish(true);
+    events.abort();
+  } };
+}
+
+// ../SpiderPlayground/ink.js
+var INK_COLORS = ["#334f60", "#365fd3", "#d47d42", "#488875", "#bc5e86"];
+var MAX_STROKES = 256;
+var MAX_POINTS = 6e4;
+var MAX_STROKE_POINTS = 2048;
+function normalizeStroke(raw) {
+  if (!raw || !INK_COLORS.includes(raw.color) || ![2, 4, 8].includes(raw.width) || !Array.isArray(raw.points) || raw.points.length > MAX_STROKE_POINTS) return null;
+  const points = raw.points.filter((p) => Array.isArray(p) && p.length === 2 && p.every((n) => Number.isFinite(n) && Math.abs(n) <= WORLD_LIMIT));
+  return points.length ? { color: raw.color, width: raw.width, points } : null;
+}
+function strokeBounds(stroke) {
+  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+  for (const [x, y] of stroke.points) {
+    left = Math.min(left, x);
+    top = Math.min(top, y);
+    right = Math.max(right, x);
+    bottom = Math.max(bottom, y);
+  }
+  return { left: left - stroke.width, top: top - stroke.width, right: right + stroke.width, bottom: bottom + stroke.width };
+}
+function strokeHit(point, stroke, radius) {
+  const limit = (radius + stroke.width / 2) ** 2;
+  for (let i = 0; i < stroke.points.length; i++) {
+    const a = stroke.points[i], b = stroke.points[Math.max(0, i - 1)], dx = a[0] - b[0], dy = a[1] - b[1];
+    const t = Math.max(0, Math.min(1, ((point.x - b[0]) * dx + (point.y - b[1]) * dy) / (dx * dx + dy * dy || 1)));
+    if ((point.x - b[0] - dx * t) ** 2 + (point.y - b[1] - dy * t) ** 2 <= limit) return true;
+  }
+  return false;
+}
+function sizeCanvas(canvas, bounds) {
+  const dpr = Math.min(1.5, window.devicePixelRatio || 1), width = Math.ceil(bounds.width * dpr), height = Math.ceil(bounds.height * dpr);
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+  return dpr;
+}
+function strokePath(points) {
+  const path = new Path2D();
+  path.moveTo(...points[0]);
+  if (points.length === 1) path.lineTo(points[0][0] + 0.01, points[0][1]);
+  else for (let i = 1; i < points.length; i++) path.lineTo(...points[i]);
+  return path;
+}
+function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, getCamera, getBounds, notice: notice2, onHistory }) {
+  const ctx = canvas.getContext("2d"), live = liveCanvas.getContext("2d"), cache = /* @__PURE__ */ new Map(), histories = /* @__PURE__ */ new Map();
+  let active = null, excluded = /* @__PURE__ */ new Map(), sceneKey = "", dpr = 1, color = INK_COLORS[0], width = 4, space = "studio", erasePoint = null, lastSource = null;
+  const history = () => {
+    if (!histories.has(space)) histories.set(space, { undo: [], redo: [] });
+    return histories.get(space);
+  };
+  const source = () => read().ink?.[space] || {};
+  function controls() {
+    const h = history();
+    onHistory({ undo: h.undo.length > 0, redo: h.redo.length > 0 });
+  }
+  function sync(force = false) {
+    const nextSpace = getSpace();
+    if (space !== nextSpace) {
+      cancel();
+      space = nextSpace;
+      sceneKey = "";
+      lastSource = null;
+    }
+    const strokes = source();
+    if (!force && strokes === lastSource) return;
+    lastSource = strokes;
+    const key2 = JSON.stringify(strokes);
+    if (key2 !== sceneKey) {
+      sceneKey = key2;
+      let points = 0, count = 0;
+      const alive = /* @__PURE__ */ new Set();
+      for (const [id, raw] of Object.entries(strokes)) {
+        if (!raw || count >= MAX_STROKES) continue;
+        const signature = JSON.stringify(raw), old = cache.get(id);
+        let entry = old?.signature === signature ? old : null;
+        if (!entry) {
+          const stroke = normalizeStroke(raw);
+          if (!stroke) continue;
+          entry = { stroke, path: strokePath(stroke.points), bounds: strokeBounds(stroke), signature };
+        }
+        if (points + entry.stroke.points.length > MAX_POINTS) continue;
+        points += entry.stroke.points.length;
+        count++;
+        alive.add(id);
+        cache.set(id, entry);
+      }
+      for (const id of cache.keys()) if (!alive.has(id)) cache.delete(id);
+      invalidate();
+    }
+    controls();
+  }
+  function clear(context) {
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  function paint2() {
+    clear(ctx);
+    ctx.setTransform(...cameraMatrix(getCamera(), dpr));
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    const view = visibleWorld(getCamera(), getBounds(), 16);
+    for (const [id, entry] of cache) {
+      const b = entry.bounds;
+      if (excluded.has(id) || b.right < view.left || b.left > view.right || b.bottom < view.top || b.top > view.bottom) continue;
+      ctx.strokeStyle = entry.stroke.color;
+      ctx.lineWidth = entry.stroke.width;
+      ctx.stroke(entry.path);
+    }
+    paintLive();
+  }
+  function paintLive() {
+    clear(live);
+    if (!active) return;
+    live.setTransform(...cameraMatrix(getCamera(), dpr));
+    live.lineCap = "round";
+    live.lineJoin = "round";
+    live.strokeStyle = active.color;
+    live.lineWidth = active.width;
+    live.stroke(strokePath(active.points));
+  }
+  function invalidate() {
+    frames.request(paint2);
+  }
+  function resize() {
+    dpr = sizeCanvas(canvas, getBounds());
+    sizeCanvas(liveCanvas, getBounds());
+    invalidate();
+  }
+  function begin(point) {
+    sync();
+    const total = [...cache.values()].reduce((n, item) => n + item.stroke.points.length, 0);
+    if (cache.size >= MAX_STROKES || total >= MAX_POINTS) {
+      notice2("This canvas is full. Erase a few marks or use the other workspace to keep drawing.");
+      return;
+    }
+    active = { color, width, points: [[point.x, point.y]], budget: Math.min(MAX_STROKE_POINTS, MAX_POINTS - total) };
+    frames.request(paintLive);
+  }
+  function append(point) {
+    if (!active) return;
+    const last = active.points.at(-1), distance = Math.hypot(point.x - last[0], point.y - last[1]) * getCamera().zoom;
+    if (distance < 1.5) return;
+    if (active.points.length < active.budget) {
+      active.points.push([Math.round(point.x * 10) / 10, Math.round(point.y * 10) / 10]);
+      frames.request(paintLive);
+    } else if (!active.full) {
+      active.full = true;
+      notice2("This stroke has reached its limit. Lift the pen and start a new stroke to continue.");
+    }
+  }
+  function record(changes) {
+    const h = history();
+    h.undo.push(changes);
+    if (h.undo.length > 50) h.undo.shift();
+    h.redo = [];
+    controls();
+  }
+  function finish() {
+    if (erasePoint) eraseFrame();
+    if (active) {
+      const { id = crypto.randomUUID(), color: color2, width: width2, points } = active, stroke = { color: color2, width: width2, points };
+      active = null;
+      write2(["ink", space, id], stroke);
+      record([{ id, before: null, after: stroke }]);
+      sync();
+    }
+    if (excluded.size) {
+      const changes = [...excluded].map(([id, entry]) => ({ id, before: entry.stroke, after: null }));
+      excluded.clear();
+      for (const change of changes) write2(["ink", space, change.id], null);
+      record(changes);
+      sync();
+    }
+    frames.request(paintLive);
+  }
+  function cancel() {
+    active = null;
+    erasePoint = null;
+    excluded.clear();
+    frames.cancel(eraseFrame);
+    invalidate();
+  }
+  function eraseFrame() {
+    const point = erasePoint;
+    erasePoint = null;
+    if (!point) return;
+    const radius = 14 / getCamera().zoom;
+    for (const [id, entry] of [...cache].reverse()) if (!excluded.has(id) && strokeHit(point, entry.stroke, radius)) {
+      excluded.set(id, entry);
+      invalidate();
+    }
+  }
+  function erase(point) {
+    erasePoint = point;
+    frames.request(eraseFrame);
+  }
+  function undo(redo = false) {
+    cancel();
+    const h = history(), from = redo ? h.redo : h.undo, to = redo ? h.undo : h.redo, changes = from.pop();
+    if (!changes) return;
+    to.push(changes);
+    for (const change of changes) write2(["ink", space, change.id], redo ? change.after : change.before);
+    sync();
+  }
+  sync();
+  return {
+    sync,
+    resize,
+    invalidate,
+    begin,
+    append,
+    finish,
+    cancel,
+    erase,
+    undo,
+    setColor(value) {
+      if (INK_COLORS.includes(value)) color = value;
+    },
+    setWidth(value) {
+      if ([2, 4, 8].includes(value)) width = value;
+    },
+    destroy() {
+      frames.cancel(paint2);
+      frames.cancel(paintLive);
+      frames.cancel(eraseFrame);
+      cache.clear();
+      histories.clear();
+      active = null;
+      excluded.clear();
+    }
+  };
+}
+
+// ../SpiderPlayground/scenery.js
+function createScenery({ canvas, frames, getBounds, getCamera, read }) {
+  const ctx = canvas.getContext("2d", { alpha: false }), tiles = /* @__PURE__ */ new Map();
+  let dpr = 1, appearanceKey = "";
+  function tile(theme, pattern) {
+    const key2 = theme.name + pattern;
+    if (tiles.has(key2)) return tiles.get(key2);
+    const image = document.createElement("canvas");
+    image.width = 512;
+    image.height = 512;
+    const c = image.getContext("2d");
+    c.fillStyle = theme.color;
+    c.fillRect(0, 0, 512, 512);
+    if (pattern !== "plain") {
+      c.fillStyle = theme.line;
+      for (let x = 0; x < 512; x += 32) for (let y = 0; y < 512; y += 32) c.fillRect(x, y, 1, 1);
+      if (pattern !== "grid") {
+        for (const [x, y, kind] of [[85, 110, 0], [368, 332, 1], [190, 440, 0]]) {
+          c.fillStyle = "#b8c9c066";
+          c.fillRect(x - 12, y + 8, 36, 5);
+          c.fillStyle = "#7d9e8c";
+          c.fillRect(x + 2, y - 5, 3, 15);
+          c.fillRect(x - 6, y, 8, 3);
+          c.fillRect(x + 5, y - 8, 7, 3);
+          c.fillStyle = kind ? "#d49b79" : "#a9bca0";
+          c.fillRect(x - 8, y - 4, 7, 6);
+          c.fillRect(x + 9, y - 12, 6, 6);
+          c.fillStyle = "#eaf0e5";
+          c.fillRect(x - 6, y - 4, 2, 2);
+          c.fillRect(x + 11, y - 12, 2, 2);
+        }
+        c.strokeStyle = theme.line + "66";
+        c.setLineDash([3, 8]);
+        c.strokeRect(255, 60, 110, 62);
+      }
+    }
+    const value = ctx.createPattern(image, "repeat");
+    tiles.set(key2, value);
+    return value;
+  }
+  function paint2() {
+    const appearance = read().appearance || {}, theme = THEMES[appearance.theme] || THEMES.tide, pattern = ["plain", "grid"].includes(appearance.pattern) ? appearance.pattern : "workshop";
+    if (getCamera().zoom < 0.2) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = theme.color;
+      ctx.fillRect(0, 0, getBounds().width, getBounds().height);
+      return;
+    }
+    const patternFill = tile(theme, pattern), matrix = cameraMatrix(getCamera());
+    patternFill.setTransform(new DOMMatrix(matrix));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = patternFill;
+    ctx.fillRect(0, 0, getBounds().width, getBounds().height);
+  }
+  const invalidate = () => frames.request(paint2);
+  return { invalidate, resize() {
+    dpr = sizeCanvas(canvas, getBounds());
+    invalidate();
+  }, sync() {
+    const key2 = JSON.stringify(read().appearance);
+    if (key2 !== appearanceKey) {
+      appearanceKey = key2;
+      invalidate();
+    }
+  }, destroy() {
+    frames.cancel(paint2);
+    tiles.clear();
+  } };
+}
+
+// ../SpiderPlayground/crew.js
+var palette = { h: "#e8b46c", H: "#f5d190", s: "#e4b99b", d: "#334951", b: "#587e82", B: "#87aaa5", w: "#f1eee0", k: "#253942" };
+var standing = [
+  "....HHHH....",
+  "...HHHHHH...",
+  "..hhhhhhhh..",
+  "...ssssss...",
+  "...skssks...",
+  "....ssss....",
+  "..ssbbbbss..",
+  ".ssbbbbbbss.",
+  "..bbbbbbbb..",
+  "...bBBBBb...",
+  "...bb..bb...",
+  "...dd..dd...",
+  "...dd..dd...",
+  "..kkk..kkk.."
+];
+var seated = [
+  "....HHHH....",
+  "...HHHHHH...",
+  "..hhhhhhhh..",
+  "...ssssss...",
+  "...skssks...",
+  "....ssss....",
+  "...bbbbbb...",
+  "..ssbbbbss..",
+  "...bBBBBb...",
+  "...dd..dd...",
+  "...dddddd...",
+  "..kkkkkkkk.."
+];
+function sprite(rows, step = 0) {
+  const image = document.createElement("canvas");
+  image.width = 28;
+  image.height = 32;
+  const c = image.getContext("2d");
+  rows.forEach((row, y) => [...row].forEach((pixel, x) => {
+    if (!palette[pixel]) return;
+    const offset = y > 10 && step ? x < 6 ? step : -step : 0;
+    c.fillStyle = palette[pixel];
+    c.fillRect(x * 2 + 2, y * 2 + offset, 2, 2);
+  }));
+  return image;
+}
+function createCrew({ canvas, frames, getBounds, getCamera, getWindows }) {
+  const ctx = canvas.getContext("2d"), sprites = [sprite(standing, -2), sprite(standing, 2), sprite(seated)], motion = /* @__PURE__ */ new Map();
+  let dpr = 1, hidden = document.hidden, reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const events = new AbortController(), media = matchMedia("(prefers-reduced-motion: reduce)");
+  function setMoving(id, moving) {
+    const now = performance.now(), entry = motion.get(id) || { started: now, rect: null, speed: 0, last: now };
+    entry.moving = moving;
+    entry.released = moving ? 0 : now;
+    entry.started = moving ? now : entry.started;
+    motion.set(id, entry);
+    canvas.dataset.motion = moving ? "moving" : reduced ? "idle" : "settling";
+    invalidate();
+  }
+  function paint2(now = performance.now()) {
+    if (hidden) return;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = false;
+    if (getCamera().zoom < 0.15) {
+      canvas.dataset.motion = "idle";
+      return;
+    }
+    ctx.setTransform(...cameraMatrix(getCamera(), dpr));
+    const view = visibleWorld(getCamera(), getBounds(), 60), alive = /* @__PURE__ */ new Set();
+    let animate = false;
+    for (const win of getWindows()) {
+      if (win.mode !== "normal" || win.minimized) continue;
+      alive.add(win.id);
+      const r = win.rect;
+      if (r.x + r.width + 40 < view.left || r.x - 40 > view.right || r.y + r.height + 50 < view.top || r.y > view.bottom) continue;
+      const m = motion.get(win.id), moving = !!m?.moving, elapsed = m?.released ? now - m.released : 1e4, settling = elapsed < 650;
+      let speed = 0, lean = 0, bounce = 0, squash = 1;
+      if (moving && m) {
+        if (m.rect) {
+          const dt = Math.max(8, now - m.last);
+          m.speed = m.speed * 0.5 + (r.x - m.rect.x) / dt * 0.5;
+          if (r.x !== m.rect.x || r.y !== m.rect.y || r.width !== m.rect.width || r.height !== m.rect.height) m.lastMove = now;
+        } else m.lastMove = now;
+        m.rect = { ...r };
+        m.last = now;
+        speed = Math.min(1, Math.abs(m.speed));
+        if (!reduced && now - m.lastMove < 160) {
+          lean = Math.max(-0.22, Math.min(0.22, m.speed * 0.13));
+          bounce = Math.sin(now * 0.028) * Math.min(2.2, 1 + speed);
+          squash = 1 + 0.12 * Math.sin((now - m.started) * 0.028);
+          animate = true;
+        }
+      } else if (settling && !reduced) {
+        bounce = -Math.sin(elapsed * 0.025) * Math.exp(-elapsed / 180) * 4;
+        squash = 1 + Math.sin(elapsed * 0.025) * Math.exp(-elapsed / 150) * 0.17;
+        animate = true;
+      }
+      const image = moving ? sprites[Math.floor(now / 110) % 2] : sprites[2];
+      if (moving) {
+        ctx.fillStyle = "#91a8aa";
+        ctx.fillRect(r.x + 20, r.y + r.height + 1, Math.max(0, r.width - 40), 2);
+      }
+      for (let i = 0; i < 2; i++) {
+        const x = i === 0 ? r.x + 18 : r.x + r.width - 46, y = r.y + r.height + (moving ? 3 : 1);
+        ctx.save();
+        ctx.translate(x + 14, y + 28 + bounce);
+        ctx.rotate(lean);
+        ctx.scale(1 / squash, squash);
+        ctx.drawImage(image, -14, -28);
+        ctx.restore();
+        if (settling && elapsed < 260 && !reduced) {
+          ctx.fillStyle = "#a9bfc0";
+          const spread = elapsed * 0.035;
+          ctx.fillRect(x - spread, y + 28, 3, 2);
+          ctx.fillRect(x + 24 + spread, y + 27, 2, 2);
+        }
+      }
+    }
+    for (const id of motion.keys()) if (!alive.has(id)) motion.delete(id);
+    const state2 = animate ? [...motion.values()].some((m) => m.moving) ? "moving" : "settling" : "idle";
+    if (canvas.dataset.motion !== state2) canvas.dataset.motion = state2;
+    if (animate) frames.request(paint2);
+  }
+  function invalidate() {
+    if (!hidden) frames.request(paint2);
+  }
+  document.addEventListener("visibilitychange", () => {
+    hidden = document.hidden;
+    if (hidden) frames.cancel(paint2);
+    else invalidate();
+  }, { signal: events.signal });
+  media.addEventListener("change", () => {
+    reduced = media.matches;
+    invalidate();
+  }, { signal: events.signal });
+  return { invalidate, setMoving, resize() {
+    dpr = sizeCanvas(canvas, getBounds());
+    invalidate();
+  }, destroy() {
+    events.abort();
+    frames.cancel(paint2);
+    motion.clear();
+  } };
 }
 
 // ../SpiderPlayground/icons.js
@@ -388,67 +1093,162 @@ function icon(name) {
 }
 
 // ../SpiderPlayground/windows.js
-function createWindows({ stage, container, preview, shield, layout: initial, createContent: createContent2, onChange, onPaint, onMenu }) {
-  let layout = normalizeLayout(initial), gesture = null, desktopRestore = [];
-  const entries = /* @__PURE__ */ new Map(), events = new AbortController();
+function createWindows({ stage, container, shield, layout: initial, createContent: createContent2, onChange, onPaint, onMenu, read, write: write2, notice: notice2, onTools }) {
+  let layout = normalizeLayout(initial), gesture = null, desktopRestore = [], tool = "move", disposed = false;
+  const entries = /* @__PURE__ */ new Map(), events = new AbortController(), frames = createFrames(), overlay = stage.querySelector("#overlay-windows");
   const bounds = () => boundsOf({ width: stage.clientWidth, height: stage.clientHeight });
+  const camera = () => layout.cameras[layout.space];
   const visible = () => layout.windows.filter((win) => win.space === layout.space && !win.minimized).sort((a, b) => a.order - b.order);
-  const save = () => onChange(structuredClone(layout));
+  const fullscreen = () => visible().find((win) => win.mode === "maximized");
   const listen = (node, name, fn) => node.addEventListener(name, fn, { signal: events.signal });
+  const ink = createInk({
+    canvas: stage.querySelector("#ink-canvas"),
+    liveCanvas: stage.querySelector("#live-ink"),
+    frames,
+    read,
+    write: write2,
+    getSpace: () => layout.space,
+    getCamera: camera,
+    getBounds: bounds,
+    notice: notice2,
+    onHistory: (state2) => onTools({ history: state2 })
+  });
+  const scenery = createScenery({ canvas: stage.querySelector("#scenery"), frames, getBounds: bounds, getCamera: camera, read });
+  const crew = createCrew({ canvas: stage.querySelector("#crew"), frames, getBounds: bounds, getCamera: camera, getWindows: () => fullscreen() ? [] : visible() });
+  function save() {
+    if (!disposed) onChange(structuredClone(layout));
+  }
+  function graphics() {
+    if (fullscreen()) return;
+    ink.invalidate();
+    scenery.invalidate();
+    crew.invalidate();
+  }
+  function paintCamera() {
+    const c = camera();
+    container.style.transform = `translate(${c.x}px,${c.y}px) rotate(${c.angle}deg) scale(${c.zoom})`;
+    stage.dataset.camera = JSON.stringify(c);
+    onTools({ camera: { ...c }, tool });
+  }
+  function setCamera(value) {
+    layout.cameras[layout.space] = normalizeCamera(value);
+    frames.request(paintCamera);
+    graphics();
+  }
   function focus(id) {
     const entry = entries.get(id);
     if (!entry || entry.panel.hidden) {
       stage.focus({ preventScroll: true });
       return;
     }
-    const target = entry.lastFocus?.isConnected ? entry.lastFocus : entry.bar;
-    target.focus({ preventScroll: true });
+    (entry.lastFocus?.isConnected ? entry.lastFocus : entry.bar).focus({ preventScroll: true });
+  }
+  function paintWindow(entry, full = fullscreen()) {
+    const win = entry.win, hidden = win.space !== layout.space || win.minimized || !!full && win.id !== full.id;
+    entry.panel.hidden = hidden;
+    entry.panel.inert = hidden;
+    const parent2 = win.mode === "normal" ? container : overlay;
+    if (entry.panel.parentElement !== parent2) parent2.append(entry.panel);
+    const rect = displayRect(win, bounds()), active = layout.active[layout.space] === win.id;
+    if (entry.x !== rect.x || entry.y !== rect.y) {
+      entry.panel.style.transform = `translate(${rect.x}px,${rect.y}px)`;
+      entry.x = rect.x;
+      entry.y = rect.y;
+    }
+    if (entry.width !== rect.width) {
+      entry.panel.style.width = rect.width + "px";
+      entry.width = rect.width;
+    }
+    if (entry.height !== rect.height) {
+      entry.panel.style.height = rect.height + "px";
+      entry.height = rect.height;
+    }
+    if (entry.order !== win.order) {
+      entry.panel.style.zIndex = String(10 + win.order);
+      entry.order = win.order;
+    }
+    entry.panel.classList.toggle("is-active", active);
+    entry.panel.classList.toggle("is-expanded", win.mode !== "normal");
+    entry.panel.classList.toggle("is-moving", gesture?.id === win.id && gesture.started);
+    if (entry.mode !== win.mode) {
+      const green = win.mode === "maximized";
+      entry.green.textContent = green ? "\u2199" : "\u2922";
+      entry.green.setAttribute("aria-label", (green ? "Restore " : "Full screen ") + appById(win.app).name);
+      entry.panel.dataset.mode = win.mode;
+      entry.mode = win.mode;
+    }
+    if (entry.expanded !== !!win.expanded) {
+      entry.yellow.setAttribute("aria-pressed", String(!!win.expanded));
+      entry.expanded = !!win.expanded;
+    }
   }
   function paint2() {
-    const compact = bounds().width < 600;
-    for (const win of layout.windows) {
-      const entry = entries.get(win.id);
-      if (!entry) continue;
-      const rect = displayRect(win, bounds()), active = layout.active[layout.space] === win.id;
-      entry.panel.hidden = win.space !== layout.space || win.minimized || compact && !active;
-      entry.panel.inert = entry.panel.hidden;
-      entry.panel.classList.toggle("is-active", active);
-      entry.panel.classList.toggle("is-expanded", compact || win.mode !== "normal");
-      entry.panel.dataset.mode = win.mode;
-      Object.assign(entry.panel.style, { left: rect.x + "px", top: rect.y + "px", width: rect.width + "px", height: rect.height + "px", zIndex: String(10 + win.order) });
-      entry.maximize.replaceChildren(icon(win.mode === "maximized" ? "restore" : "maximize"));
-      entry.maximize.setAttribute("aria-label", (win.mode === "maximized" ? "Restore " : "Maximize ") + appById(win.app).name);
-      entry.maximize.title = win.mode === "maximized" ? "Restore size" : "Maximize";
-    }
-    stage.classList.toggle("compact", compact);
+    const full = fullscreen();
+    for (const entry of entries.values()) paintWindow(entry, full);
+    stage.classList.toggle("has-fullscreen", !!full);
     onPaint(structuredClone(layout));
+    paintCamera();
+    graphics();
   }
   function restack(id) {
-    const sorted = layout.windows.filter((win) => win.id !== id).sort((a, b) => a.order - b.order);
-    sorted.forEach((win, i) => win.order = i + 1);
+    layout.windows.filter((win) => win.id !== id).sort((a, b) => a.order - b.order).forEach((win, i) => win.order = i + 1);
     layout.windows.find((win) => win.id === id).order = layout.windows.length;
   }
   function activate(id, input = false) {
     const win = layout.windows.find((win2) => win2.id === id);
     if (!win) return;
     const changed = layout.space !== win.space || win.minimized || layout.active[win.space] !== id;
+    if (layout.space !== win.space) navigation.cancel();
     layout.space = win.space;
     win.minimized = false;
     layout.active[win.space] = id;
     if (changed) {
       restack(id);
+      ink.sync();
       paint2();
       save();
     }
     if (input) focus(id);
   }
+  function reveal(id) {
+    const win = layout.windows.find((win2) => win2.id === id);
+    if (!win) return;
+    activate(id);
+    if (win.mode === "normal") setCamera(fitWorld([win.rect], bounds(), camera().angle, 44));
+    save();
+    focus(id);
+  }
   function nextActive(space) {
     layout.active[space] = layout.windows.filter((win) => win.space === space && !win.minimized).sort((a, b) => a.order - b.order).at(-1)?.id || null;
   }
   function setMode(id, mode) {
+    navigation.flush();
+    finish();
     const win = layout.windows.find((win2) => win2.id === id);
     if (!win) return;
+    if (mode === "maximized") {
+      for (const other of layout.windows) if (other.space === win.space && other.mode === "maximized") other.mode = "normal";
+    }
     win.mode = mode;
+    activate(id);
+    paint2();
+    save();
+    focus(id);
+  }
+  function resize(id) {
+    const win = layout.windows.find((win2) => win2.id === id);
+    if (!win) return;
+    if (win.expanded && win.restoreRect) {
+      win.rect = win.restoreRect;
+      win.restoreRect = null;
+      win.expanded = false;
+    } else {
+      const b = bounds(), center = screenToWorld(camera(), { x: b.width / 2, y: b.height / 2 }), factor = Math.abs(Math.cos(camera().angle * Math.PI / 180)) + Math.abs(Math.sin(camera().angle * Math.PI / 180));
+      win.restoreRect = { ...win.rect };
+      win.rect = normalRect({ x: center.x - b.width * 0.44 / camera().zoom / factor, y: center.y - b.height * 0.44 / camera().zoom / factor, width: b.width * 0.88 / camera().zoom / factor, height: b.height * 0.88 / camera().zoom / factor });
+      win.expanded = true;
+    }
+    win.mode = "normal";
     activate(id);
     paint2();
     save();
@@ -463,15 +1263,18 @@ function createWindows({ stage, container, preview, shield, layout: initial, cre
     save();
     focus(layout.active[layout.space]);
   }
-  function close(id) {
-    const win = layout.windows.find((win2) => win2.id === id);
-    if (!win) return;
-    if (gesture?.id === id) finish(false);
+  function removeEntry(id) {
     const entry = entries.get(id);
     entry?.events.abort();
     entry?.content.destroy?.();
     entry?.panel.remove();
     entries.delete(id);
+  }
+  function close(id) {
+    const win = layout.windows.find((win2) => win2.id === id);
+    if (!win) return;
+    if (gesture?.id === id) finish(false);
+    removeEntry(id);
     layout.windows = layout.windows.filter((win2) => win2.id !== id);
     if (layout.active[win.space] === id) nextActive(win.space);
     paint2();
@@ -479,9 +1282,8 @@ function createWindows({ stage, container, preview, shield, layout: initial, cre
     focus(layout.active[layout.space]);
   }
   function add(win) {
-    const windowEvents = new AbortController();
-    const listenWindow = (node, name, fn) => node.addEventListener(name, fn, { signal: windowEvents.signal });
-    const app = appById(win.app), panel = document.createElement("section");
+    const app = appById(win.app), panel = document.createElement("section"), windowEvents = new AbortController();
+    const listenWindow = (node, type, fn) => node.addEventListener(type, fn, { signal: windowEvents.signal });
     panel.className = "window";
     panel.dataset.window = win.id;
     panel.dataset.app = win.app;
@@ -491,38 +1293,41 @@ function createWindows({ stage, container, preview, shield, layout: initial, cre
     bar.className = "titlebar";
     bar.tabIndex = 0;
     bar.setAttribute("aria-label", "Move " + app.name + " window");
-    bar.title = "Drag to move. Double-click to maximize. Alt + arrows to move; Shift + Alt + arrows to resize.";
-    const mark = document.createElement("span");
-    mark.className = "window-mark";
-    mark.append(icon(app.icon));
+    bar.title = "Drag to move. Double-click for full screen. Alt + arrows to move; Shift + Alt + arrows to resize.";
+    const controls = document.createElement("div");
+    controls.className = "window-controls";
+    function control(color, symbol, label, action) {
+      const node = document.createElement("button");
+      node.type = "button";
+      node.className = "window-control " + color;
+      node.textContent = symbol;
+      node.title = label;
+      node.setAttribute("aria-label", label + " " + app.name);
+      listenWindow(node, "click", action);
+      controls.append(node);
+      return node;
+    }
+    control("red", "\xD7", "Close", () => close(win.id));
+    const yellow = control("yellow", "\u2194", "Resize", () => resize(win.id)), green = control("green", "\u2922", "Full screen", () => setMode(win.id, win.mode === "maximized" ? "normal" : "maximized"));
     const title = document.createElement("span");
     title.className = "window-title";
     title.id = "title-" + win.id;
     title.textContent = app.name;
-    const controls = document.createElement("div");
-    controls.className = "window-controls";
-    function control(name, svg, action) {
-      const button2 = document.createElement("button");
-      button2.type = "button";
-      button2.className = "window-control";
-      button2.setAttribute("aria-label", name + " " + app.name);
-      button2.title = name;
-      button2.append(icon(svg));
-      listenWindow(button2, "click", action);
-      controls.append(button2);
-      return button2;
-    }
-    control("Window actions for", "dots", () => onMenu(win.id));
-    control("Minimize", "minimize", () => minimize(win.id));
-    const maximize = control("Maximize", "maximize", () => setMode(win.id, win.mode === "maximized" ? "normal" : "maximized"));
-    const closer = control("Close", "close", () => close(win.id));
-    closer.classList.add("close-control");
-    bar.append(mark, title, controls);
+    const tag = document.createElement("span");
+    tag.className = "window-tag";
+    tag.textContent = "Playground";
+    const menu = document.createElement("button");
+    menu.type = "button";
+    menu.className = "window-menu-button";
+    menu.setAttribute("aria-label", "Window actions for " + app.name);
+    menu.append(icon("dots"));
+    listenWindow(menu, "click", () => onMenu(win.id));
+    bar.append(controls, title, tag, menu);
     const body = document.createElement("div");
     body.className = "window-body";
     panel.append(bar, body);
     container.append(panel);
-    const entry = { panel, bar, maximize, lastFocus: null, events: windowEvents, content: createContent2(win, body) };
+    const entry = { win, panel, bar, green, yellow, lastFocus: null, events: windowEvents, content: createContent2(win, body) };
     entries.set(win.id, entry);
     listenWindow(panel, "pointerdown", () => activate(win.id));
     listenWindow(panel, "focusin", (event) => {
@@ -542,13 +1347,12 @@ function createWindows({ stage, container, preview, shield, layout: initial, cre
       }
       if (!event.altKey || !event.key.startsWith("Arrow")) return;
       event.preventDefault();
-      const delta = event.shiftKey ? 12 : 20;
-      const dx = event.key === "ArrowLeft" ? -delta : event.key === "ArrowRight" ? delta : 0;
-      const dy = event.key === "ArrowUp" ? -delta : event.key === "ArrowDown" ? delta : 0;
-      const rect = displayRect(win, bounds());
+      const step = event.shiftKey ? 12 : 20, dx = event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0, dy = event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0;
       win.mode = "normal";
-      win.rect = event.shiftKey ? resizeRect(rect, "se", dx, dy, bounds()) : moveRect(rect, dx, dy, bounds());
-      paint2();
+      win.rect = event.shiftKey ? resizeRect(win.rect, "se", dx, dy) : moveRect(win.rect, dx, dy);
+      win.expanded = false;
+      paintWindow(entry);
+      crew.invalidate();
       save();
     });
     for (const edge of ["n", "e", "s", "w", "ne", "nw", "se", "sw"]) {
@@ -561,75 +1365,69 @@ function createWindows({ stage, container, preview, shield, layout: initial, cre
     }
   }
   function start(event, win, edge) {
-    if (event.button !== 0 || event.isPrimary === false || gesture || bounds().width < 600 || event.target.closest("button,input,select,textarea,a")) return;
+    if (event.button !== 0 || event.isPrimary === false || gesture || navigation.busy || tool === "pan" || event.target.closest("button,input,textarea,select,a")) return;
     event.preventDefault();
     activate(win.id);
-    const box = stage.getBoundingClientRect(), rect = displayRect(win, bounds());
-    gesture = {
-      id: win.id,
-      win,
-      edge,
-      pointer: event.pointerId,
-      target: event.currentTarget,
-      x: event.clientX,
-      y: event.clientY,
-      box,
-      rect,
-      original: structuredClone({ rect: win.rect, mode: win.mode }),
-      started: false,
-      snap: null
-    };
+    const box = stage.getBoundingClientRect(), p = screenToWorld(camera(), { x: event.clientX - box.left, y: event.clientY - box.top });
+    gesture = { id: win.id, win, edge, pointer: event.pointerId, target: event.currentTarget, x: event.clientX, y: event.clientY, box, start: p, rect: { ...win.rect }, original: structuredClone(win), started: false };
     event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function paintGesture() {
+    if (gesture) {
+      paintWindow(entries.get(gesture.id));
+    }
   }
   function move(event) {
     const g = gesture;
     if (!g || event.pointerId !== g.pointer) return;
-    const dx = event.clientX - g.x, dy = event.clientY - g.y;
-    if (!g.started && Math.hypot(dx, dy) < 4) return;
+    if (!g.started && Math.hypot(event.clientX - g.x, event.clientY - g.y) < 3) return;
     event.preventDefault();
     if (!g.started) {
       g.started = true;
       document.body.classList.add("gesturing");
       shield.hidden = false;
-      if (!g.edge && g.win.mode !== "normal") {
-        const restored = fitRect(g.win.rect, bounds()), ratio = Math.max(0, Math.min(1, (g.x - g.box.left - g.rect.x) / g.rect.width));
-        g.rect = { ...restored, x: g.x - g.box.left - restored.width * ratio, y: g.y - g.box.top - 20 };
+      crew.setMoving(g.id, true);
+      if (g.win.mode !== "normal") {
+        g.rect = { ...g.win.rect, x: g.start.x - g.win.rect.width * 0.4, y: g.start.y - 20 };
+        g.win.mode = "normal";
       }
-      g.win.mode = "normal";
+      if (g.edge) {
+        g.win.expanded = false;
+        g.win.restoreRect = null;
+      }
     }
-    g.win.rect = g.edge ? resizeRect(g.rect, g.edge, dx, dy, bounds()) : moveRect(g.rect, dx, dy, bounds());
-    g.snap = g.edge ? null : snapAt({ x: event.clientX - g.box.left, y: event.clientY - g.box.top }, bounds());
-    preview.hidden = !g.snap;
-    if (g.snap) {
-      const r = displayRect({ ...g.win, mode: g.snap }, bounds());
-      Object.assign(preview.style, { left: r.x + "px", top: r.y + "px", width: r.width + "px", height: r.height + "px" });
-    }
-    paint2();
+    const p = screenToWorld(camera(), { x: event.clientX - g.box.left, y: event.clientY - g.box.top }), dx = p.x - g.start.x, dy = p.y - g.start.y;
+    g.win.rect = g.edge ? resizeRect(g.rect, g.edge, dx, dy) : moveRect(g.rect, dx, dy);
+    frames.request(paintGesture);
+    crew.invalidate();
   }
   function finish(commit = true) {
     const g = gesture;
     if (!g) return;
     gesture = null;
+    frames.cancel(paintGesture);
     if (g.target.hasPointerCapture(g.pointer)) g.target.releasePointerCapture(g.pointer);
-    if (!commit) {
-      g.win.rect = g.original.rect;
-      g.win.mode = g.original.mode;
-    } else if (g.started && g.snap) g.win.mode = g.snap;
-    preview.hidden = true;
+    if (!commit) Object.assign(g.win, g.original);
     shield.hidden = true;
     document.body.classList.remove("gesturing");
-    paint2();
-    if (commit && g.started) save();
+    if (g.started) crew.setMoving(g.id, false);
+    paintWindow(entries.get(g.id));
+    if (g.started) {
+      onPaint(structuredClone(layout));
+      if (commit) save();
+    }
     focus(g.id);
   }
+  function fitAll() {
+    setCamera(fitWorld(visible().filter((win) => win.mode === "normal").map((win) => win.rect), bounds(), camera().angle));
+    save();
+  }
+  const navigation = createNavigation({ stage, getCamera: camera, setCamera, commit: save, getTool: () => tool, ink, isBlocked: () => !!fullscreen(), isWindowMoving: () => !!gesture, cancelWindow: () => finish(false), fitAll });
   listen(document, "pointermove", move);
   listen(document, "pointerup", (event) => {
     if (event.pointerId === gesture?.pointer) finish();
   });
-  listen(document, "pointercancel", (event) => {
-    if (event.pointerId === gesture?.pointer) finish(false);
-  });
-  listen(document, "lostpointercapture", (event) => {
+  for (const type of ["pointercancel", "lostpointercapture"]) listen(document, type, (event) => {
     if (event.pointerId === gesture?.pointer) finish(false);
   });
   listen(document, "keydown", (event) => {
@@ -642,34 +1440,42 @@ function createWindows({ stage, container, preview, shield, layout: initial, cre
       if (!list.length) return;
       event.preventDefault();
       const index = list.findIndex((win) => win.id === layout.active[layout.space]);
-      activate(list[(index + (event.shiftKey ? -1 : 1) + list.length) % list.length].id, true);
+      reveal(list[(index + (event.shiftKey ? -1 : 1) + list.length) % list.length].id);
     }
   });
   listen(window, "blur", () => finish());
+  listen(window, "pagehide", () => finish());
   const observer = new ResizeObserver(() => {
     if (gesture) finish(false);
+    navigation.cancel();
+    ink.resize();
+    scenery.resize();
+    crew.resize();
     paint2();
   });
   observer.observe(stage);
   function open(appId) {
     const existing = layout.windows.find((win2) => win2.space === layout.space && win2.app === appId);
     if (existing) {
-      activate(existing.id, true);
+      reveal(existing.id);
       return;
     }
     const app = appById(appId);
     if (!app) return;
-    const count = layout.windows.filter((win2) => win2.space === layout.space).length;
-    const win = { id: crypto.randomUUID(), app: appId, space: layout.space, rect: fitRect({ x: 48 + count * 32, y: 40 + count * 28, width: app.width, height: app.height }, bounds()), mode: "normal", minimized: false, order: layout.windows.length + 1 };
+    const b = bounds(), center = screenToWorld(camera(), { x: b.width / 2, y: b.height / 2 });
+    const win = { id: crypto.randomUUID(), app: appId, space: layout.space, rect: normalRect({ x: center.x - app.width / 2, y: center.y - app.height / 2, width: app.width, height: app.height }), mode: "normal", minimized: false, order: layout.windows.length + 1 };
     layout.windows.push(win);
     add(win);
     activate(win.id, true);
+    if (b.width < 600) reveal(win.id);
   }
   function switchSpace(id) {
     if (!["studio", "quiet"].includes(id) || id === layout.space) return;
+    navigation.flush();
     finish();
     layout.space = id;
     desktopRestore = [];
+    ink.sync();
     paint2();
     save();
     focus(layout.active[id]);
@@ -677,16 +1483,13 @@ function createWindows({ stage, container, preview, shield, layout: initial, cre
   function arrange(kind) {
     const wins = visible(), b = bounds();
     if (!wins.length) return true;
-    const gap = 12, columns = Math.min(wins.length, Math.max(1, Math.floor((b.width - gap) / (280 + gap)))), rows = Math.ceil(wins.length / columns);
-    if (kind === "tile" && (b.width < 600 || (b.height - gap) / rows - gap < 210)) return false;
+    const gap = 14, columns = Math.min(wins.length, Math.max(1, Math.floor((b.width - gap) / 294))), rows = Math.ceil(wins.length / columns);
+    if (kind === "tile" && (b.height - gap) / rows - gap < 210) return false;
+    setCamera({ x: 0, y: 0, zoom: 1, angle: 0 });
     wins.forEach((win, i) => {
       win.mode = "normal";
-      win.rect = kind === "tile" ? fitRect({
-        x: gap + i % columns * (b.width - gap) / columns,
-        y: gap + Math.floor(i / columns) * (b.height - gap) / rows,
-        width: (b.width - gap) / columns - gap,
-        height: (b.height - gap) / rows - gap
-      }, b) : fitRect({ x: 24 + i * 36 % Math.max(36, b.width - 320), y: 24 + i * 32 % Math.max(32, b.height - 250), width: appById(win.app).width, height: appById(win.app).height }, b);
+      win.expanded = false;
+      win.rect = normalRect(kind === "tile" ? { x: gap + i % columns * (b.width - gap) / columns, y: gap + Math.floor(i / columns) * (b.height - gap) / rows, width: (b.width - gap) / columns - gap, height: (b.height - gap) / rows - gap } : { x: 32 + i * 42, y: 30 + i * 36, width: appById(win.app).width, height: appById(win.app).height });
     });
     paint2();
     save();
@@ -710,7 +1513,7 @@ function createWindows({ stage, container, preview, shield, layout: initial, cre
     save();
   }
   function replace(next) {
-    if (gesture) return;
+    if (gesture || navigation.busy) return;
     const previous = new Map(layout.windows.map((win) => [win.id, win]));
     layout = normalizeLayout(next);
     desktopRestore = [];
@@ -720,52 +1523,80 @@ function createWindows({ stage, container, preview, shield, layout: initial, cre
     });
     for (const [id, entry] of entries) {
       const win = layout.windows.find((win2) => win2.id === id), old = previous.get(id);
-      if (!win || old?.app !== win.app || old?.space !== win.space) {
-        entry.events.abort();
-        entry.content.destroy?.();
-        entry.panel.remove();
-        entries.delete(id);
-      }
+      if (!win || old?.app !== win.app || old?.space !== win.space) removeEntry(id);
+      else entry.win = win;
     }
-    for (const win of layout.windows) {
-      if (!entries.has(win.id)) add(win);
-    }
+    for (const win of layout.windows) if (!entries.has(win.id)) add(win);
+    ink.sync();
     paint2();
   }
   for (const win of layout.windows) add(win);
+  ink.resize();
+  scenery.resize();
+  crew.resize();
   return {
     open,
     activate,
+    reveal,
     close,
     minimize,
     setMode,
+    resize,
     switchSpace,
     arrange,
     showDesktop,
     paint: paint2,
     replace,
+    fitAll,
+    zoom(factor) {
+      const b = bounds();
+      setCamera(transformAt(camera(), { x: b.width / 2, y: b.height / 2 }, { zoom: camera().zoom * factor }));
+      save();
+    },
+    resetView() {
+      const b = bounds();
+      setCamera(transformAt(camera(), { x: b.width / 2, y: b.height / 2 }, { zoom: 1, angle: 0 }));
+      save();
+    },
+    rotate(step) {
+      const b = bounds();
+      setCamera(transformAt(camera(), { x: b.width / 2, y: b.height / 2 }, { angle: camera().angle + step }));
+      save();
+    },
+    setTool(value) {
+      navigation.flush();
+      tool = tool === value ? "move" : value;
+      stage.dataset.tool = tool;
+      onTools({ tool });
+    },
+    setColor: ink.setColor,
+    setWidth: ink.setWidth,
+    undo: ink.undo,
     get layout() {
       return structuredClone(layout);
     },
     get busy() {
-      return !!gesture;
+      return !!gesture || navigation.busy;
     },
-    update() {
+    update(path) {
       for (const entry of entries.values()) entry.content.update?.();
+      ink.sync(path?.[0] === "ink");
+      scenery.sync();
     },
     tick() {
-      for (const entry of entries.values()) entry.content.tick?.();
+      if (!document.hidden) for (const entry of entries.values()) entry.content.tick?.();
     },
     destroy() {
+      disposed = true;
+      navigation.destroy();
       if (gesture) finish(false);
       events.abort();
       observer.disconnect();
-      for (const entry of entries.values()) {
-        entry.events.abort();
-        entry.content.destroy?.();
-        entry.panel.remove();
-      }
-      entries.clear();
+      ink.destroy();
+      scenery.destroy();
+      crew.destroy();
+      frames.destroy();
+      for (const id of entries.keys()) removeEntry(id);
     }
   };
 }
@@ -846,7 +1677,7 @@ function createContent(win, body, { read, write: write2, open, library }) {
     emblem.append(icon("spark"));
     body.append(emblem, el("h1", "", "Your other desktop."), el("p", "intro", "A place to figure out how you want things to work."));
     const instructions = el("div", "guide-instructions");
-    for (const [svg, text] of [["desktop", "Drag a title bar. Resize from any edge."], ["left", "Drag to a side to snap a window into place."], ["grid", "Switch rooms to make a little more space."]]) {
+    for (const [svg, text] of [["desktop", "Drag windows freely. Drag empty canvas to pan."], ["left", "Pinch to zoom. Twist two fingers to rotate by 15\xB0."], ["pen", "Choose Draw and make the background your own."]]) {
       const row = el("p");
       row.append(icon(svg), el("span", "", text));
       instructions.append(row);
@@ -854,7 +1685,7 @@ function createContent(win, body, { read, write: write2, open, library }) {
     body.append(instructions);
     const actions = el("div", "guide-actions");
     actions.append(button("Open apps", library, "primary"), button("Start a thought", () => open("note"), "text-button"));
-    body.append(actions, el("p", "small-print", "\u2318 / Ctrl K opens apps. F6 switches windows. Your writing stays when you close a window."));
+    body.append(actions, el("p", "small-print", "Fit all brings your windows back. Your little crew helps carry them, then takes a break."));
     return {};
   }
   if (win.app === "note") {
@@ -1055,9 +1886,9 @@ function createContent(win, body, { read, write: write2, open, library }) {
     let choose = function(patch) {
       write2(["appearance"], { ...read().appearance, ...patch });
     }, update = function() {
-      const value = read().appearance || {};
+      const value = read().appearance || {}, pattern = ["plain", "grid"].includes(value.pattern) ? value.pattern : "workshop";
       for (const node of themes.children) node.setAttribute("aria-pressed", String(node.dataset.theme === (value.theme || "tide")));
-      for (const node of options.children) node.setAttribute("aria-pressed", String(node.dataset.pattern === (value.pattern || "orbits")));
+      for (const node of options.children) node.setAttribute("aria-pressed", String(node.dataset.pattern === pattern));
     };
     body.classList.add("appearance-content");
     body.append(el("h1", "", "Set the atmosphere."), el("p", "intro", "Same room. A different feeling."));
@@ -1074,7 +1905,7 @@ function createContent(win, body, { read, write: write2, open, library }) {
     }
     const patterns = el("fieldset"), patternLegend = el("legend", "", "Wallpaper"), options = el("div", "pattern-options");
     patterns.append(patternLegend, options);
-    for (const [id, name] of [["orbits", "Orbits"], ["grid", "Grid"], ["plain", "Plain"]]) {
+    for (const [id, name] of [["workshop", "Workshop"], ["grid", "Grid"], ["plain", "Plain"]]) {
       const option = button(name, () => choose({ pattern: id }));
       option.dataset.pattern = id;
       options.append(option);
@@ -1092,11 +1923,13 @@ var sdk = await connect();
 var data = {};
 var manager = null;
 var session = null;
+var workspace = null;
 var layoutKey = "";
 var state = null;
 var saveError = "";
 var libraryOrigin = null;
-var lastTaskActive = null;
+var penColor = INK_COLORS[0];
+var penWidth = 4;
 var shell = $("#shell");
 var status = $("#save-status");
 function notice(message) {
@@ -1115,7 +1948,7 @@ function write(path, value) {
   }
   target[path.at(-1)] = structuredClone(value);
   applyAppearance();
-  manager?.update();
+  manager?.update(path);
   if (!sdk) {
     updateStatus();
     return;
@@ -1139,40 +1972,44 @@ function applyAppearance() {
   const value = data.appearance || {}, theme = THEMES[value.theme] || THEMES.tide;
   shell.style.setProperty("--desk", theme.color);
   shell.style.setProperty("--desk-line", theme.line);
-  shell.dataset.pattern = ["orbits", "grid", "plain"].includes(value.pattern) ? value.pattern : "orbits";
+  shell.dataset.pattern = ["grid", "plain"].includes(value.pattern) ? value.pattern : "workshop";
 }
 function paint(layout) {
   for (const node of $("#spaces").children) node.setAttribute("aria-pressed", String(node.dataset.space === layout.space));
-  const wins = layout.windows.filter((win) => win.space === layout.space).sort((a, b) => a.order - b.order), tasks = $("#tasks");
-  for (const node of [...tasks.children]) if (!wins.some((win) => win.id === node.dataset.window)) node.remove();
+  const wins = layout.windows.filter((win) => win.space === layout.space).sort((a, b) => a.order - b.order), picker = $("#window-picker");
+  for (const node of [...picker.options]) if (node.value && !wins.some((win) => win.id === node.value)) node.remove();
   for (const win of wins) {
-    let task = [...tasks.children].find((node) => node.dataset.window === win.id);
-    if (!task) {
-      const app = appById(win.app);
-      task = button("", () => manager.activate(win.id, true), "task");
-      task.dataset.window = win.id;
-      task.append(icon(app.icon), el("span", "", app.name));
-      tasks.append(task);
+    let option = [...picker.options].find((node) => node.value === win.id);
+    if (!option) {
+      option = new Option("", win.id);
+      picker.add(option);
     }
-    task.setAttribute("aria-label", (win.minimized ? "Restore " : "Switch to ") + appById(win.app).name);
-    task.setAttribute("aria-current", String(layout.active[layout.space] === win.id));
-    task.classList.toggle("is-minimized", win.minimized);
-  }
-  if (lastTaskActive !== layout.active[layout.space]) {
-    lastTaskActive = layout.active[layout.space];
-    [...tasks.children].find((node) => node.dataset.window === lastTaskActive)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    option.textContent = appById(win.app).name + (win.minimized ? " (minimized)" : "");
   }
   $("#empty").hidden = wins.some((win) => !win.minimized);
   $("#show-desktop").setAttribute("aria-label", wins.some((win) => !win.minimized) ? "Show desktop" : "Restore windows");
-  for (const node of $("#pinned").children) node.classList.toggle("is-open", wins.some((win) => win.app === node.dataset.app));
+}
+function tools({ camera, tool, history }) {
+  if (camera) {
+    $("#actual-size").textContent = camera.zoom < 0.01 ? "<1%" : Math.round(camera.zoom * 100) + "%";
+    $("#angle").textContent = camera.angle + "\xB0";
+  }
+  if (tool) for (const id of ["pan", "draw", "erase"]) $("#" + id).setAttribute("aria-pressed", String(id === tool));
+  if (history) {
+    $("#undo").disabled = !history.undo;
+    $("#redo").disabled = !history.redo;
+  }
 }
 function makeManager(layout) {
   manager = createWindows({
     stage: $("#desktop"),
-    container: $("#windows"),
-    preview: $("#snap-preview"),
+    container: $("#world"),
     shield: $("#gesture-shield"),
     layout,
+    read: () => data,
+    write,
+    notice,
+    onTools: tools,
     createContent: (win, body) => createContent(win, body, { read: () => data, write, open: (id) => manager.open(id), library: openLibrary }),
     onChange: (value) => {
       layoutKey = JSON.stringify(value);
@@ -1182,14 +2019,17 @@ function makeManager(layout) {
     onMenu: openWindowMenu
   });
   manager.paint();
+  manager.setColor(penColor);
+  manager.setWidth(penWidth);
 }
 function receive(next) {
-  const switched = session !== next.sessionId;
+  const switched = session !== next.sessionId || workspace !== next.workspaceId;
   if (switched) {
     for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
     manager?.destroy();
     manager = null;
     session = next.sessionId;
+    workspace = next.workspaceId;
     saveError = "";
     notice("");
   }
@@ -1215,16 +2055,7 @@ for (const space of SPACES) {
   item.dataset.space = space.id;
   $("#spaces").append(item);
 }
-for (const app of APPS.filter((app2) => ["note", "board", "timer", "calculator"].includes(app2.id))) {
-  const item = button("", () => manager.open(app.id), "rail-button");
-  item.dataset.app = app.id;
-  item.setAttribute("aria-label", "Open " + app.name);
-  item.title = app.name;
-  item.append(icon(app.icon), el("span", "rail-label", app.id === "note" ? "Write" : app.id === "board" ? "Ideas" : app.id === "timer" ? "Focus" : "Calc"));
-  $("#pinned").append(item);
-}
 $("#brand-icon").append(icon("spark"));
-$("#library").append(icon("grid"), el("span", "rail-label", "Apps"));
 $("#appearance").append(icon("palette"));
 $("#help").append(icon("spark"));
 $("#search-icon").append(icon("search"));
@@ -1315,6 +2146,7 @@ function openWindowMenu(id) {
 }
 $("#library").addEventListener("click", openLibrary);
 $("#empty-open").addEventListener("click", openLibrary);
+$("#search-apps").addEventListener("click", openLibrary);
 $("#appearance").addEventListener("click", () => manager.open("appearance"));
 $("#help").addEventListener("click", () => manager.open("guide"));
 $("#arrange").addEventListener("click", () => show($("#arrange-menu")));
@@ -1324,6 +2156,38 @@ for (const id of ["tile", "cascade"]) $("#" + id).addEventListener("click", () =
   else if (!saveError) notice("");
 });
 $("#show-desktop").addEventListener("click", () => manager.showDesktop());
+$("#window-picker").addEventListener("change", (event) => {
+  if (event.target.value) manager.reveal(event.target.value);
+  event.target.value = "";
+});
+for (const id of ["pan", "draw", "erase"]) $("#" + id).addEventListener("click", () => manager.setTool(id));
+for (const [index, color] of INK_COLORS.entries()) {
+  const node = button("", () => {
+    penColor = color;
+    manager.setColor(color);
+    for (const other of $("#ink-colors").children) other.setAttribute("aria-pressed", String(other === node));
+  }, "ink-color");
+  node.style.setProperty("--swatch", color);
+  node.setAttribute("aria-label", ["Slate pen", "Blue pen", "Amber pen", "Green pen", "Pink pen"][index]);
+  node.setAttribute("aria-pressed", String(index === 0));
+  $("#ink-colors").append(node);
+}
+$("#pen-width").addEventListener("change", (event) => {
+  penWidth = Number(event.target.value);
+  manager.setWidth(penWidth);
+});
+$("#undo").addEventListener("click", () => manager.undo());
+$("#redo").addEventListener("click", () => manager.undo(true));
+$("#zoom-out").addEventListener("click", () => manager.zoom(1 / 1.2));
+$("#zoom-in").addEventListener("click", () => manager.zoom(1.2));
+$("#actual-size").addEventListener("click", () => manager.resetView());
+$("#fit-all").addEventListener("click", () => manager.fitAll());
+$("#rotate-left").addEventListener("click", () => manager.rotate(-15));
+$("#rotate-right").addEventListener("click", () => manager.rotate(15));
+$("#angle").addEventListener("click", () => {
+  const angle = manager.layout.cameras[manager.layout.space].angle;
+  manager.rotate(-angle);
+});
 $("#fullscreen").disabled = !sdk;
 $("#fullscreen").addEventListener("click", () => sdk?.request("fullscreen").catch((error) => notice(error.message)));
 document.addEventListener("keydown", (event) => {
