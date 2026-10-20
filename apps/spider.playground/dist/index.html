@@ -38,6 +38,7 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
 
 #life-canvas{z-index:4}#scenery-fallback{z-index:0}#desktop[data-tool=plant] #canvas-surface{cursor:crosshair}.has-fullscreen>#life-canvas,.has-fullscreen>#world-whisper{display:none}
 .guide-content{padding:20px 28px}.guide-emblem{width:36px;height:36px;margin-bottom:11px}.guide-instructions{margin:15px 0}.guide-actions{margin-bottom:10px}
+.terrain-key{position:absolute;right:16px;top:12px;z-index:6;display:flex;gap:12px;font-size:10px;color:#456c68;background:#eaf0e6cf;border:1px solid #becdc2;padding:6px 9px;pointer-events:none;border-radius:4px}.terrain-key span:first-child{border-right:1px solid #bfccc2;padding-right:12px}.has-fullscreen .terrain-key{display:none}
 .work-heading{gap:10px}.work-heading h1{font-size:18px}.work-heading #world-phase{margin:0 0 2px}.work-heading>div{min-width:160px}#explore-world{font-size:11px;padding:8px 12px;border-radius:7px;background:#dde8d8;border:1px solid #b5c5af;color:#416149;white-space:nowrap}#explore-world:hover{background:#d0e0ca}
 #plant-kind{display:none;width:112px!important;font-size:11px!important}#desktop[data-tool=plant] #plant-kind{display:block}#desktop[data-tool=plant] #ink-colors,#desktop[data-tool=plant] #pen-width{display:none}
 #world-whisper{position:absolute;left:20px;bottom:120px;margin:0;pointer-events:none;z-index:6;color:#4e6b58;font-size:11px;max-width:360px;background:#e4ebd8d9;padding:5px 9px;border-radius:5px}
@@ -75,13 +76,14 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
         <button id="pan" aria-label="Pan canvas" aria-pressed="false">Pan</button>
         <button id="draw" aria-label="Draw on canvas" aria-pressed="false">Draw</button>
         <button id="erase" aria-label="Erase drawing" aria-pressed="false">Erase</button>
-        <button id="plant" aria-label="Seed the current" aria-pressed="false">Seed</button>
-        <select id="plant-kind" aria-label="Seed kind"><option value="flower">Ripple</option><option value="fern">Eddy</option><option value="tree">Glow</option><option value="remove">Remove seed</option></select>
+        <button id="plant" aria-label="Shape terrain" aria-pressed="false">Shape</button>
+        <select id="plant-kind" aria-label="Landform kind"><option value="flower">Hill</option><option value="fern">Hollow</option><option value="tree">Peak</option><option value="remove">Remove landform</option></select>
         <div id="ink-colors" aria-label="Pen colors"></div>
         <select id="pen-width" aria-label="Pen width"><option value="2">Fine</option><option value="4" selected>Medium</option><option value="8">Broad</option></select>
         <button id="undo" aria-label="Undo drawing" disabled>Undo</button><button id="redo" aria-label="Redo drawing" disabled>Redo</button>
       </nav>
       <p id="world-whisper"></p>
+      <div class="terrain-key"><span>5-unit contours</span><span id="terrain-status">Ground settling</span></div>
       <nav class="canvas-tools" aria-label="Canvas navigation">
         <select id="window-picker" aria-label="Go to window"><option value="">Go to…</option></select>
         <button id="zoom-out" aria-label="Zoom canvas out">−</button><button id="actual-size" aria-label="Reset canvas view">100%</button><button id="zoom-in" aria-label="Zoom canvas in">+</button>
@@ -101,8 +103,8 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
     <div id="app-results"></div><p class="dialog-hint">⌘ / Ctrl K to open apps <span>Esc to close</span></p>
   </dialog>
   <dialog id="neighbors-dialog" aria-labelledby="neighbors-title">
-    <div class="dialog-heading"><h2 id="neighbors-title">People of the current</h2><button class="icon-button" data-dismiss aria-label="Close neighbors"></button></div>
-    <p class="neighbors-intro">They follow ripples, visit one another, and make room as windows arrive. Tap someone to say hello. Their footsteps leave little wakes.</p>
+    <div class="dialog-heading"><h2 id="neighbors-title">People of the landscape</h2><button class="icon-button" data-dismiss aria-label="Close neighbors"></button></div>
+    <p class="neighbors-intro">They climb slopes, follow contours, and brace as the ground moves. When the landscape settles, they rest. Tap someone to say hello.</p>
     <div id="neighbor-list"></div>
     <div class="world-settings"><button id="pause-world" aria-label="Pause world" aria-pressed="false">Pause world</button><span id="world-rhythm">A day lasts 24 minutes.</span></div>
   </dialog>
@@ -881,66 +883,229 @@ function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, 
 // ../SpiderPlayground/liquid-model.js
 var FIELD_SIZE = 256;
 var MAX_PIXELS = 6e5;
-var MAX_IMPULSES = 32;
 function surfaceSize(width, height, budget = MAX_PIXELS) {
   const scale = Math.min(1, Math.sqrt(budget / Math.max(1, width * height)));
   return { width: Math.max(1, Math.floor(width * scale)), height: Math.max(1, Math.floor(height * scale)) };
 }
-function createImpulsePool(limit = MAX_IMPULSES) {
-  const points = [];
-  return { add(p, radius = 65, strength = 0.08) {
-    if (!Number.isFinite(p?.x) || !Number.isFinite(p?.y)) return;
-    points.push({ x: p.x, y: p.y, radius: Math.max(8, Math.min(500, radius)), strength: Math.max(5e-3, Math.min(0.2, strength)) });
-    if (points.length > limit) points.shift();
-  }, drain() {
-    return points.splice(0);
-  }, clear() {
-    points.length = 0;
-  }, get size() {
-    return points.length;
-  } };
+
+// ../SpiderPlayground/terrain.js
+var CONTOUR_INTERVAL = 5;
+var MAX_LOADS = 6;
+var MAX_SOURCES = 192;
+var MAX_PULSES = 32;
+var HEIGHT_RANGE = 128;
+var SETTLE_MS = 3e3;
+var kernel = (u) => u >= 1 ? 0 : Math.pow(1 - Math.max(0, u), 4) * (1 + 4 * Math.max(0, u));
+function rectangleDistance(p, r) {
+  const x = p.x - r.x, y = p.y - r.y, rx = Math.max(0, r.width / 2 - 24), ry = Math.max(0, r.height / 2 - 24), qx = Math.abs(x) - rx, qy = Math.abs(y) - ry, ox = Math.max(0, qx), oy = Math.max(0, qy), length = Math.hypot(ox, oy);
+  return { distance: length + Math.min(Math.max(qx, qy), 0) - 24, dx: length ? Math.sign(x) * ox / length : qx > qy ? Math.sign(x) : 0, dy: length ? Math.sign(y) * oy / length : qy >= qx ? Math.sign(y) : 0 };
+}
+var shoulder = (r) => Math.min(340, 180 + Math.min(r.width, r.height) * 0.18);
+var windowLoad = (r) => Math.min(110, 30 + Math.sqrt(r.width * r.height) * 0.09);
+function sampleRelief(point, loads, sources = []) {
+  let height = 0, dx = 0, dy = 0;
+  for (const r of loads) {
+    const d = rectangleDistance(point, r), width = shoulder(r), u = Math.max(0, d.distance) / width;
+    if (u >= 1) continue;
+    const k = kernel(u), gradient = -20 * u * Math.pow(1 - u, 3) / width * r.weight;
+    height += r.weight * k;
+    if (d.distance > 0) {
+      dx += gradient * d.dx;
+      dy += gradient * d.dy;
+    }
+  }
+  const positive = { height: 0, dx: 0, dy: 0 }, negative = { height: 0, dx: 0, dy: 0 };
+  for (const s of sources) {
+    const x = point.x - s.x, y = point.y - s.y, d = Math.hypot(x, y), u = d / s.radius;
+    if (u >= 1) continue;
+    const phase = s.transient ? u * 5 - s.age * 11 : 0, wave = s.transient ? Math.cos(phase) : 1, k = kernel(u), value = s.amplitude * k * wave;
+    const gradient = s.amplitude * (-20 * u * Math.pow(1 - u, 3) * wave - (s.transient ? 5 * k * Math.sin(phase) : 0)) / s.radius;
+    const sum = value < 0 ? negative : positive, sign = value < 0 ? -1 : 1;
+    sum.height += Math.abs(value);
+    if (d) {
+      sum.dx += sign * gradient * x / d;
+      sum.dy += sign * gradient * y / d;
+    }
+  }
+  for (const [sum, sign] of [[positive, 1], [negative, -1]]) {
+    height += sign * Math.min(HEIGHT_RANGE, sum.height);
+    if (sum.height < HEIGHT_RANGE) {
+      dx += sign * sum.dx;
+      dy += sign * sum.dy;
+    }
+  }
+  return { height, dx, dy, slope: Math.hypot(dx, dy) };
+}
+function spring(current, target, velocity, dt) {
+  const count = Math.max(1, Math.ceil(dt * 120)), step = dt / count;
+  for (let i = 0; i < count; i++) {
+    velocity += ((target - current) * 169 - velocity * 20.8) * step;
+    current += velocity * step;
+  }
+  if (Math.abs(current - target) < 0.015 && Math.abs(velocity) < 0.06) return [target, 0];
+  return [current, velocity];
+}
+function createTerrain() {
+  const bodies = /* @__PURE__ */ new Map();
+  let loads = [], seeds = [], seedKey = "", seedVersion = 0, pulses = [], now = 0, inputAt = -Infinity, changed = false, moving = false, cachedSources = null;
+  function updateLoads() {
+    loads = [...bodies.values()].sort((a, b) => Number(a.retired) - Number(b.retired)).slice(0, MAX_LOADS).map((b) => ({ id: b.id, x: b.x, y: b.y, width: Math.max(0, b.width), height: Math.max(0, b.height), weight: Math.max(0, b.weight) }));
+  }
+  function setWindows(windows, time) {
+    const ids = new Set(windows.slice(0, MAX_LOADS).map((w) => w.id));
+    let dirty = false;
+    for (const win of windows.slice(0, MAX_LOADS)) {
+      const rect = win.rect, target = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, width: rect.width, height: rect.height, weight: windowLoad(rect) };
+      let b = bodies.get(win.id);
+      if (!b) {
+        b = { id: win.id, ...target, width: 0, height: 0, weight: 0, velocity: { x: 0, y: 0, width: 0, height: 0, weight: 0 } };
+        bodies.set(win.id, b);
+        dirty = true;
+      }
+      if (b.retired || !b.target || Object.keys(target).some((k) => target[k] !== b.target[k])) dirty = true;
+      b.retired = false;
+      b.target = target;
+    }
+    for (const b of bodies.values()) if (!ids.has(b.id) && !b.retired) {
+      b.retired = true;
+      b.target = { ...b.target, width: 0, height: 0, weight: 0 };
+      dirty = true;
+    }
+    if (dirty) {
+      inputAt = time;
+      changed = moving = true;
+    }
+    return dirty;
+  }
+  function setSeeds(plants, time) {
+    const next = plants.slice(0, MAX_SOURCES).map((p) => ({ x: p.x, y: p.y, radius: p.kind === "tree" ? 150 : p.kind === "fern" ? 175 : 115, amplitude: p.kind === "tree" ? 30 : p.kind === "fern" ? -22 : 18, age: 0, transient: false })), key2 = JSON.stringify(next);
+    if (key2 === seedKey) return false;
+    const origin = next.at(-1) || seeds.at(-1);
+    seedKey = key2;
+    seeds = next;
+    seedVersion++;
+    cachedSources = null;
+    if (next.length || seedVersion > 1) {
+      inputAt = time;
+      changed = true;
+      if (origin && seedVersion > 1) disturb(origin, origin.radius, 0.1, time);
+    }
+    return true;
+  }
+  function disturb(point, radius = 90, strength = 0.08, time = now, actor = false) {
+    if (!Number.isFinite(point?.x) || !Number.isFinite(point?.y)) return false;
+    const remaining = inputAt + SETTLE_MS - time;
+    if (actor && remaining < 180) return false;
+    if (!actor) inputAt = time;
+    pulses.push({ x: point.x, y: point.y, radius: Math.max(12, Math.min(500, radius)), amplitude: Math.max(0.2, Math.min(12, strength * 40)), at: time, duration: actor ? Math.min(700, remaining) : SETTLE_MS });
+    if (pulses.length > MAX_PULSES) pulses.shift();
+    cachedSources = null;
+    changed = true;
+    return true;
+  }
+  function step(dt, time, snap = false) {
+    now = time;
+    moving = false;
+    dt = Math.max(0, Math.min(0.1, dt));
+    for (const [id, b] of bodies) {
+      for (const key2 of ["x", "y", "width", "height", "weight"]) {
+        if (snap) {
+          b[key2] = b.target[key2];
+          b.velocity[key2] = 0;
+        } else [b[key2], b.velocity[key2]] = spring(b[key2], b.target[key2], b.velocity[key2], dt);
+        if (b[key2] !== b.target[key2] || b.velocity[key2] !== 0) moving = true;
+      }
+      if (b.retired && b.weight === 0) bodies.delete(id);
+    }
+    pulses = snap ? [] : pulses.filter((p) => time - p.at < p.duration);
+    cachedSources = null;
+    updateLoads();
+    changed = false;
+    return moving || pulses.length > 0;
+  }
+  function sources() {
+    if (!cachedSources) cachedSources = [...seeds, ...pulses.map((p) => {
+      const elapsed = Math.max(0, now - p.at), age = elapsed / 1e3, tail = Math.min(1, Math.max(0, (p.duration - elapsed) / 500));
+      return { ...p, amplitude: p.amplitude * Math.exp(-age * 2.8) * tail, age, transient: true };
+    })];
+    return cachedSources;
+  }
+  return {
+    setWindows,
+    setSeeds,
+    disturb,
+    step,
+    sources,
+    sample(p) {
+      return sampleRelief(p, loads, sources());
+    },
+    get loads() {
+      return loads;
+    },
+    get seeds() {
+      return seeds;
+    },
+    get seedVersion() {
+      return seedVersion;
+    },
+    get pulseCount() {
+      return pulses.length;
+    },
+    get moving() {
+      return moving;
+    },
+    get active() {
+      return changed || moving || pulses.length > 0;
+    },
+    get inputAt() {
+      return inputAt;
+    }
+  };
 }
 
 // ../SpiderPlayground/liquid-surface.js
 var vertex = `attribute vec2 aPosition;varying vec2 vUV;void main(){vUV=aPosition*.5+.5;gl_Position=vec4(aPosition,0.,1.);}`;
-var common = `precision highp float;
-varying vec2 vUV;uniform vec2 uView;uniform vec4 uCamera;
+var display = `precision highp float;
+varying vec2 vUV;uniform vec2 uView;uniform vec4 uCamera;uniform sampler2D uField;
+uniform vec4 uWindows[6];uniform vec3 uLoadsA;uniform vec3 uLoadsB;uniform int uCount;
+uniform vec3 uTint;uniform float uPattern;uniform float uNight;
 vec2 world(vec2 uv){vec2 p=vec2(uv.x,1.-uv.y)*uView-uCamera.xy;return vec2(uCamera.z*p.x+uCamera.w*p.y,-uCamera.w*p.x+uCamera.z*p.y)/max(.0000000001,dot(uCamera.zw,uCamera.zw));}
-vec2 project(vec2 p,vec4 camera,vec2 view){vec2 s=vec2(camera.z*p.x-camera.w*p.y,camera.w*p.x+camera.z*p.y)+camera.xy;return vec2(s.x/view.x,1.-s.y/view.y);}
-`;
-var update = `${common}
-uniform sampler2D uState;uniform vec4 uPrevious;uniform vec2 uPreviousView;uniform float uTime;uniform float uAdvance;
-vec2 sampleState(vec2 uv){if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.)return vec2(.5019608);return texture2D(uState,uv).rg;}
+float field(vec2 uv){vec2 h=texture2D(uField,uv).rg;return (h.r-h.g)*128.;}
+vec3 landform(vec2 p,vec4 r,float weight){
+ vec2 delta=p-r.xy,q=abs(delta)-max(vec2(0.),r.zw-24.),outward=max(q,0.);float len=length(outward);
+ float d=len+min(max(q.x,q.y),0.)-24.,width=min(340.,180.+min(r.z,r.w)*.36),u=max(0.,d)/width;
+ if(u>=1.)return vec3(0.);float t=1.-u,k=t*t*t*t*(1.+4.*u);vec2 normal=len>.00001?sign(delta)*outward/len:q.x>q.y?vec2(sign(delta.x),0.):vec2(0.,sign(delta.y));
+ float derivative=d>0.?-20.*u*t*t*t*weight/width:0.;return vec3(weight*k,normal*derivative);
+}
+float contour(float h,float interval,float width){float distance=abs(fract(h/interval+.5)-.5)*interval;return 1.-smoothstep(width*.2,width,distance);}
 void main(){
- vec2 p=world(vUV),uv=project(p,uPrevious,uPreviousView);uv-=vec2(sin(p.y*.004+uTime*.17),cos(p.x*.003-uTime*.13))*.00045*uAdvance;
- vec2 h=sampleState(uv);vec2 cell=vec2(1./256.,0.);
- float lap=sampleState(uv+cell).r+sampleState(uv-cell).r+sampleState(uv+cell.yx).r+sampleState(uv-cell.yx).r-4.*h.r;
- float next=.5019608+(2.*h.r-h.g+.23*lap-.5019608)*.985;
- gl_FragColor=vec4(mix(h.r,clamp(next,.12,.88),uAdvance),mix(h.g,h.r,uAdvance),0.,1.);
+ vec2 p=world(vUV),cell=vec2(1./256.,0.);float zoom=length(uCamera.zw);
+ float gx=(field(vUV+cell)-field(vUV-cell))/(2.*uView.x/256.),gy=-(field(vUV+cell.yx)-field(vUV-cell.yx))/(2.*uView.y/256.);
+ vec3 relief=vec3(field(vUV),uCamera.z*gx+uCamera.w*gy,-uCamera.w*gx+uCamera.z*gy);
+ for(int i=0;i<6;i++){if(i<uCount){float mass=i==0?uLoadsA.x:i==1?uLoadsA.y:i==2?uLoadsA.z:i==3?uLoadsB.x:i==4?uLoadsB.y:uLoadsB.z;relief+=landform(p,uWindows[i],mass);}}
+ float height=relief.x,slope=length(relief.yz),amount=1.-exp(-abs(height)/85.);
+ vec3 paper=vec3(.88,.92,.88),high=height<0.?vec3(.62,.78,.81):vec3(.81,.83,.66),color=mix(paper,high,amount*.78);
+ vec3 normal=normalize(vec3(-relief.yz*.95,1.));float shade=dot(normal,normalize(vec3(-.5,-.65,1.)));color*=.83+.28*shade;
+ float aa=clamp(slope/max(.00001,zoom)*.85,.035,1.1),mask=smoothstep(.001,.012,slope);
+ float minor=contour(height,5.,aa)*mask,major=contour(height,25.,aa*1.7)*mask;
+ float detail=uPattern>1.5?.12:uPattern>.5?.84:.55;color=mix(color,vec3(.31,.46,.44),minor*detail);color=mix(color,vec3(.22,.37,.39),major*.82);
+ float spacing=zoom<.35?500.:100.;vec2 grid=abs(fract(p/spacing+.5)-.5)*spacing*zoom;float guide=1.-smoothstep(.18,.55,min(grid.x,grid.y));color=mix(color,vec3(.46,.58,.56),guide*.085);
+ color=mix(color,color*uTint,.15);color=mix(color,color*vec3(.75,.8,.89),uNight*.45);gl_FragColor=vec4(color,1.);
 }`;
-var display = `${common}
-uniform sampler2D uState;uniform vec4 uWindows[6];uniform int uCount;uniform float uTime;uniform float uNight;uniform vec3 uTint;uniform float uPattern;
-float box(vec2 p,vec4 r){vec2 q=abs(p-r.xy)-max(vec2(0.),r.zw-24.);return length(max(q,0.))+min(max(q.x,q.y),0.)-24.;}
-void main(){
- vec2 p=world(vUV);float t=uTime;vec2 cell=vec2(1./256.,0.);float h=(texture2D(uState,vUV).r-.5019608)*4.;
- vec2 grad=vec2(texture2D(uState,vUV+cell).r-texture2D(uState,vUV-cell).r,texture2D(uState,vUV+cell.yx).r-texture2D(uState,vUV-cell.yx).r);
- float terrain=.5+.21*sin(p.x*.0037+sin(p.y*.0029+t*.12)*1.6)+.17*cos(p.y*.0043-t*.1+sin(p.x*.002)*1.2);
- float distance=100000.;for(int i=0;i<6;i++){if(i<uCount){float d=box(p,uWindows[i]);float k=90.;float a=clamp(.5+.5*(distance-d)/k,0.,1.);distance=mix(distance,d,a)-k*a*(1.-a);}}
- float shore=exp(-abs(distance)*.008),swell=sin(distance*.027-t*.9)*exp(-abs(distance)*.005);
- float f=terrain+h*.6+swell*.08;vec3 deep=vec3(.41,.64,.69),pearl=vec3(.86,.92,.9),violet=vec3(.68,.68,.81),gold=vec3(.94,.89,.72);
- vec3 color=mix(deep,pearl,smoothstep(.05,.85,f));color=mix(color,violet,(.5+.5*sin(f*7.+t*.1))*.22);
- color=mix(color,gold,shore*.34);color=mix(color,pearl,(1.-smoothstep(-60.,65.,distance))*.38);
- float contours=1.-smoothstep(.018,.065,abs(fract(f*7.+shore*.9)-.5));color+=vec3(.11,.16,.13)*contours*(uPattern>1.5?.03:uPattern>.5?.65:.32);
- color+=vec3(.7,.85,.8)*clamp(dot(grad,vec2(-4.,6.)),0.,.16);color=mix(color,color*uTint,.2);color=mix(color,color*vec3(.65,.73,.86),uNight*.8);
- gl_FragColor=vec4(color,1.);
-}`;
-var pointVertex = `precision highp float;attribute vec4 aSource;uniform vec4 uCamera;uniform vec2 uView;uniform float uTime;uniform float uMaxPoint;varying float vPower;
-void main(){vec2 p=vec2(uCamera.z*aSource.x-uCamera.w*aSource.y,uCamera.w*aSource.x+uCamera.z*aSource.y)+uCamera.xy;gl_Position=vec4(p.x/uView.x*2.-1.,1.-p.y/uView.y*2.,0.,1.);gl_PointSize=clamp(aSource.z*length(uCamera.zw)*256./uView.x*2.,2.,uMaxPoint);vPower=aSource.w*(.8+.2*sin(uTime+aSource.x*.01));}`;
-var pointFragment = `precision mediump float;varying float vPower;void main(){vec2 p=gl_PointCoord*2.-1.;gl_FragColor=vec4(exp(-dot(p,p)*5.)*vPower,0.,0.,0.);}`;
-function createScenery({ canvas, fallback, stage, frames, getBounds, getCamera, getWindows, read, getScene }) {
-  const events = new AbortController(), media = matchMedia("(prefers-reduced-motion: reduce)"), pool = createImpulsePool(), births = /* @__PURE__ */ new Map(), positions = /* @__PURE__ */ new Map();
-  let gl = null, resources = null, lost = false, disposed = false, timer = 0, last = 0, time = 0, inView = true, previous = null, previousView = null, appearanceKey = "", seedScene = null, seeds = new Float32Array(), frameCount = 0;
-  const fallbackCtx = fallback.getContext("2d", { alpha: false });
+var stampVertex = `precision highp float;
+attribute vec2 aCorner;attribute vec4 aSource;attribute vec2 aPulse;
+uniform vec4 uCamera;uniform vec2 uView;varying vec2 vOffset;varying float vAmplitude;varying vec2 vPulse;
+void main(){vec2 w=aSource.xy+aCorner*aSource.z,p=vec2(uCamera.z*w.x-uCamera.w*w.y,uCamera.w*w.x+uCamera.z*w.y)+uCamera.xy;gl_Position=vec4(p.x/uView.x*2.-1.,1.-p.y/uView.y*2.,0.,1.);vOffset=aCorner;vAmplitude=aSource.w;vPulse=aPulse;}`;
+var stampFragment = `precision highp float;varying vec2 vOffset;varying float vAmplitude;varying vec2 vPulse;
+void main(){float u=length(vOffset);if(u>=1.)discard;float t=1.-u,k=t*t*t*t*(1.+4.*u),wave=vPulse.y>.5?cos(u*5.-vPulse.x*11.):1.,h=vAmplitude*k*wave/128.;gl_FragColor=vec4(max(h,0.),max(-h,0.),0.,0.);}`;
+function sourceVertices(sources) {
+  const vertices = [];
+  for (const s of sources) for (const [x, y] of [[-1, -1], [1, -1], [-1, 1], [-1, 1], [1, -1], [1, 1]]) vertices.push(x, y, s.x, s.y, s.radius, s.amplitude, s.age || 0, s.transient ? 1 : 0);
+  return new Float32Array(vertices);
+}
+function createScenery({ canvas, fallback, stage, frames, getBounds, getCamera, getWindows, read, getScene, onStatus }) {
+  const events = new AbortController(), media = matchMedia("(prefers-reduced-motion: reduce)"), fallbackCtx = fallback.getContext("2d", { alpha: false });
+  let terrain = createTerrain(), gl = null, resources = null, lost = false, disposed = false, timer = 0, last = 0, inView = true, appearanceKey = "", sceneRef = null, space = null, atlasKey = "", hadPulses = false, uploadedVersion = -1, frameCount = 0, status2 = "";
   const cameraVector = (c) => {
     const a = c.angle * Math.PI / 180;
     return new Float32Array([c.x, c.y, Math.cos(a) * c.zoom, Math.sin(a) * c.zoom]);
@@ -952,6 +1117,13 @@ function createScenery({ canvas, fallback, stage, frames, getBounds, getCamera, 
     frames.cancel(paint2);
     last = 0;
   }
+  function report(value) {
+    canvas.dataset.motion = value;
+    if (status2 !== value) {
+      status2 = value;
+      onStatus?.({ motion: value, interval: CONTOUR_INTERVAL });
+    }
+  }
   function fail() {
     resources = null;
     canvas.hidden = true;
@@ -962,21 +1134,21 @@ function createScenery({ canvas, fallback, stage, frames, getBounds, getCamera, 
     try {
       let shader = function(type, source) {
         const s = gl.createShader(type);
-        shaders.push(s);
+        resources.shaders.push(s);
         gl.shaderSource(s, source);
         gl.compileShader(s);
         return s;
-      }, program = function(v, f, names) {
+      }, program = function(v, f, names, attrs) {
         const p = gl.createProgram();
-        programs.push(p);
+        resources.programs.push(p);
         gl.attachShader(p, shader(gl.VERTEX_SHADER, v));
         gl.attachShader(p, shader(gl.FRAGMENT_SHADER, f));
         gl.linkProgram(p);
-        if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw Error(gl.getProgramInfoLog(p) + " " + shaders.map((s) => gl.getShaderInfoLog(s)).join(" "));
-        return { p, uniforms: Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)])), attribute: gl.getAttribLocation(p, v === vertex ? "aPosition" : "aSource") };
+        if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw Error(gl.getProgramInfoLog(p) + " " + resources.shaders.map((s) => gl.getShaderInfoLog(s)).join(" "));
+        return { p, uniforms: Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)])), attrs: Object.fromEntries(attrs.map((n) => [n, gl.getAttribLocation(p, n)])) };
       }, buffer = function(data2) {
         const b = gl.createBuffer();
-        buffers.push(b);
+        resources.buffers.push(b);
         gl.bindBuffer(gl.ARRAY_BUFFER, b);
         gl.bufferData(gl.ARRAY_BUFFER, data2, gl.DYNAMIC_DRAW);
         return b;
@@ -986,34 +1158,29 @@ function createScenery({ canvas, fallback, stage, frames, getBounds, getCamera, 
         fail();
         return;
       }
-      const shaders = [], programs = [], buffers = [], textures = [], framebuffers = [];
-      resources = { shaders, programs, buffers, textures, framebuffers };
-      resources.update = program(vertex, update, ["uView", "uCamera", "uPrevious", "uPreviousView", "uState", "uTime", "uAdvance"]);
-      resources.display = program(vertex, display, ["uView", "uCamera", "uState", "uWindows[0]", "uCount", "uTime", "uNight", "uTint", "uPattern"]);
-      resources.points = program(pointVertex, pointFragment, ["uView", "uCamera", "uTime", "uMaxPoint"]);
-      resources.quad = buffer(new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]));
-      resources.sources = buffer(16);
-      for (let i = 0; i < 2; i++) {
-        const texture = gl.createTexture();
-        textures.push(texture);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, FIELD_SIZE, FIELD_SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-        const fbo = gl.createFramebuffer();
-        framebuffers.push(fbo);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-        if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw Error("Incomplete liquid field");
-        gl.clearColor(0.5019608, 0.5019608, 0, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
+      lost = gl.isContextLost();
+      if (lost) {
+        fail();
+        return;
       }
-      resources.front = 0;
-      resources.maxPoint = Math.min(128, gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE)[1]);
-      previous = cameraVector(getCamera());
-      previousView = [getBounds().width, getBounds().height];
+      resources = { shaders: [], programs: [], buffers: [], textures: [], framebuffers: [] };
+      resources.display = program(vertex, display, ["uView", "uCamera", "uField", "uWindows[0]", "uLoadsA", "uLoadsB", "uCount", "uNight", "uTint", "uPattern"], ["aPosition"]);
+      resources.stamp = program(stampVertex, stampFragment, ["uView", "uCamera"], ["aCorner", "aSource", "aPulse"]);
+      resources.quad = buffer(new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]));
+      resources.seeds = buffer(16);
+      resources.pulses = buffer(16);
+      const texture = gl.createTexture();
+      resources.textures.push(texture);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      for (const [name, value] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, name, value);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, FIELD_SIZE, FIELD_SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      const fbo = gl.createFramebuffer();
+      resources.framebuffers.push(fbo);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw Error("Incomplete relief atlas");
+      atlasKey = "";
+      uploadedVersion = -1;
       lost = false;
       canvas.hidden = false;
       fallback.hidden = true;
@@ -1035,134 +1202,135 @@ function createScenery({ canvas, fallback, stage, frames, getBounds, getCamera, 
     }
     resources = null;
   }
-  function shapes(now) {
-    const wins = getWindows().slice(0, 6), alive = new Set(wins.map((w) => w.id));
-    for (const id of births.keys()) if (!alive.has(id)) {
-      births.delete(id);
-      positions.delete(id);
-    }
-    return wins.map((w) => {
-      if (!births.has(w.id)) {
-        births.set(w.id, now);
-        pool.add({ x: w.rect.x + w.rect.width / 2, y: w.rect.y + w.rect.height / 2 }, 300, 0.12);
-      }
-      const t = media.matches ? 1 : Math.min(1, (now - births.get(w.id)) / 620), ease = 1 - Math.pow(1 - t, 3), r = w.rect, old = positions.get(w.id);
-      if (old) {
-        const dx = r.x - old.x, dy = r.y - old.y;
-        if (Math.hypot(dx, dy) > 1 || r.width !== old.width || r.height !== old.height) pool.add({ x: r.x + r.width / 2 - Math.sign(dx) * r.width / 2, y: r.y + r.height / 2 - Math.sign(dy) * r.height / 2 }, 120, 0.06);
-      }
-      positions.set(w.id, { ...r });
-      return { x: r.x + r.width * (1 - ease) / 2, y: r.y + r.height * (1 - ease) / 2, width: r.width * ease, height: r.height * ease };
-    });
+  function use(p, c) {
+    gl.useProgram(p.p);
+    gl.uniform2f(p.uniforms.uView, getBounds().width, getBounds().height);
+    gl.uniform4fv(p.uniforms.uCamera, c);
   }
-  function use(program, c) {
-    gl.useProgram(program.p);
-    gl.uniform2f(program.uniforms.uView, getBounds().width, getBounds().height);
-    gl.uniform4fv(program.uniforms.uCamera, c);
-    if (program.uniforms.uTime) gl.uniform1f(program.uniforms.uTime, time);
-  }
-  function quad(p) {
-    gl.bindBuffer(gl.ARRAY_BUFFER, resources.quad);
-    gl.enableVertexAttribArray(p.attribute);
-    gl.vertexAttribPointer(p.attribute, 2, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-    gl.disableVertexAttribArray(p.attribute);
-  }
-  function splat(data2, c) {
-    if (!data2.length) return;
-    const p = resources.points;
+  function stamp(buffer, count, c) {
+    if (!count) return;
+    const p = resources.stamp;
     use(p, c);
-    gl.uniform1f(p.uniforms.uMaxPoint, resources.maxPoint);
-    gl.bindBuffer(gl.ARRAY_BUFFER, resources.sources);
-    gl.bufferData(gl.ARRAY_BUFFER, data2, gl.DYNAMIC_DRAW);
-    gl.enableVertexAttribArray(p.attribute);
-    gl.vertexAttribPointer(p.attribute, 4, gl.FLOAT, false, 0, 0);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE);
-    gl.colorMask(true, false, false, false);
-    gl.drawArrays(gl.POINTS, 0, data2.length / 4);
-    gl.colorMask(true, true, true, true);
-    gl.disable(gl.BLEND);
-    gl.disableVertexAttribArray(p.attribute);
-  }
-  function paintGPU(rects, impulses, advance) {
-    const c = cameraVector(getCamera()), r = resources, next = 1 - r.front;
-    gl.viewport(0, 0, FIELD_SIZE, FIELD_SIZE);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffers[next]);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, r.textures[r.front]);
-    use(r.update, c);
-    gl.uniform4fv(r.update.uniforms.uPrevious, previous || c);
-    gl.uniform2fv(r.update.uniforms.uPreviousView, previousView || [getBounds().width, getBounds().height]);
-    gl.uniform1f(r.update.uniforms.uAdvance, advance ? 1 : 0);
-    gl.uniform1i(r.update.uniforms.uState, 0);
-    quad(r.update);
-    const scene = getScene();
-    if (scene !== seedScene) {
-      seedScene = scene;
-      seeds = new Float32Array((scene?.plants || []).flatMap((p) => [p.x, p.y, p.kind === "tree" ? 100 : p.kind === "fern" ? 65 : 35, 8e-3 + p.stage * 2e-3]));
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    for (const [name, size, offset] of [["aCorner", 2, 0], ["aSource", 4, 8], ["aPulse", 2, 24]]) {
+      const a = p.attrs[name];
+      gl.enableVertexAttribArray(a);
+      gl.vertexAttribPointer(a, size, gl.FLOAT, false, 32, offset);
     }
-    if (advance) splat(seeds, c);
-    splat(new Float32Array(impulses.flatMap((p) => [p.x, p.y, p.radius, p.strength])), c);
+    gl.drawArrays(gl.TRIANGLES, 0, count * 6);
+    for (const a of Object.values(p.attrs)) gl.disableVertexAttribArray(a);
+  }
+  function paintGPU() {
+    const r = resources, c = cameraVector(getCamera()), b = getBounds(), key2 = JSON.stringify([Array.from(c), b.width, b.height, terrain.seedVersion]), pulses = terrain.sources().slice(terrain.seeds.length);
+    if (key2 !== atlasKey || pulses.length || hadPulses) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffers[0]);
+      gl.viewport(0, 0, FIELD_SIZE, FIELD_SIZE);
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE);
+      if (uploadedVersion !== terrain.seedVersion) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, r.seeds);
+        gl.bufferData(gl.ARRAY_BUFFER, sourceVertices(terrain.seeds), gl.DYNAMIC_DRAW);
+        uploadedVersion = terrain.seedVersion;
+      }
+      stamp(r.seeds, terrain.seeds.length, c);
+      if (pulses.length) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, r.pulses);
+        gl.bufferData(gl.ARRAY_BUFFER, sourceVertices(pulses), gl.DYNAMIC_DRAW);
+        stamp(r.pulses, pulses.length, c);
+      }
+      gl.disable(gl.BLEND);
+      atlasKey = key2;
+      hadPulses = pulses.length > 0;
+    }
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.bindTexture(gl.TEXTURE_2D, r.textures[next]);
-    use(r.display, c);
-    gl.uniform1i(r.display.uniforms.uState, 0);
-    const windows = new Float32Array(24);
-    rects.forEach((v, i) => windows.set([v.x + v.width / 2, v.y + v.height / 2, v.width / 2, v.height / 2], i * 4));
-    gl.uniform4fv(r.display.uniforms["uWindows[0]"], windows);
-    gl.uniform1i(r.display.uniforms.uCount, rects.length);
-    gl.uniform1f(r.display.uniforms.uNight, scene?.phase.night ? 0.35 : 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, r.textures[0]);
+    const p = r.display;
+    use(p, c);
+    gl.uniform1i(p.uniforms.uField, 0);
+    const windows = new Float32Array(24), weights = new Float32Array(6);
+    terrain.loads.forEach((v, i) => {
+      windows.set([v.x, v.y, v.width / 2, v.height / 2], i * 4);
+      weights[i] = v.weight;
+    });
+    gl.uniform4fv(p.uniforms["uWindows[0]"], windows);
+    gl.uniform3fv(p.uniforms.uLoadsA, weights.subarray(0, 3));
+    gl.uniform3fv(p.uniforms.uLoadsB, weights.subarray(3, 6));
+    gl.uniform1i(p.uniforms.uCount, terrain.loads.length);
     const appearance = read().appearance || {}, theme = appearance.theme;
-    gl.uniform3fv(r.display.uniforms.uTint, theme === "iris" ? [1, 0.87, 1.12] : theme === "grove" ? [0.86, 1.05, 0.86] : [0.88, 1.03, 1.08]);
-    gl.uniform1f(r.display.uniforms.uPattern, appearance.pattern === "plain" ? 2 : appearance.pattern === "grid" ? 1 : 0);
-    quad(r.display);
-    r.front = next;
-    previous = c;
-    previousView = [getBounds().width, getBounds().height];
+    gl.uniform3fv(p.uniforms.uTint, theme === "iris" ? [1, 0.92, 1.08] : theme === "grove" ? [0.93, 1.04, 0.91] : [0.94, 1.02, 1.04]);
+    gl.uniform1f(p.uniforms.uNight, getScene()?.phase.night ? 0.35 : 0);
+    gl.uniform1f(p.uniforms.uPattern, appearance.pattern === "plain" ? 2 : appearance.pattern === "grid" ? 1 : 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.quad);
+    gl.enableVertexAttribArray(p.attrs.aPosition);
+    gl.vertexAttribPointer(p.attrs.aPosition, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.disableVertexAttribArray(p.attrs.aPosition);
   }
-  function paintFallback(rects, impulses) {
-    const c = fallbackCtx, b = getBounds();
+  function paintFallback() {
+    const c = fallbackCtx, b = getBounds(), columns = 64, rows = Math.min(96, Math.max(24, Math.round(columns * b.height / b.width))), heights = [], points = [];
     c.setTransform(fallback.width / b.width, 0, 0, fallback.height / b.height, 0, 0);
-    const g = c.createLinearGradient(0, 0, b.width, b.height);
-    g.addColorStop(0, "#d3e4e0");
-    g.addColorStop(0.5, "#a9cbd1");
-    g.addColorStop(1, "#ccc7d9");
-    c.fillStyle = g;
+    c.fillStyle = "#e4ece3";
     c.fillRect(0, 0, b.width, b.height);
-    c.save();
-    c.transform(...cameraMatrix(getCamera()));
-    for (const r of rects) for (let i = 5; i >= 0; i--) {
-      c.strokeStyle = i % 2 ? "#ecedd466" : "#7baeb46b";
-      c.lineWidth = 10;
-      c.beginPath();
-      c.roundRect(r.x - i * 20, r.y - i * 20, r.width + i * 40, r.height + i * 40, 30 + i * 6);
-      c.stroke();
+    for (let y = 0; y <= rows; y++) for (let x = 0; x <= columns; x++) {
+      const point = { x: x * b.width / columns, y: y * b.height / rows }, value = terrain.sample(screenToWorld(getCamera(), point));
+      heights.push(value.height);
+      points.push(point);
+      if (x < columns && y < rows) {
+        const amount = Math.min(0.7, Math.abs(value.height) / 150);
+        c.fillStyle = `rgba(${value.height < 0 ? "93,143,162" : "142,153,106"},${amount})`;
+        c.fillRect(point.x, point.y, b.width / columns + 1, b.height / rows + 1);
+      }
     }
-    c.strokeStyle = "#f5edc9";
-    c.lineWidth = 3;
-    for (const p of impulses) {
-      c.beginPath();
-      c.arc(p.x, p.y, p.radius * 0.5, 0, Math.PI * 2);
-      c.stroke();
+    for (let y = 0; y < rows; y++) for (let x = 0; x < columns; x++) {
+      const ids = [y * (columns + 1) + x, y * (columns + 1) + x + 1, (y + 1) * (columns + 1) + x + 1, (y + 1) * (columns + 1) + x], values = ids.map((i) => heights[i]);
+      for (let h = Math.ceil(Math.min(...values) / 5) * 5; h < Math.max(...values); h += 5) {
+        const hits = [];
+        for (let edge = 0; edge < 4; edge++) {
+          const a = edge, z = (edge + 1) % 4;
+          if (values[a] < h !== values[z] < h) {
+            const t = (h - values[a]) / (values[z] - values[a]), p = points[ids[a]], q = points[ids[z]];
+            hits.push({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+          }
+        }
+        c.strokeStyle = h % 25 === 0 ? "#496d70" : "#92a8a0";
+        c.lineWidth = h % 25 === 0 ? 1.4 : 0.7;
+        for (let i = 0; i + 1 < hits.length; i += 2) {
+          c.beginPath();
+          c.moveTo(hits[i].x, hits[i].y);
+          c.lineTo(hits[i + 1].x, hits[i + 1].y);
+          c.stroke();
+        }
+      }
     }
-    c.restore();
   }
   function paint2(now = performance.now()) {
     clearTimeout(timer);
     timer = 0;
     if (disposed || document.hidden || !inView) return;
-    const paused = frozen(), dt = last ? Math.min(0.06, (now - last) / 1e3) : 0;
+    const scene = getScene();
+    if (scene && scene.space !== space) {
+      space = scene.space;
+      terrain = createTerrain();
+      atlasKey = "";
+      uploadedVersion = -1;
+    }
+    terrain.setWindows(getWindows(), now);
+    if (scene !== sceneRef) {
+      sceneRef = scene;
+      terrain.setSeeds(scene?.plants || [], now);
+    }
+    const paused = frozen(), active = terrain.step(last ? Math.min(0.06, (now - last) / 1e3) : 1 / 30, now, paused);
     last = now;
-    if (!paused) time += dt;
-    const rects = shapes(now), impulses = pool.drain();
-    if (resources && !lost) paintGPU(rects, impulses, !paused);
-    else paintFallback(rects, impulses);
+    if (resources && !lost) paintGPU();
+    else paintFallback();
     frameCount++;
-    canvas.dataset.motion = paused ? "paused" : "flowing";
-    if (frameCount % 30 === 0) canvas.dataset.frames = String(frameCount);
-    if (!paused) timer = setTimeout(() => frames.request(paint2), 22);
+    canvas.dataset.frames = String(frameCount);
+    report(paused ? "paused" : active ? "settling" : "settled");
+    if (!paused && active) timer = setTimeout(() => frames.request(paint2), resources ? 22 : 50);
   }
   function invalidate() {
     if (!disposed && !document.hidden && inView) frames.request(paint2);
@@ -1192,14 +1360,24 @@ function createScenery({ canvas, fallback, stage, frames, getBounds, getCamera, 
   return {
     invalidate,
     poke(p, radius, strength) {
-      pool.add(p, radius, strength);
+      terrain.disturb(p, radius, strength, performance.now());
       invalidate();
+    },
+    footstep(p) {
+      if (terrain.disturb(p, 24, 0.015, performance.now(), true)) invalidate();
+    },
+    sample(p) {
+      return terrain.sample(p);
+    },
+    get moving() {
+      return terrain.moving;
     },
     resize() {
       const s = surfaceSize(getBounds().width, getBounds().height);
       canvas.width = fallback.width = s.width;
       canvas.height = fallback.height = s.height;
       canvas.dataset.pixels = String(s.width * s.height);
+      atlasKey = "";
       invalidate();
     },
     sync() {
@@ -1214,10 +1392,7 @@ function createScenery({ canvas, fallback, stage, frames, getBounds, getCamera, 
       stop();
       observer.disconnect();
       events.abort();
-      pool.clear();
       release();
-      births.clear();
-      positions.clear();
     }
   };
 }
@@ -1239,9 +1414,9 @@ function placeWindow(size, windows, center) {
 // ../SpiderPlayground/world-model.js
 var MAX_PLANTS = 192;
 var NEIGHBORS = [
-  { name: "Pip", role: "follows the ripples", color: "#6c8c9c" },
-  { name: "Moss", role: "grows little currents", color: "#769777" },
-  { name: "Nori", role: "explores the islands", color: "#b98572" },
+  { name: "Pip", role: "reads the contours", color: "#6c8c9c" },
+  { name: "Moss", role: "tends the low ground", color: "#769777" },
+  { name: "Nori", role: "explores the terraces", color: "#b98572" },
   { name: "Tavi", role: "likes a little company", color: "#b6a168" },
   { name: "Bea", role: "collects little ideas", color: "#9b86ab" },
   { name: "Rue", role: "takes the long way home", color: "#7b9f9e" }
@@ -1402,7 +1577,9 @@ function citizen(color, pose = 2) {
 }
 
 // ../SpiderPlayground/residents.js
-function steerResident(a, dt, obstacles, others, pointer, now) {
+function steerResident(a, dt, obstacles, others, pointer, now, sampleTerrain = () => ({ height: 0, dx: 0, dy: 0, slope: 0 })) {
+  const ground = sampleTerrain(a);
+  if (Number.isFinite(a.elevation) && dt > 0 && Math.abs(ground.height - a.elevation) / dt > 5) a.bracingUntil = now + 350;
   let target = a.path[0], speed = 54 + a.index * 3;
   a.evading = false;
   a.curious = false;
@@ -1437,16 +1614,32 @@ function steerResident(a, dt, obstacles, others, pointer, now) {
       dy += y / d * (24 - d) * 6;
     }
   }
-  const blend = 1 - Math.exp(-dt * 9), magnitude = Math.hypot(dx, dy);
-  if (magnitude > speed) {
-    dx *= speed / magnitude;
-    dy *= speed / magnitude;
+  const magnitude = Math.hypot(dx, dy), grade = magnitude ? (ground.dx * dx + ground.dy * dy) / magnitude : 0;
+  a.grade = grade;
+  if (!a.evading) {
+    speed *= Math.max(0.38, 1 / (1 + Math.max(0, grade) * 3));
+    if (a.bracingUntil > now) speed *= 0.6;
+    if (grade > 0 && ground.slope > 0.2) {
+      const across = (ground.dx * dx + ground.dy * dy) / (ground.slope * ground.slope);
+      dx -= ground.dx * across * 0.48;
+      dy -= ground.dy * across * 0.48;
+    }
+  }
+  const blend = 1 - Math.exp(-dt * 9), adjusted = Math.hypot(dx, dy);
+  if (adjusted > speed) {
+    dx *= speed / adjusted;
+    dy *= speed / adjusted;
   }
   a.vx = (a.vx || 0) * (1 - blend) + dx * blend;
   a.vy = (a.vy || 0) * (1 - blend) + dy * blend;
   a.x += a.vx * dt;
   a.y += a.vy * dt;
   if (Math.abs(a.vx) > 3) a.facing = a.vx < 0 ? -1 : 1;
+  const contact = sampleTerrain(a);
+  a.elevation = contact.height;
+  a.slope = contact.slope;
+  a.groundX = contact.dx;
+  a.groundY = contact.dy;
   if (!a.evading && !a.curious && target && distance < Math.max(10, speed * dt * 2)) {
     a.path.shift();
     if (!a.path.length) {
@@ -1458,10 +1651,15 @@ function steerResident(a, dt, obstacles, others, pointer, now) {
 }
 
 // ../SpiderPlayground/living-world.js
-function createLivingWorld({ canvas, frames, read, write: write2, getLayout, getCamera, getBounds, onChange, onStatus, open, notice: notice2, onWake }) {
+function createLivingWorld({ canvas, frames, read, write: write2, getLayout, getCamera, getBounds, onChange, onStatus, open, notice: notice2, onWake, onStep, sampleTerrain = () => ({ height: 0, dx: 0, dy: 0, slope: 0 }), terrainMoving = () => false }) {
   const ctx = canvas.getContext("2d"), events = new AbortController(), media = matchMedia("(prefers-reduced-motion: reduce)");
   const worlds = /* @__PURE__ */ new Map(), pending = /* @__PURE__ */ new Map();
-  let scene = null, sceneKey = "", geometryKey = "", agents = [], timer = 0, saveTimer = 0, dpr = 1, last = 0, disposed = false, flushing = false, suspended = false, draft = [], plantKind2 = "flower", ripple = null, statusKey = "", lastEpoch = 0, lastPaused, pointer = null, inView = true;
+  let scene = null, sceneKey = "", geometryKey = "", agents = [], timer = 0, saveTimer = 0, dpr = 1, last = 0, disposed = false, flushing = false, suspended = false, draft = [], plantKind2 = "flower", ripple = null, statusKey = "", lastEpoch = 0, lastPaused, pointer = null, inView = true, activeUntil = 0, resting = false;
+  function wake(duration = 3800) {
+    activeUntil = Math.max(activeUntil, performance.now() + duration);
+    resting = false;
+    invalidate();
+  }
   const space = () => getLayout().space;
   const paused = () => !!read().worldSettings?.paused;
   const blocked = () => disposed || document.hidden || !inView || paused() || media.matches || suspended || getLayout().windows.some((w) => w.space === space() && !w.minimized && w.mode === "maximized");
@@ -1514,6 +1712,7 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
     const geometry = JSON.stringify([space(), Object.entries(state2.places).map(([id, p]) => [id, p.x, p.y]), layout.windows.map((w) => [w.app, w.space, w.minimized, w.mode, w.rect])]), moved = geometry !== geometryKey;
     geometryKey = geometry;
     scene = buildSettlement(state2, layout.windows, space(), now);
+    if (moved) wake(4500);
     if (oldSpace !== space() || !agents.length) {
       agents = NEIGHBORS.map((neighbor, i) => {
         const angle = i * Math.PI / 3, point = walkable({ x: scene.commons.x + Math.cos(angle) * 85, y: scene.commons.y + Math.sin(angle) * 65 }, scene.network.obstacles) || scene.commons;
@@ -1554,26 +1753,27 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
     const obstacles = getLayout().windows.filter((w) => w.space === space() && !w.minimized && w.mode === "normal").map((w) => ({ x: w.rect.x - 18, y: w.rect.y - 18, width: w.rect.width + 36, height: w.rect.height + 36 }));
     for (const a of agents) {
       if (a.waveUntil > performance.now()) continue;
+      if (now > activeUntil - 700 && !terrainMoving()) a.rest = Math.max(1, a.rest);
       if (a.rest > 0) {
         a.rest -= dt;
         if (a.rest <= 0) depart(a);
       }
-      const speed = steerResident(a, dt, obstacles, agents, pointer, now);
+      const speed = steerResident(a, dt, obstacles, agents, pointer, now, sampleTerrain);
       a.speed = speed;
       if (speed > 12 && now - (a.lastWake || 0) > 270) {
         a.lastWake = now;
-        onWake?.(a, 30, 0.018);
+        onStep?.(a);
       }
     }
   }
   function publish() {
     if (!scene) return;
     const people = agents.map((a) => {
-      const place = scene.places[a.goal - 1], moving = a.path.length > 0, action = a.waveUntil > performance.now() ? "says hello" : a.evading ? "making room for a window" : a.curious ? "following a ripple" : a.goal === 0 ? moving ? "wandering through the current" : "watching the currents" : moving ? "visiting " + place.name : a.index % 3 === 1 ? "shaping the " + place.name + " field" : "resting near " + place.name;
-      return { name: a.name, role: a.role, color: a.color, action, x: a.x, y: a.y };
+      const place = scene.places[a.goal - 1], moving = !resting && a.speed > 5, elevation = Math.round((a.elevation || 0) / 5) * 5, level = (elevation >= 0 ? "+" : "") + elevation, action = a.waveUntil > performance.now() ? "says hello" : resting ? "resting at elevation " + level : a.evading ? "making room for a window" : a.bracingUntil > performance.now() ? "finding footing on moving ground" : moving && a.grade > 0.06 ? "climbing toward " + level : moving && a.slope > 0.12 ? "following the " + level + " contour" : a.curious ? "examining the contours" : a.goal === 0 ? moving ? "walking the low ground" : "surveying the terraces" : moving ? "visiting " + place.name : "resting near " + place.name;
+      return { name: a.name, role: a.role, color: a.color, action, x: a.x, y: a.y, elevation: a.elevation || 0 };
     });
-    const state2 = { phase: scene.phase.name, paused: paused(), reduced: media.matches, space: space(), people, plants: scene.plants.length };
-    const key2 = JSON.stringify([state2.phase, state2.paused, state2.reduced, state2.space, state2.people.map((p) => p.action), state2.plants]);
+    const state2 = { phase: scene.phase.name, paused: paused(), reduced: media.matches, resting, space: space(), people, plants: scene.plants.length };
+    const key2 = JSON.stringify([state2.phase, state2.paused, state2.reduced, state2.resting, state2.space, state2.people.map((p) => p.action), state2.plants]);
     if (key2 !== statusKey) {
       statusKey = key2;
       onStatus?.(state2);
@@ -1583,9 +1783,19 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
     clearTimeout(timer);
     timer = 0;
     if (disposed || document.hidden || !inView) return;
-    const frozen = blocked(), dt = last ? Math.min(0.2, (now - last) / 1e3) : 0;
+    const frozen = blocked(), awake = !frozen && (now < activeUntil || terrainMoving()), still = !awake, dt = last ? Math.min(0.1, (now - last) / 1e3) : 0;
     last = now;
-    if (!frozen) step(dt, now);
+    resting = !awake && !frozen;
+    if (awake) step(dt, now);
+    else for (const a of agents) {
+      a.speed = 0;
+      a.vx = a.vy = 0;
+      const p = sampleTerrain(a);
+      a.elevation = p.height;
+      a.slope = p.slope;
+      a.groundX = p.dx;
+      a.groundY = p.dy;
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = false;
@@ -1594,33 +1804,50 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
       ctx.setTransform(...cameraMatrix(getCamera(), dpr));
       for (const p of scene.places.filter((p2) => !p2.open)) {
         if (p.x < view.left || p.x > view.right || p.y < view.top || p.y > view.bottom) continue;
-        const pulse = frozen ? 0 : Math.sin(now * 15e-4 + p.x) * 2;
-        ctx.fillStyle = "#e8efddc9";
+        ctx.fillStyle = "#e8efdddf";
         ctx.beginPath();
-        ctx.ellipse(p.x, p.y - 15, 30 + pulse, 21 + pulse, 0, 0, Math.PI * 2);
+        ctx.ellipse(p.x, p.y - 15, 29, 20, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = "#688e9c";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.fillStyle = "#668b9f";
         ctx.beginPath();
-        ctx.arc(p.x, p.y - 15, 7, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y - 15, 5, 0, Math.PI * 2);
         ctx.fill();
         ctx.font = "11px -apple-system,sans-serif";
         ctx.textAlign = "center";
         ctx.fillStyle = "#365b70";
         ctx.fillText(p.name, p.x, p.y + 26);
       }
+      for (const place of scene.places.filter((p) => p.open)) {
+        const p = { x: place.x, y: place.y + 42 };
+        if (p.x < view.left || p.x > view.right || p.y < view.top || p.y > view.bottom) continue;
+        const elevation = sampleTerrain(p).height;
+        ctx.strokeStyle = "#5c7b78";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x - 5, p.y);
+        ctx.lineTo(p.x + 5, p.y);
+        ctx.moveTo(p.x, p.y - 5);
+        ctx.lineTo(p.x, p.y + 5);
+        ctx.stroke();
+        ctx.font = "10px -apple-system,sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#466563";
+        ctx.fillText((elevation >= 0 ? "+" : "") + elevation.toFixed(1), p.x + 9, p.y + 3);
+      }
       for (const a of [...agents].sort((a2, b) => a2.y - b.y)) {
         if (a.x < view.left || a.x > view.right || a.y < view.top || a.y > view.bottom) continue;
-        const waving = a.waveUntil > now, walking = !frozen && a.speed > 8, pose = waving ? 3 : walking ? Math.floor(now / 140 + a.index) % 2 : a.curious ? 5 : now % 4200 < 130 ? 6 : a.index % 3 === 0 ? 4 : 2;
-        ctx.fillStyle = "#426e8230";
+        const waving = !still && a.waveUntil > now, walking = !still && a.speed > 8, cadence = walking ? now * (0.012 / (1 + Math.max(0, a.grade || 0) * 2)) : 0, pose = waving ? 3 : walking ? Math.floor(cadence + a.index) % 2 : a.curious && !still ? 5 : still || a.index % 3 === 0 ? 4 : 2;
+        const gx = a.groundX || 0, gy = a.groundY || 0;
+        ctx.fillStyle = "#426e822b";
         ctx.beginPath();
-        ctx.ellipse(a.x, a.y + 2, 17, 5, 0, 0, Math.PI * 2);
+        ctx.ellipse(a.x + gx * 5, a.y + 3 + gy * 5, 17 + Math.min(4, (a.slope || 0) * 4), 5, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.save();
-        ctx.translate(a.x, a.y + (walking ? Math.sin(now * 0.018) * 1.5 : frozen ? 0 : Math.sin(now * 2e-3 + a.index) * 0.6));
-        ctx.rotate(frozen ? 0 : Math.max(-0.08, Math.min(0.08, (a.vx || 0) * 1e-3)));
+        ctx.translate(a.x, a.y + (walking ? Math.sin(cadence * 2) * 1.3 : 0));
+        ctx.rotate(Math.max(-0.14, Math.min(0.14, (a.grade || 0) * (a.facing || 1) * 0.22 + (still ? 0 : (a.vx || 0) * 7e-4))));
         ctx.scale(a.facing || 1, 1);
         ctx.drawImage(citizen(a.color, pose), -20, -48, 40, 52);
         ctx.restore();
@@ -1649,9 +1876,9 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
         ctx.fillRect(p.x - 6, p.y - 8, 12, 3);
       }
     }
-    canvas.dataset.motion = frozen ? "paused" : "alive";
+    canvas.dataset.motion = frozen ? "paused" : awake ? "alive" : "settled";
     publish();
-    if (!frozen) timer = setTimeout(() => frames.request(paint2), 22);
+    if (awake) timer = setTimeout(() => frames.request(paint2), 22);
   }
   function invalidate() {
     if (!disposed && !document.hidden) frames.request(paint2);
@@ -1659,6 +1886,7 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
   function sync(path) {
     if (lastPaused !== paused()) {
       lastPaused = paused();
+      if (!lastPaused) wake(1800);
       invalidate();
       publish();
     }
@@ -1688,6 +1916,7 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
         p.visits = Math.min(9999, p.visits + 1);
         queue(["world", space(), "places", app], p);
         onWake?.(p, 180, 0.1);
+        wake();
         rebuild();
       }
     }
@@ -1731,12 +1960,14 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
       state2.plants = plants;
       flush();
       write2(["world", space(), "plants"], plants);
+      wake();
       rebuild(true);
-      notice2(plantKind2 === "remove" ? "Seed removed." : count === 1 ? "A new current seeded." : count + " new currents seeded.", { transient: true });
-    } else if (Object.keys(plants).length >= MAX_PLANTS) notice2("The field has enough seeds. Choose Remove seed to make room.");
+      notice2(plantKind2 === "remove" ? "Landform removed." : count === 1 ? "A new landform raised." : count + " landforms shaped.", { transient: true });
+    } else if (Object.keys(plants).length >= MAX_PLANTS) notice2("This map is full. Remove a landform to make room.");
     invalidate();
   } };
   function groundClick(p) {
+    wake();
     const resident = agents.find((a) => Math.hypot(a.x - p.x, a.y - p.y) < 28);
     if (resident) {
       resident.waveUntil = performance.now() + 1800;
@@ -1786,6 +2017,7 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
     planting,
     groundClick,
     pointer(p) {
+      if (!pointer || Math.hypot(p.x - pointer.x, p.y - pointer.y) > 2) wake(3e3);
       pointer = { ...p, at: performance.now() };
     },
     get scene() {
@@ -1887,8 +2119,8 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     onHistory: (state2) => onTools({ history: state2 })
   });
   let habitat = null;
-  const scenery = createScenery({ canvas: stage.querySelector("#scenery"), fallback: stage.querySelector("#scenery-fallback"), stage, frames, getBounds: bounds, getCamera: camera, getWindows: () => visible().filter((w) => w.mode === "normal"), read, getScene: () => habitat?.scene });
-  habitat = createLivingWorld({ canvas: stage.querySelector("#life-canvas"), frames, read, write: write2, getLayout: () => layout, getCamera: camera, getBounds: bounds, onChange: () => scenery.invalidate(), onStatus: onWorldState, open, notice: notice2, onWake: scenery.poke });
+  const scenery = createScenery({ canvas: stage.querySelector("#scenery"), fallback: stage.querySelector("#scenery-fallback"), stage, frames, getBounds: bounds, getCamera: camera, getWindows: () => visible().filter((w) => w.mode === "normal"), read, getScene: () => habitat?.scene, onStatus: (terrain) => onTools({ terrain }) });
+  habitat = createLivingWorld({ canvas: stage.querySelector("#life-canvas"), frames, read, write: write2, getLayout: () => layout, getCamera: camera, getBounds: bounds, onChange: () => scenery.invalidate(), onStatus: onWorldState, open, notice: notice2, onWake: scenery.poke, onStep: scenery.footstep, sampleTerrain: scenery.sample, terrainMoving: () => scenery.moving });
   function save() {
     if (!disposed) onChange(structuredClone(layout));
   }
@@ -2494,9 +2726,9 @@ function createContent(win, body, { read, write: write2, open, library, explore 
     body.classList.add("guide-content");
     const emblem = el("div", "guide-emblem");
     emblem.append(icon("spark"));
-    body.append(emblem, el("h1", "", "A world in motion."), el("p", "intro", "Windows shape the current. Little lives find their own way through it."));
+    body.append(emblem, el("h1", "", "A little relief."), el("p", "intro", "Your windows raise the ground. Give things a little weight, then let them settle."));
     const instructions = el("div", "guide-instructions");
-    for (const [svg, text] of [["desktop", "Open an app. Watch it unfold into its own island."], ["left", "Move windows to reshape the surface. Pan, pinch, or twist."], ["pen", "Draw, seed a current, or touch the surface to send a ripple."]]) {
+    for (const [svg, text] of [["desktop", "Move a window. Watch its slopes find their level."], ["left", "Read the contours. Closer lines mean steeper ground."], ["pen", "Draw, or Shape a hill, hollow, or peak of your own."]]) {
       const row = el("p");
       row.append(icon(svg), el("span", "", text));
       instructions.append(row);
@@ -2504,11 +2736,11 @@ function createContent(win, body, { read, write: write2, open, library, explore 
     body.append(instructions);
     const actions = el("div", "guide-actions");
     actions.append(button("Explore the world", explore, "primary"), button("Open apps", library, "text-button"));
-    body.append(actions, el("p", "small-print", "Neighbors wander, follow ripples, and make room for your work. Closed apps leave a glowing marker you can tap to return."));
+    body.append(actions, el("p", "small-print", "Neighbors feel the same ground: they slow uphill and find their footing. Pan, pinch, or twist to explore. Closed apps keep a marker."));
     return {};
   }
   if (win.app === "note") {
-    let update2 = function() {
+    let update = function() {
       const value = String(get("notes", ""));
       if (document.activeElement !== input) input.value = value;
       count.textContent = input.value.length.toLocaleString() + " characters";
@@ -2528,12 +2760,12 @@ function createContent(win, body, { read, write: write2, open, library, explore 
       write2(["notes", space], input.value);
       count.textContent = input.value.length.toLocaleString() + " characters";
     });
-    input.addEventListener("blur", update2);
-    update2();
-    return { update: update2 };
+    input.addEventListener("blur", update);
+    update();
+    return { update };
   }
   if (win.app === "board") {
-    let update2 = function() {
+    let update = function() {
       if (document.activeElement !== input) input.value = String(get("boardDrafts", ""));
       const value = cards(), next = JSON.stringify(value);
       if (next === signature) return;
@@ -2551,11 +2783,11 @@ function createContent(win, body, { read, write: write2, open, library, explore 
           const actions = el("div", "card-actions"), nextLane = lanes[(lanes.findIndex(([key2]) => key2 === id) + 1) % lanes.length];
           const move = button("Move to " + nextLane[1], () => {
             write2(["boards", space], cards().map((other) => other.id === card.id ? { ...other, lane: nextLane[0] } : other));
-            update2();
+            update();
           }, "card-move");
           const remove = button("", () => {
             write2(["boards", space], cards().filter((other) => other.id !== card.id));
-            update2();
+            update();
           }, "icon-button");
           remove.append(icon("close"));
           remove.setAttribute("aria-label", "Delete idea: " + card.text.slice(0, 60));
@@ -2591,11 +2823,11 @@ function createContent(win, body, { read, write: write2, open, library, explore 
       write2(["boards", space], [...cards(), { id: crypto.randomUUID(), text, lane: "try" }]);
       input.value = "";
       write2(["boardDrafts", space], "");
-      update2();
+      update();
       input.focus();
     });
-    update2();
-    return { update: update2 };
+    update();
+    return { update };
   }
   if (win.app === "timer") {
     let tick2 = function() {
@@ -2639,7 +2871,7 @@ function createContent(win, body, { read, write: write2, open, library, explore 
   if (win.app === "calculator") {
     let store = function() {
       write2(["calculations", space], { ...state2(), expression: input.value });
-    }, update2 = function() {
+    }, update = function() {
       const value = state2();
       if (document.activeElement !== input) input.value = value.expression;
       answer.textContent = String(value.answer);
@@ -2698,13 +2930,13 @@ function createContent(win, body, { read, write: write2, open, library, explore 
         error.textContent = problem.message;
       }
     });
-    update2();
-    return { update: update2 };
+    update();
+    return { update };
   }
   if (win.app === "appearance") {
     let choose = function(patch) {
       write2(["appearance"], { ...read().appearance, ...patch });
-    }, update2 = function() {
+    }, update = function() {
       const value = read().appearance || {}, pattern = ["plain", "grid"].includes(value.pattern) ? value.pattern : "workshop";
       for (const node of themes.children) node.setAttribute("aria-pressed", String(node.dataset.theme === (value.theme || "tide")));
       for (const node of options.children) node.setAttribute("aria-pressed", String(node.dataset.pattern === pattern));
@@ -2724,14 +2956,14 @@ function createContent(win, body, { read, write: write2, open, library, explore 
     }
     const patterns = el("fieldset"), patternLegend = el("legend", "", "Wallpaper"), options = el("div", "pattern-options");
     patterns.append(patternLegend, options);
-    for (const [id, name] of [["workshop", "Flow"], ["grid", "Contours"], ["plain", "Quiet"]]) {
+    for (const [id, name] of [["workshop", "Relief"], ["grid", "Contours"], ["plain", "Quiet"]]) {
       const option = button(name, () => choose({ pattern: id }));
       option.dataset.pattern = id;
       options.append(option);
     }
     body.append(field, patterns, el("p", "small-print", "This changes your playground. Keep experimenting."));
-    update2();
-    return { update: update2 };
+    update();
+    return { update };
   }
   return {};
 }
@@ -2819,7 +3051,7 @@ function paint(layout) {
   $("#empty").hidden = wins.some((win) => !win.minimized);
   $("#show-desktop").setAttribute("aria-label", wins.some((win) => !win.minimized) ? "Show desktop" : "Restore windows");
 }
-function tools({ camera, tool, history }) {
+function tools({ camera, tool, history, terrain }) {
   if (camera) {
     $("#actual-size").textContent = camera.zoom < 0.01 ? "<1%" : Math.round(camera.zoom * 100) + "%";
     $("#angle").textContent = camera.angle + "\xB0";
@@ -2829,17 +3061,18 @@ function tools({ camera, tool, history }) {
     $("#undo").disabled = !history.undo;
     $("#redo").disabled = !history.redo;
   }
+  if (terrain) $("#terrain-status").textContent = terrain.motion === "settling" ? "Ground settling" : terrain.motion === "paused" ? "Ground paused" : "Ground at rest";
 }
 function worldStatus(value) {
   worldState = value;
-  $("#world-title").textContent = value.space === "quiet" ? "Quiet currents" : "Studio tides";
-  $("#world-phase").textContent = value.phase + " \xB7 " + (value.paused ? "A still moment" : "6 lives in the current");
-  const explorer = value.people.find((p) => p.action === "following a ripple" || p.action === "making room for a window");
-  $("#world-whisper").textContent = value.paused ? "A quiet moment." : explorer ? explorer.name + " is " + explorer.action + "." : "Move through the world. Leave a little wake.";
+  $("#world-title").textContent = value.space === "quiet" ? "Quiet terrain" : "Studio relief";
+  $("#world-phase").textContent = value.phase + " \xB7 " + (value.paused ? "A still moment" : "Windows shape the ground");
+  const explorer = value.people.find((p) => p.action.startsWith("climbing") || p.action === "finding footing on moving ground");
+  $("#world-whisper").textContent = value.paused || value.resting ? "A place to let things settle." : explorer ? explorer.name + " is " + explorer.action + "." : "Move a window. Watch the contours find their level.";
   $("#pause-world").textContent = value.paused ? "Resume world" : "Pause world";
   $("#pause-world").setAttribute("aria-label", value.paused ? "Resume world" : "Pause world");
   $("#pause-world").setAttribute("aria-pressed", String(value.paused));
-  $("#world-rhythm").textContent = value.reduced ? "Motion follows your system preference." : "A day lasts 24 minutes.";
+  $("#world-rhythm").textContent = value.reduced ? "Motion follows your system preference." : "Motion settles after your input.";
   const list = $("#neighbor-list");
   for (const p of value.people) {
     let row = list.querySelector('[data-neighbor="' + p.name + '"]');
