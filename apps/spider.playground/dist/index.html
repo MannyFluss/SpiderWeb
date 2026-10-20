@@ -1,0 +1,1353 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#c7d6ed" />
+  <title>OS Playground</title>
+
+
+<style>:root{font-family:"Avenir Next",Avenir,"Trebuchet MS",sans-serif;color:#1c2b4b;background:#c7d6ed;font-synthesis:none;font-size:14px;line-height:1.45;color-scheme:light}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.45}button{border:0;background:none}button,textarea,input{-webkit-tap-highlight-color:transparent}button:focus-visible,input:focus-visible,textarea:focus-visible,.titlebar:focus-visible{outline:3px solid #3156da;outline-offset:-3px}button:hover{background-color:#1e386c0c}svg{display:block;width:20px;height:20px;flex-shrink:0}h1,h2,p{margin:0}button{touch-action:manipulation}[hidden]{display:none!important}
+#shell{--desk:#c7d6ed;--desk-line:#a3b7d9;display:grid;grid-template-columns:70px minmax(0,1fr);grid-template-rows:54px minmax(0,1fr) 52px;height:100%;width:100%;background:var(--desk)}
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:24px;padding:0 19px;background:#edf2fc;border-bottom:1px solid #1d376016;z-index:100;min-width:0}.identity{display:flex;align-items:center;gap:9px;white-space:nowrap}.identity strong{font-size:15px;font-weight:650;letter-spacing:-.4px}#brand-icon svg{width:25px;height:25px;color:#3b50a3}.experiment-tag{font-size:10px;color:#5c6b88;border-left:1px solid #c9d2e4;margin-left:3px;padding-left:11px}
+#spaces{display:flex;align-items:center;gap:3px;min-width:0;margin:auto}#spaces button{padding:7px 13px;border-radius:6px;font-size:12px;white-space:nowrap;color:#64738e}#spaces button[aria-pressed=true]{background:#dbe4f7;color:#233c8b;font-weight:650}.top-actions{display:flex;align-items:center;gap:12px}.quiet-button{display:flex;gap:7px;align-items:center;font-size:12px;padding:7px 8px;border-radius:5px}.quiet-button svg{width:16px;height:16px}.icon-button{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:5px;flex-shrink:0}.icon-button svg{width:18px;height:18px}#clock{font-size:11px;font-variant-numeric:tabular-nums;color:#53627d;white-space:nowrap}
+.rail{grid-column:1;grid-row:2;display:flex;align-items:center;flex-direction:column;gap:7px;background:#eaf0fae8;border-right:1px solid #1d376010;padding:15px 6px;z-index:60;min-height:0;overflow-y:auto}.rail-button{position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;width:54px;min-height:48px;border-radius:9px;color:#485f89;flex-shrink:0}.rail-button svg{width:23px;height:23px}.rail-label{font-size:9px;line-height:1.2;font-weight:600}.library-button{color:#2c4bc0;background:#dce5f9}.rail-divider{height:1px;width:27px;background:#ccd6e8;margin:4px 0 7px}.rail-spacer{flex:1}.rail #pinned{display:flex;flex-direction:column;gap:9px}.rail-button.is-open:after{content:"";width:3px;height:13px;position:absolute;left:-3px;top:17px;background:#536bc7;border-radius:2px}
+#desktop{grid-column:2;grid-row:2;position:relative;overflow:hidden;min-height:0;min-width:0;isolation:isolate}.wallpaper{position:absolute;inset:0;overflow:hidden;pointer-events:none;color:var(--desk-line)}.orbit{position:absolute;border:1px solid currentColor;border-radius:50%;width:920px;height:920px;right:-420px;bottom:-635px}.orbit-two{width:1160px;height:1160px;right:-540px;bottom:-755px}.orbit-three{width:1400px;height:1400px;right:-660px;bottom:-875px}.wallpaper-word{position:absolute;left:8%;top:12%;font-size:clamp(40px,7.5vw,100px);font-weight:500;line-height:1.02;letter-spacing:-.065em;opacity:.65}.wallpaper-word::selection{background:none}#shell[data-pattern=plain] .wallpaper>*{display:none}#shell[data-pattern=grid] .wallpaper>*{display:none}#shell[data-pattern=grid] .wallpaper{background-image:linear-gradient(90deg,var(--desk-line) 1px,transparent 1px),linear-gradient(var(--desk-line) 1px,transparent 1px);background-size:40px 40px;opacity:.45}
+#empty{position:absolute;bottom:35px;left:36px;z-index:1;font-size:15px;color:#3e5277}#empty button{font-size:12px;margin:10px 0 0;padding:7px 13px;border:1px solid #647da65c;border-radius:5px;background:#f3f6fc60}#windows{position:absolute;inset:0;pointer-events:none}#snap-preview{position:absolute;z-index:200;background:#edf3ff55;box-shadow:inset 0 0 0 2px #3156da99;border-radius:10px;pointer-events:none}#gesture-shield{position:absolute;inset:0;z-index:190;background:transparent}.gesturing{user-select:none;-webkit-user-select:none}.gesturing *{cursor:grabbing!important}
+.window{position:absolute;display:flex;flex-direction:column;background:#f8faff;border:1px solid #657c9d66;border-radius:11px;box-shadow:0 5px 18px #354c7020;overflow:hidden;pointer-events:auto;min-width:0;min-height:0}.window.is-active{border-color:#5b74b4a8;box-shadow:0 15px 45px #34476529,0 2px 6px #34476515}.window.is-expanded{border-radius:5px}.titlebar{display:flex;align-items:center;gap:8px;height:40px;min-height:40px;padding:0 5px 0 13px;background:#e8edf7;color:#64728d;border-bottom:1px solid #d7dfed;user-select:none;-webkit-user-select:none;touch-action:none;cursor:grab}.is-active .titlebar{background:#f4f7fd;color:#263b68}.window-mark svg{width:16px;height:16px}.window-title{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.window-controls{display:flex;align-items:center;gap:1px}.window-control{width:29px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:5px;color:#647695}.window-control svg{width:15px;height:15px}.window-control:hover{background:#cdd9ef}.close-control:hover{color:#a32f41;background:#f1d8de}.window-body{position:relative;overflow:auto;overscroll-behavior:contain;flex:1;min-height:0;min-width:0;scrollbar-width:thin}.resize-handle{position:absolute;z-index:60;touch-action:none}.edge-n,.edge-s{height:6px;left:10px;right:10px;cursor:ns-resize}.edge-n{top:0}.edge-s{bottom:0}.edge-e,.edge-w{width:6px;top:10px;bottom:10px;cursor:ew-resize}.edge-e{right:0}.edge-w{left:0}.edge-ne,.edge-nw,.edge-se,.edge-sw{width:13px;height:13px}.edge-ne{right:0;top:0;cursor:nesw-resize}.edge-sw{left:0;bottom:0;cursor:nesw-resize}.edge-nw{left:0;top:0;cursor:nwse-resize}.edge-se{right:0;bottom:0;cursor:nwse-resize}.compact .resize-handle{display:none}.compact .titlebar{cursor:default}
+.shelf{grid-column:1/-1;grid-row:3;display:flex;align-items:center;gap:10px;background:#edf2fc;border-top:1px solid #c1cfe4;padding:0 14px;min-width:0;z-index:100}.shelf-divider{height:21px;width:1px;flex-shrink:0;background:#cfdaec}#tasks{display:flex;align-items:center;gap:5px;overflow-x:auto;min-width:0;scrollbar-width:none;flex:1}.task{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:6px;white-space:nowrap;font-size:11px;position:relative}.task svg{width:17px;height:17px;color:#48649d}.task[aria-current=true]{background:#d8e3f9;color:#233e8e}.task.is-minimized{opacity:.55}.task.is-minimized:after{content:"";position:absolute;bottom:3px;left:calc(50% - 5px);width:10px;height:2px;background:#7a89a7;border-radius:2px}#save-status{font-size:10px;color:#687b99;flex-shrink:0;padding-left:10px}#save-status:before{content:"";display:inline-block;vertical-align:middle;width:5px;height:5px;border-radius:50%;background:#719890;margin-right:6px}#save-status.has-error{color:#a53c4a}#save-status.has-error:before{background:#a53c4a}
+dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8fe;color:#1c2b4b;box-shadow:0 25px 100px #17244950;max-width:calc(100vw - 28px);max-height:calc(100dvh - 32px);overflow:auto}dialog::backdrop{background:#24395835;backdrop-filter:blur(5px)}.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.dialog-heading h1{font-size:25px;line-height:1.15;letter-spacing:-1px;font-weight:500}.dialog-heading h2{font-size:20px;letter-spacing:-.5px;font-weight:500}#app-library{width:530px}.search-field{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #c4cfe1;border-radius:7px;padding:9px 13px;margin-bottom:13px}.search-field svg{width:18px;height:18px;color:#8a9bb8}.search-field input{background:none;border:0;width:100%;outline:none;padding:2px;font-size:13px}.search-field:focus-within{outline:2px solid #5474d4}.app-choice{display:flex;align-items:center;gap:13px;text-align:left;width:100%;padding:10px 8px;border-radius:8px}.app-choice-icon{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:11px;background:#e4ebf8;color:#4561ad;flex-shrink:0}.app-choice-icon svg{width:23px;height:23px}.app-choice>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:2px}.app-choice strong{font-size:13px;font-weight:600}.app-choice span span{font-size:11px;color:#6c7b95}.app-choice>svg{width:16px;height:16px;color:#99a8c1}.dialog-hint{display:flex;justify-content:space-between;gap:12px;font-size:10px;color:#72829f;margin-top:18px}.no-matches{font-size:13px;padding:25px 8px}#window-menu,#arrange-menu{width:350px}.window-action{display:flex;align-items:center;gap:12px;padding:12px;border-radius:5px;width:100%;text-align:left}.window-action svg{width:18px;height:18px;color:#617aa7}.action-row{width:100%;text-align:left;padding:15px 10px;border-radius:7px;display:flex;flex-direction:column;gap:4px;font-weight:600}.action-row span{font-size:12px;font-weight:400;color:#6b7e9e}#notice{position:fixed;z-index:300;bottom:62px;left:85px;right:18px;background:#fff2e5;border:1px solid #dfbea0;border-radius:8px;padding:12px 17px;font-size:12px;box-shadow:0 5px 20px #31425c20;max-width:680px}
+.primary{padding:9px 17px;background:#3f59c7;color:white;border:1px solid #334db9;border-radius:6px;font-weight:600;font-size:12px}.primary:hover{background:#304ab5}.text-button{padding:9px 12px;font-size:12px;border-radius:6px;color:#526b9e}.intro{color:#647493;font-size:14px;line-height:1.55;max-width:32ch}.small-print{color:#7b89a0;font-size:10px;line-height:1.65;max-width:47ch}.guide-content{padding:24px 31px}.guide-emblem{display:flex;align-items:center;justify-content:center;width:47px;height:47px;background:#dce5fa;color:#4b63b4;border-radius:50%;margin-bottom:16px}.guide-emblem svg{width:28px;height:28px}.guide-content h1{font-size:30px;line-height:1.1;font-weight:500;letter-spacing:-1.3px;margin-bottom:10px}.guide-instructions{margin:22px 0}.guide-instructions p{display:flex;gap:12px;align-items:center;font-size:12px;color:#52698d;margin:13px 0}.guide-instructions svg{width:17px;height:17px;flex-shrink:0;color:#7c90b5}.guide-actions{display:flex;align-items:center;gap:8px;margin-bottom:17px}
+.note-content{background:#f6edbc;display:flex;flex-direction:column;overflow:hidden;padding:18px 23px 13px}.note-heading{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#95864f;border-bottom:1px solid #d9cc8b;padding-bottom:13px}.note-dot{font-size:8px;color:#c2af57}.note-editor{flex:1;min-height:70px;resize:none;border:0;background:transparent;padding:20px 0 14px;line-height:1.65;font-size:20px;font-family:"Iowan Old Style","Palatino Linotype",Palatino,serif;color:#5d522e;scrollbar-width:thin;border-radius:0}.note-editor::placeholder{color:#a29460}.note-editor:focus-visible{outline:none}.note-content:focus-within .note-heading{border-color:#ae9841}.note-footer{display:flex;justify-content:space-between;gap:10px;font-size:9px;color:#a29460;padding-top:10px;border-top:1px solid #d9cc8b}
+.board-content{padding:24px;background:#f6f8fc}.content-heading h1{font-size:25px;font-weight:500;letter-spacing:-.9px;margin-bottom:5px}.content-heading p{font-size:12px;color:#6c7c96}.board-form{display:flex;gap:8px;margin:20px 0}.board-form input{min-width:0;flex:1;padding:9px 11px;border:1px solid #cfdaea;background:white;border-radius:5px;font-size:12px}.board-lanes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.board-lane h2{font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;color:#60749a}.lane-count{color:#9ba9be}.idea-card{padding:13px 12px 8px;background:white;border:1px solid #d8e0ee;border-radius:6px;margin-bottom:10px}.board-lane[data-lane=keep] .idea-card{background:#edf4ec;border-color:#cddfcf}.board-lane[data-lane=change] .idea-card{background:#eeebf7;border-color:#d9d2eb}.idea-card p{font-size:12px;line-height:1.6;overflow-wrap:anywhere;white-space:pre-wrap}.card-actions{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:12px}.card-move{font-size:9px;text-align:left;padding:3px 0;color:#788cac}.card-actions .icon-button{width:24px;height:24px;color:#91a0b6}.card-actions svg{width:12px;height:12px}.lane-empty{font-size:11px;color:#9aa8bd;border:1px dashed #cbd5e5;border-radius:5px;padding:16px 10px;line-height:1.6}
+.timer-content{text-align:center;padding:20px 20px 15px;display:flex;align-items:center;flex-direction:column;gap:16px}.timer-label{font-size:13px;color:#6c7f9e}.timer-face{position:relative;width:174px;height:174px;flex-shrink:0;display:grid;place-items:center}.timer-face svg{width:100%;height:100%;position:absolute;inset:0;transform:rotate(-90deg);fill:none;stroke-width:3}.timer-track{stroke:#e1e7f4}.timer-progress{stroke:#5873d7;stroke-dasharray:560;stroke-linecap:round}.timer-digits{font-size:44px;font-weight:400;letter-spacing:-2px;font-variant-numeric:tabular-nums;color:#3e5288}.duration-options{display:flex;gap:4px;background:#eaf0fa;border-radius:6px;padding:3px}.duration-options button{font-size:11px;padding:6px 12px;border-radius:4px;color:#8796b0}.duration-options button[aria-pressed=true]{background:white;color:#3d5bb5;box-shadow:0 1px 4px #425a8120}.timer-controls{display:flex;gap:8px;align-items:center}.timer-controls .primary{min-width:100px}.timer-status{font-size:10px;color:#8c9bb4}
+.calculator-content{padding:20px}.calculator-content form{max-width:360px;margin:0 auto}.calculator-content label{font-size:11px;color:#7284a2;display:block}.calculation-input{display:block;width:100%;border:0;border-bottom:1px solid #d5deef;background:transparent;margin:10px 0 8px;padding:6px 0;font-size:17px;line-height:1.5}.calculation-input::placeholder{color:#b5c1d5}.calculation-answer{display:block;text-align:right;font-size:35px;letter-spacing:-1px;font-variant-numeric:tabular-nums;color:#3c54a1;overflow-wrap:anywhere;line-height:1.3;min-height:55px;padding-bottom:9px}.calculator-keys{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.calculator-keys button{height:33px;background:#edf1f9;border:1px solid #e4eaf5;border-radius:5px}.calculator-keys button:hover{background:#dce5f8}.calculator-keys .operator,.calculator-actions .operator{background:#dfe7fb;color:#4664b6}.calculator-actions{display:flex;gap:5px;margin-top:7px}.calculator-actions button{height:33px;border:1px solid #d8e2f4;border-radius:5px;flex:1;font-size:12px}.calculator-actions .primary{flex:2}.calculation-error{font-size:11px;color:#b14a58;padding-top:10px;min-height:20px}
+.appearance-content{padding:26px}.appearance-content h1{font-size:26px;letter-spacing:-1px;font-weight:500;margin-bottom:7px}.appearance-content .intro{font-size:12px;margin-bottom:24px}.appearance-content fieldset{border:0;padding:0;margin:0 0 24px}.appearance-content legend{font-size:11px;color:#7587a6;margin-bottom:13px;padding:0}.theme-options{display:flex;gap:13px}.theme-option{padding:0;border-radius:8px;font-size:11px;flex:1;text-align:left}.theme-option>span:last-child{display:block;padding-top:8px}.theme-swatch{height:68px;width:100%;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid transparent}.theme-swatch svg{width:22px;height:22px;opacity:0;color:#3b5385}.theme-option[aria-pressed=true] .theme-swatch{border-color:#5c71bf;box-shadow:inset 0 0 0 3px #ffffff70}.theme-option[aria-pressed=true] svg{opacity:1}.pattern-options{display:flex;gap:7px}.pattern-options button{padding:8px 15px;border:1px solid #d0dcee;border-radius:5px;font-size:11px}.pattern-options button[aria-pressed=true]{background:#e2e9fa;border-color:#859bcd;color:#3a56a9}
+@media(max-width:1000px){.experiment-tag{display:none}.topbar{gap:10px;padding:0 12px}.top-actions{gap:5px}#clock{display:none}#save-status{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+@media(max-width:700px){#shell{grid-template-columns:54px minmax(0,1fr);grid-template-rows:48px minmax(0,1fr) 48px}.rail{padding:10px 3px;gap:3px}.rail-button{width:46px;min-height:45px}.rail-label{font-size:8px}.identity{gap:5px}.identity strong{font-size:12px}#brand-icon svg{width:20px;height:20px}.topbar{padding:0 8px;gap:4px}.top-actions{gap:0}.quiet-button{padding:7px}.quiet-button span{display:none}#spaces{gap:0}#spaces button{font-size:10px;padding:6px 7px}.top-actions .icon-button{width:28px;height:28px}.shelf{padding:0 6px;gap:5px}#save-status{display:none}.task{padding:8px 10px;font-size:10px;gap:6px}.shelf-divider{margin:0 2px}.wallpaper-word{font-size:56px;top:9%}.guide-content{padding:22px}.guide-content h1{font-size:28px}.board-content{padding:18px}.board-lanes{grid-template-columns:1fr}.board-form{flex-wrap:wrap}.board-form input{flex-basis:100%}.board-form .primary{width:100%}.titlebar{padding-left:12px}.window-control{width:26px}.window-controls{gap:0}.window-title{font-size:11px}.note-content{padding:15px 18px}.note-editor{font-size:19px}#notice{left:63px;font-size:11px}dialog{padding:20px}.dialog-heading h1{font-size:24px}}
+@media(prefers-reduced-motion:no-preference){dialog[open]{animation:appear .14s ease-out}.window{animation:window-appear .16s ease-out}@keyframes window-appear{from{opacity:.6}to{opacity:1}}@keyframes appear{from{opacity:.6;transform:translateY(4px)}to{opacity:1;transform:none}}}
+</style></head>
+<body>
+  <main id="shell" aria-label="OS Playground">
+    <header class="topbar">
+      <div class="identity"><span id="brand-icon"></span><strong>Playground</strong><span class="experiment-tag">OS sketch</span></div>
+      <nav id="spaces" aria-label="Workspaces"></nav>
+      <div class="top-actions">
+        <button id="arrange" class="quiet-button" aria-label="Arrange windows"></button>
+        <button id="fullscreen" class="icon-button" aria-label="Enter full screen" title="Fill the Spider window"></button>
+        <time id="clock"></time>
+      </div>
+    </header>
+    <nav id="rail" class="rail" aria-label="Pinned apps">
+      <button id="library" class="rail-button library-button" aria-label="Open playground apps" title="Apps (⌘/Ctrl K)"></button>
+      <div class="rail-divider"></div>
+      <div id="pinned"></div>
+      <div class="rail-spacer"></div>
+      <button id="appearance" class="rail-button" aria-label="Open Appearance" title="Appearance"></button>
+      <button id="help" class="rail-button" aria-label="Open Start here" title="Start here"></button>
+    </nav>
+    <section id="desktop" aria-label="Playground desktop" tabindex="0">
+      <div class="wallpaper" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div><div class="wallpaper-word">room to<br />make things.</div></div>
+      <div id="empty" hidden><p>A little breathing room.</p><button id="empty-open">Open an app</button></div>
+      <div id="windows"></div>
+      <div id="snap-preview" hidden aria-hidden="true"></div>
+      <div id="gesture-shield" hidden aria-hidden="true"></div>
+    </section>
+    <footer class="shelf">
+      <button id="show-desktop" class="icon-button" aria-label="Show desktop" title="Show desktop"></button>
+      <div class="shelf-divider"></div>
+      <nav id="tasks" aria-label="Open windows"></nav>
+      <span id="save-status" role="status">Connecting…</span>
+    </footer>
+  </main>
+  <dialog id="app-library" aria-labelledby="library-title">
+    <div class="dialog-heading"><h1 id="library-title">Make yourself at home.</h1><button class="icon-button" data-dismiss aria-label="Close apps"></button></div>
+    <label class="search-field"><span id="search-icon"></span><input id="app-search" type="search" aria-label="Search playground apps" placeholder="Find an app…" autocomplete="off" /></label>
+    <div id="app-results"></div><p class="dialog-hint">⌘ / Ctrl K to open apps <span>Esc to close</span></p>
+  </dialog>
+  <dialog id="window-menu" aria-labelledby="window-menu-title">
+    <div class="dialog-heading"><h2 id="window-menu-title">Window</h2><button class="icon-button" data-dismiss aria-label="Close window actions"></button></div>
+    <div id="window-actions"></div>
+  </dialog>
+  <dialog id="arrange-menu" aria-labelledby="arrange-title">
+    <div class="dialog-heading"><h2 id="arrange-title">Arrange this workspace</h2><button class="icon-button" data-dismiss aria-label="Close arrangement options"></button></div>
+    <button id="tile" class="action-row">Tile windows <span>See everything together</span></button>
+    <button id="cascade" class="action-row">Cascade windows <span>A little overlap, a little room</span></button>
+    <p class="dialog-hint">Your writing and ideas stay in place.</p>
+  </dialog>
+  <div id="notice" role="alert" hidden></div>
+<script type="module">// gestures.js
+var installed = /* @__PURE__ */ new WeakSet();
+function isolatePageZoom(doc = document) {
+  if (installed.has(doc)) return;
+  installed.add(doc);
+  const view = doc.defaultView;
+  const action = view.getComputedStyle(doc.documentElement).touchAction;
+  if (action === "auto" || action === "manipulation") doc.documentElement.style.touchAction = "pan-x pan-y";
+  else if (action.includes("pinch-zoom")) doc.documentElement.style.touchAction = action.replace(/\bpinch-zoom\b/g, "").trim() || "none";
+  const preventNativeZoom = (event) => {
+    if (event.cancelable) event.preventDefault();
+  };
+  view.addEventListener("wheel", (event) => {
+    if (event.ctrlKey || event.metaKey) preventNativeZoom(event);
+  }, { passive: false });
+  for (const type of ["gesturestart", "gesturechange", "gestureend"])
+    view.addEventListener(type, preventNativeZoom, { passive: false });
+}
+
+// sdk.js
+var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function connect() {
+  if (window.parent === window) return Promise.resolve(null);
+  isolatePageZoom(document);
+  return new Promise((resolve) => {
+    const ready = (e) => {
+      if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
+        return;
+      window.removeEventListener("message", ready);
+      const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set(), focusListeners = /* @__PURE__ */ new Set();
+      let state2 = e.data.state;
+      port.onmessage = ({ data: data2 }) => {
+        if (data2.type === "focus") {
+          window.focus();
+          for (const fn of focusListeners) fn();
+          return;
+        }
+        if (data2.type === "state") {
+          state2 = data2.state;
+          for (const fn of listeners) fn(state2);
+          return;
+        }
+        const task = pending.get(data2.id);
+        if (task) {
+          pending.delete(data2.id);
+          data2.error ? task.reject(Error(data2.error)) : task.resolve(data2.result);
+        }
+      };
+      function request(method, args = {}, transfers = []) {
+        return new Promise((resolve2, reject) => {
+          const id = uid();
+          pending.set(id, { resolve: resolve2, reject });
+          port.postMessage({ id, method, args }, transfers);
+        });
+      }
+      const sdk2 = {
+        context: e.data.context,
+        get state() {
+          return state2;
+        },
+        read: () => state2?.data || {},
+        write: (path, value) => request("write", { path, value }),
+        request,
+        onFocus(fn) {
+          focusListeners.add(fn);
+          return () => focusListeners.delete(fn);
+        },
+        async openTerminal(options, onEvent) {
+          const channel = new MessageChannel();
+          channel.port1.onmessage = ({ data: data2 }) => onEvent(data2);
+          try {
+            await request("openrig-terminal", options, [channel.port2]);
+          } catch (error) {
+            channel.port1.close();
+            throw error;
+          }
+          return {
+            send: (frame) => channel.port1.postMessage(frame),
+            close: () => {
+              channel.port1.postMessage({ type: "disconnect" });
+              channel.port1.close();
+            }
+          };
+        },
+        onState(fn) {
+          listeners.add(fn);
+          fn(state2);
+          return () => listeners.delete(fn);
+        },
+        async mount(appId, container, options = {}) {
+          const desc = await request("mount", { appId, ...options });
+          const frame = document.createElement("iframe");
+          frame.srcdoc = desc.html;
+          frame.title = desc.name;
+          frame.sandbox = "allow-scripts allow-forms";
+          frame.allowFullscreen = true;
+          frame.className = "embedded-app";
+          container.append(frame);
+          const channel = new MessageChannel();
+          channel.port1.onmessage = async (ev) => {
+            const msg = ev.data;
+            try {
+              const result = await request("child", {
+                mountId: desc.context.mountId,
+                message: msg
+              }, ev.ports);
+              channel.port1.postMessage({ id: msg.id, result });
+            } catch (error) {
+              channel.port1.postMessage({ id: msg.id, error: error.message });
+            }
+          };
+          const ready2 = (event) => {
+            if (event.source !== frame.contentWindow || event.data?.type !== "spider:ready")
+              return;
+            window.removeEventListener("message", ready2);
+            frame.contentWindow.postMessage(
+              { type: "spider:init", context: desc.context, state: desc.state },
+              "*",
+              [channel.port2]
+            );
+          };
+          window.addEventListener("message", ready2);
+          const unsubscribe = sdk2.onState(() => {
+            request("childState", { mountId: desc.context.mountId }).then(
+              (s) => channel.port1.postMessage({ type: "state", state: s })
+            ).catch(() => {
+            });
+          });
+          const unfocus = sdk2.onFocus(() => {
+            if (document.activeElement === frame) channel.port1.postMessage({ type: "focus" });
+          });
+          return {
+            frame,
+            close() {
+              unsubscribe();
+              unfocus();
+              request("unmount", { mountId: desc.context.mountId }).catch(
+                () => {
+                }
+              );
+              frame.remove();
+              channel.port1.close();
+            }
+          };
+        }
+      };
+      const activate = () => request("activate").catch(() => {
+      });
+      document.addEventListener("pointerdown", activate, { capture: true, passive: true });
+      document.addEventListener("focusin", activate);
+      document.addEventListener("keydown", (event) => {
+        if (event.altKey && !event.ctrlKey && !event.metaKey && event.code === "Space" && !event.repeat) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          request("launcher").catch(() => {
+          });
+        }
+      }, true);
+      resolve(sdk2);
+    };
+    window.addEventListener("message", ready);
+    parent.postMessage({ type: "spider:ready" }, "*");
+  });
+}
+
+// ../SpiderPlayground/model.js
+var SPACES = [{ id: "studio", name: "Studio" }, { id: "quiet", name: "Quiet room" }];
+var APPS = [
+  { id: "guide", name: "Start here", icon: "spark", description: "Get a feel for this desktop", width: 470, height: 430 },
+  { id: "note", name: "Scratchpad", icon: "pen", description: "A little room for a thought", width: 440, height: 360 },
+  { id: "board", name: "Ideas", icon: "board", description: "Collect what to try, keep, and change", width: 660, height: 440 },
+  { id: "timer", name: "Focus timer", icon: "timer", description: "Make time for one thing", width: 340, height: 390 },
+  { id: "calculator", name: "Calculator", icon: "calculator", description: "Work something out", width: 340, height: 390 },
+  { id: "appearance", name: "Appearance", icon: "palette", description: "Change the atmosphere", width: 400, height: 410 }
+];
+var THEMES = {
+  tide: { name: "Tide", color: "#c7d6ed", line: "#a3b7d9" },
+  iris: { name: "Iris", color: "#d8cfea", line: "#baaad5" },
+  grove: { name: "Grove", color: "#cbded4", line: "#a1c0ae" }
+};
+var clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+var finite = (n, fallback) => Number.isFinite(n) ? n : fallback;
+var key = (value) => typeof value === "string" && /^[a-zA-Z0-9_-]{1,80}$/.test(value);
+var appById = (id) => APPS.find((app) => app.id === id);
+function boundsOf(bounds) {
+  return { width: Math.max(1, finite(bounds.width, 800)), height: Math.max(1, finite(bounds.height, 600)) };
+}
+function normalRect(rect = {}) {
+  rect = rect && typeof rect === "object" ? rect : {};
+  return {
+    x: clamp(finite(rect.x, 40), 0, 8e3),
+    y: clamp(finite(rect.y, 40), 0, 8e3),
+    width: clamp(finite(rect.width, 440), 280, 4e3),
+    height: clamp(finite(rect.height, 360), 210, 4e3)
+  };
+}
+function fitRect(rect, bounds) {
+  const b = boundsOf(bounds), r = normalRect(rect);
+  const width = Math.min(r.width, b.width), height = Math.min(r.height, b.height);
+  return { x: clamp(r.x, 0, b.width - width), y: clamp(r.y, 0, b.height - height), width, height };
+}
+function displayRect(win, bounds) {
+  const b = boundsOf(bounds);
+  if (b.width < 600 || win.mode === "maximized") return { x: 0, y: 0, ...b };
+  if (win.mode === "left" || win.mode === "right") {
+    const leftWidth = Math.floor(b.width / 2);
+    return {
+      x: win.mode === "left" ? 0 : leftWidth,
+      y: 0,
+      width: win.mode === "left" ? leftWidth : b.width - leftWidth,
+      height: b.height
+    };
+  }
+  return fitRect(win.rect, b);
+}
+function moveRect(rect, dx, dy, bounds) {
+  const r = fitRect(rect, bounds), b = boundsOf(bounds);
+  return { ...r, x: clamp(r.x + dx, 0, b.width - r.width), y: clamp(r.y + dy, 0, b.height - r.height) };
+}
+function resizeRect(rect, edge, dx, dy, bounds) {
+  const r = fitRect(rect, bounds), b = boundsOf(bounds);
+  let left = r.x, top = r.y, right = r.x + r.width, bottom = r.y + r.height;
+  const minWidth = Math.min(280, b.width), minHeight = Math.min(210, b.height);
+  if (edge.includes("w")) left = clamp(left + dx, 0, right - minWidth);
+  if (edge.includes("e")) right = clamp(right + dx, left + minWidth, b.width);
+  if (edge.includes("n")) top = clamp(top + dy, 0, bottom - minHeight);
+  if (edge.includes("s")) bottom = clamp(bottom + dy, top + minHeight, b.height);
+  return { x: left, y: top, width: right - left, height: bottom - top };
+}
+function snapAt(point, bounds) {
+  const b = boundsOf(bounds);
+  if (b.width < 600) return null;
+  if (point.y <= 16) return "maximized";
+  if (point.x <= 22) return "left";
+  if (point.x >= b.width - 22) return "right";
+  return null;
+}
+function defaultLayout() {
+  return { version: 1, space: "studio", active: { studio: "first-note", quiet: null }, windows: [
+    { id: "first-guide", app: "guide", space: "studio", rect: { x: 48, y: 40, width: 470, height: 430 }, mode: "normal", minimized: false, order: 1 },
+    { id: "first-note", app: "note", space: "studio", rect: { x: 480, y: 176, width: 440, height: 360 }, mode: "normal", minimized: false, order: 2 }
+  ] };
+}
+function normalizeLayout(value) {
+  if (!value || value.version !== 1 || !Array.isArray(value.windows)) return defaultLayout();
+  const spaces = new Set(SPACES.map((space) => space.id)), ids = /* @__PURE__ */ new Set(), apps = /* @__PURE__ */ new Set(), windows = [];
+  for (const raw of value.windows.slice(0, 32)) {
+    if (!raw || !key(raw.id) || ids.has(raw.id) || !appById(raw.app) || !spaces.has(raw.space) || apps.has(raw.space + "/" + raw.app)) continue;
+    ids.add(raw.id);
+    apps.add(raw.space + "/" + raw.app);
+    windows.push({
+      id: raw.id,
+      app: raw.app,
+      space: raw.space,
+      rect: normalRect(raw.rect),
+      mode: ["normal", "maximized", "left", "right"].includes(raw.mode) ? raw.mode : "normal",
+      minimized: raw.minimized === true,
+      order: finite(raw.order, windows.length)
+    });
+  }
+  windows.sort((a, b) => a.order - b.order).forEach((win, i) => win.order = i + 1);
+  const active = {};
+  for (const space of spaces) {
+    const available = windows.filter((win) => win.space === space && !win.minimized);
+    active[space] = available.find((win) => win.id === value.active?.[space])?.id || available.at(-1)?.id || null;
+  }
+  return { version: 1, space: spaces.has(value.space) ? value.space : "studio", active, windows };
+}
+function remainingTime(timer, now = Date.now()) {
+  const duration = clamp(finite(timer?.duration, 25 * 60), 60, 60 * 60);
+  return { duration, remaining: timer?.endAt > 0 ? clamp(Math.ceil((timer.endAt - now) / 1e3), 0, duration) : clamp(finite(timer?.remaining, duration), 0, duration), running: timer?.endAt > now };
+}
+
+// ../SpiderPlayground/icons.js
+var paths = {
+  spark: '<path d="M12 2v20M2 12h20M5 5l14 14M5 19L19 5"/><circle cx="12" cy="12" r="4"/>',
+  grid: '<rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/>',
+  pen: '<path d="m15 4 5 5M4 20l5-1L21 7a2.1 2.1 0 0 0-4-4L5 15l-1 5Z"/><path d="M12 20h8"/>',
+  board: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M15 3v18M5 7h2m4 4h2m4-4h2"/>',
+  timer: '<circle cx="12" cy="14" r="8"/><path d="M9 2h6m-3 4V2m0 8v5l3 2m3-13 2 2"/>',
+  calculator: '<rect x="5" y="2" width="14" height="20" rx="3"/><path d="M8 7h8M8 12h1m5 0h2m-8 4h1m5 0h2m-8 3h1m5 0h2"/>',
+  palette: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/><path d="M12 3a9 9 0 0 1 9 9h-9Z" fill="currentColor" stroke="none"/>',
+  expand: '<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',
+  restore: '<rect x="3" y="7" width="14" height="14" rx="2"/><path d="M8 7V3h13v13h-4"/>',
+  maximize: '<rect x="4" y="4" width="16" height="16" rx="2"/>',
+  minimize: '<path d="M5 17h14"/>',
+  close: '<path d="m6 6 12 12M6 18 18 6"/>',
+  dots: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  left: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/><path d="M3 4h9v16H3Z" fill="currentColor" opacity=".2"/>',
+  right: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/><path d="M12 4h9v16h-9Z" fill="currentColor" opacity=".2"/>',
+  arrange: '<rect x="3" y="3" width="8" height="18" rx="1"/><rect x="14" y="3" width="7" height="8" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  desktop: '<rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>',
+  arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>'
+};
+function icon(name) {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  node.setAttribute("viewBox", "0 0 24 24");
+  node.setAttribute("fill", "none");
+  node.setAttribute("stroke", "currentColor");
+  node.setAttribute("stroke-width", "1.6");
+  node.setAttribute("stroke-linecap", "round");
+  node.setAttribute("stroke-linejoin", "round");
+  node.setAttribute("aria-hidden", "true");
+  node.innerHTML = paths[name] || paths.spark;
+  return node;
+}
+
+// ../SpiderPlayground/windows.js
+function createWindows({ stage, container, preview, shield, layout: initial, createContent: createContent2, onChange, onPaint, onMenu }) {
+  let layout = normalizeLayout(initial), gesture = null, desktopRestore = [];
+  const entries = /* @__PURE__ */ new Map(), events = new AbortController();
+  const bounds = () => boundsOf({ width: stage.clientWidth, height: stage.clientHeight });
+  const visible = () => layout.windows.filter((win) => win.space === layout.space && !win.minimized).sort((a, b) => a.order - b.order);
+  const save = () => onChange(structuredClone(layout));
+  const listen = (node, name, fn) => node.addEventListener(name, fn, { signal: events.signal });
+  function focus(id) {
+    const entry = entries.get(id);
+    if (!entry || entry.panel.hidden) {
+      stage.focus({ preventScroll: true });
+      return;
+    }
+    const target = entry.lastFocus?.isConnected ? entry.lastFocus : entry.bar;
+    target.focus({ preventScroll: true });
+  }
+  function paint2() {
+    const compact = bounds().width < 600;
+    for (const win of layout.windows) {
+      const entry = entries.get(win.id);
+      if (!entry) continue;
+      const rect = displayRect(win, bounds()), active = layout.active[layout.space] === win.id;
+      entry.panel.hidden = win.space !== layout.space || win.minimized || compact && !active;
+      entry.panel.inert = entry.panel.hidden;
+      entry.panel.classList.toggle("is-active", active);
+      entry.panel.classList.toggle("is-expanded", compact || win.mode !== "normal");
+      entry.panel.dataset.mode = win.mode;
+      Object.assign(entry.panel.style, { left: rect.x + "px", top: rect.y + "px", width: rect.width + "px", height: rect.height + "px", zIndex: String(10 + win.order) });
+      entry.maximize.replaceChildren(icon(win.mode === "maximized" ? "restore" : "maximize"));
+      entry.maximize.setAttribute("aria-label", (win.mode === "maximized" ? "Restore " : "Maximize ") + appById(win.app).name);
+      entry.maximize.title = win.mode === "maximized" ? "Restore size" : "Maximize";
+    }
+    stage.classList.toggle("compact", compact);
+    onPaint(structuredClone(layout));
+  }
+  function restack(id) {
+    const sorted = layout.windows.filter((win) => win.id !== id).sort((a, b) => a.order - b.order);
+    sorted.forEach((win, i) => win.order = i + 1);
+    layout.windows.find((win) => win.id === id).order = layout.windows.length;
+  }
+  function activate(id, input = false) {
+    const win = layout.windows.find((win2) => win2.id === id);
+    if (!win) return;
+    const changed = layout.space !== win.space || win.minimized || layout.active[win.space] !== id;
+    layout.space = win.space;
+    win.minimized = false;
+    layout.active[win.space] = id;
+    if (changed) {
+      restack(id);
+      paint2();
+      save();
+    }
+    if (input) focus(id);
+  }
+  function nextActive(space) {
+    layout.active[space] = layout.windows.filter((win) => win.space === space && !win.minimized).sort((a, b) => a.order - b.order).at(-1)?.id || null;
+  }
+  function setMode(id, mode) {
+    const win = layout.windows.find((win2) => win2.id === id);
+    if (!win) return;
+    win.mode = mode;
+    activate(id);
+    paint2();
+    save();
+    focus(id);
+  }
+  function minimize(id) {
+    const win = layout.windows.find((win2) => win2.id === id);
+    if (!win) return;
+    win.minimized = true;
+    if (layout.active[win.space] === id) nextActive(win.space);
+    paint2();
+    save();
+    focus(layout.active[layout.space]);
+  }
+  function close(id) {
+    const win = layout.windows.find((win2) => win2.id === id);
+    if (!win) return;
+    if (gesture?.id === id) finish(false);
+    const entry = entries.get(id);
+    entry?.events.abort();
+    entry?.content.destroy?.();
+    entry?.panel.remove();
+    entries.delete(id);
+    layout.windows = layout.windows.filter((win2) => win2.id !== id);
+    if (layout.active[win.space] === id) nextActive(win.space);
+    paint2();
+    save();
+    focus(layout.active[layout.space]);
+  }
+  function add(win) {
+    const windowEvents = new AbortController();
+    const listenWindow = (node, name, fn) => node.addEventListener(name, fn, { signal: windowEvents.signal });
+    const app = appById(win.app), panel = document.createElement("section");
+    panel.className = "window";
+    panel.dataset.window = win.id;
+    panel.dataset.app = win.app;
+    panel.setAttribute("role", "region");
+    panel.setAttribute("aria-labelledby", "title-" + win.id);
+    const bar = document.createElement("div");
+    bar.className = "titlebar";
+    bar.tabIndex = 0;
+    bar.setAttribute("aria-label", "Move " + app.name + " window");
+    bar.title = "Drag to move. Double-click to maximize. Alt + arrows to move; Shift + Alt + arrows to resize.";
+    const mark = document.createElement("span");
+    mark.className = "window-mark";
+    mark.append(icon(app.icon));
+    const title = document.createElement("span");
+    title.className = "window-title";
+    title.id = "title-" + win.id;
+    title.textContent = app.name;
+    const controls = document.createElement("div");
+    controls.className = "window-controls";
+    function control(name, svg, action) {
+      const button2 = document.createElement("button");
+      button2.type = "button";
+      button2.className = "window-control";
+      button2.setAttribute("aria-label", name + " " + app.name);
+      button2.title = name;
+      button2.append(icon(svg));
+      listenWindow(button2, "click", action);
+      controls.append(button2);
+      return button2;
+    }
+    control("Window actions for", "dots", () => onMenu(win.id));
+    control("Minimize", "minimize", () => minimize(win.id));
+    const maximize = control("Maximize", "maximize", () => setMode(win.id, win.mode === "maximized" ? "normal" : "maximized"));
+    const closer = control("Close", "close", () => close(win.id));
+    closer.classList.add("close-control");
+    bar.append(mark, title, controls);
+    const body = document.createElement("div");
+    body.className = "window-body";
+    panel.append(bar, body);
+    container.append(panel);
+    const entry = { panel, bar, maximize, lastFocus: null, events: windowEvents, content: createContent2(win, body) };
+    entries.set(win.id, entry);
+    listenWindow(panel, "pointerdown", () => activate(win.id));
+    listenWindow(panel, "focusin", (event) => {
+      entry.lastFocus = event.target;
+      activate(win.id);
+    });
+    listenWindow(bar, "pointerdown", (event) => start(event, win, ""));
+    listenWindow(bar, "dblclick", (event) => {
+      if (!event.target.closest("button")) setMode(win.id, win.mode === "maximized" ? "normal" : "maximized");
+    });
+    listenWindow(bar, "keydown", (event) => {
+      if (event.target !== bar) return;
+      if (event.key === "Escape" && win.mode !== "normal") {
+        event.preventDefault();
+        setMode(win.id, "normal");
+        return;
+      }
+      if (!event.altKey || !event.key.startsWith("Arrow")) return;
+      event.preventDefault();
+      const delta = event.shiftKey ? 12 : 20;
+      const dx = event.key === "ArrowLeft" ? -delta : event.key === "ArrowRight" ? delta : 0;
+      const dy = event.key === "ArrowUp" ? -delta : event.key === "ArrowDown" ? delta : 0;
+      const rect = displayRect(win, bounds());
+      win.mode = "normal";
+      win.rect = event.shiftKey ? resizeRect(rect, "se", dx, dy, bounds()) : moveRect(rect, dx, dy, bounds());
+      paint2();
+      save();
+    });
+    for (const edge of ["n", "e", "s", "w", "ne", "nw", "se", "sw"]) {
+      const handle = document.createElement("div");
+      handle.className = "resize-handle edge-" + edge;
+      handle.dataset.edge = edge;
+      handle.setAttribute("aria-hidden", "true");
+      panel.append(handle);
+      listenWindow(handle, "pointerdown", (event) => start(event, win, edge));
+    }
+  }
+  function start(event, win, edge) {
+    if (event.button !== 0 || event.isPrimary === false || gesture || bounds().width < 600 || event.target.closest("button,input,select,textarea,a")) return;
+    event.preventDefault();
+    activate(win.id);
+    const box = stage.getBoundingClientRect(), rect = displayRect(win, bounds());
+    gesture = {
+      id: win.id,
+      win,
+      edge,
+      pointer: event.pointerId,
+      target: event.currentTarget,
+      x: event.clientX,
+      y: event.clientY,
+      box,
+      rect,
+      original: structuredClone({ rect: win.rect, mode: win.mode }),
+      started: false,
+      snap: null
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function move(event) {
+    const g = gesture;
+    if (!g || event.pointerId !== g.pointer) return;
+    const dx = event.clientX - g.x, dy = event.clientY - g.y;
+    if (!g.started && Math.hypot(dx, dy) < 4) return;
+    event.preventDefault();
+    if (!g.started) {
+      g.started = true;
+      document.body.classList.add("gesturing");
+      shield.hidden = false;
+      if (!g.edge && g.win.mode !== "normal") {
+        const restored = fitRect(g.win.rect, bounds()), ratio = Math.max(0, Math.min(1, (g.x - g.box.left - g.rect.x) / g.rect.width));
+        g.rect = { ...restored, x: g.x - g.box.left - restored.width * ratio, y: g.y - g.box.top - 20 };
+      }
+      g.win.mode = "normal";
+    }
+    g.win.rect = g.edge ? resizeRect(g.rect, g.edge, dx, dy, bounds()) : moveRect(g.rect, dx, dy, bounds());
+    g.snap = g.edge ? null : snapAt({ x: event.clientX - g.box.left, y: event.clientY - g.box.top }, bounds());
+    preview.hidden = !g.snap;
+    if (g.snap) {
+      const r = displayRect({ ...g.win, mode: g.snap }, bounds());
+      Object.assign(preview.style, { left: r.x + "px", top: r.y + "px", width: r.width + "px", height: r.height + "px" });
+    }
+    paint2();
+  }
+  function finish(commit = true) {
+    const g = gesture;
+    if (!g) return;
+    gesture = null;
+    if (g.target.hasPointerCapture(g.pointer)) g.target.releasePointerCapture(g.pointer);
+    if (!commit) {
+      g.win.rect = g.original.rect;
+      g.win.mode = g.original.mode;
+    } else if (g.started && g.snap) g.win.mode = g.snap;
+    preview.hidden = true;
+    shield.hidden = true;
+    document.body.classList.remove("gesturing");
+    paint2();
+    if (commit && g.started) save();
+    focus(g.id);
+  }
+  listen(document, "pointermove", move);
+  listen(document, "pointerup", (event) => {
+    if (event.pointerId === gesture?.pointer) finish();
+  });
+  listen(document, "pointercancel", (event) => {
+    if (event.pointerId === gesture?.pointer) finish(false);
+  });
+  listen(document, "lostpointercapture", (event) => {
+    if (event.pointerId === gesture?.pointer) finish(false);
+  });
+  listen(document, "keydown", (event) => {
+    if (gesture && event.key === "Escape") {
+      event.preventDefault();
+      finish(false);
+    }
+    if (event.key === "F6" && !document.querySelector("dialog[open]")) {
+      const list = visible();
+      if (!list.length) return;
+      event.preventDefault();
+      const index = list.findIndex((win) => win.id === layout.active[layout.space]);
+      activate(list[(index + (event.shiftKey ? -1 : 1) + list.length) % list.length].id, true);
+    }
+  });
+  listen(window, "blur", () => finish());
+  const observer = new ResizeObserver(() => {
+    if (gesture) finish(false);
+    paint2();
+  });
+  observer.observe(stage);
+  function open(appId) {
+    const existing = layout.windows.find((win2) => win2.space === layout.space && win2.app === appId);
+    if (existing) {
+      activate(existing.id, true);
+      return;
+    }
+    const app = appById(appId);
+    if (!app) return;
+    const count = layout.windows.filter((win2) => win2.space === layout.space).length;
+    const win = { id: crypto.randomUUID(), app: appId, space: layout.space, rect: fitRect({ x: 48 + count * 32, y: 40 + count * 28, width: app.width, height: app.height }, bounds()), mode: "normal", minimized: false, order: layout.windows.length + 1 };
+    layout.windows.push(win);
+    add(win);
+    activate(win.id, true);
+  }
+  function switchSpace(id) {
+    if (!["studio", "quiet"].includes(id) || id === layout.space) return;
+    finish();
+    layout.space = id;
+    desktopRestore = [];
+    paint2();
+    save();
+    focus(layout.active[id]);
+  }
+  function arrange(kind) {
+    const wins = visible(), b = bounds();
+    if (!wins.length) return true;
+    const gap = 12, columns = Math.min(wins.length, Math.max(1, Math.floor((b.width - gap) / (280 + gap)))), rows = Math.ceil(wins.length / columns);
+    if (kind === "tile" && (b.width < 600 || (b.height - gap) / rows - gap < 210)) return false;
+    wins.forEach((win, i) => {
+      win.mode = "normal";
+      win.rect = kind === "tile" ? fitRect({
+        x: gap + i % columns * (b.width - gap) / columns,
+        y: gap + Math.floor(i / columns) * (b.height - gap) / rows,
+        width: (b.width - gap) / columns - gap,
+        height: (b.height - gap) / rows - gap
+      }, b) : fitRect({ x: 24 + i * 36 % Math.max(36, b.width - 320), y: 24 + i * 32 % Math.max(32, b.height - 250), width: appById(win.app).width, height: appById(win.app).height }, b);
+    });
+    paint2();
+    save();
+    return true;
+  }
+  function showDesktop() {
+    const wins = visible();
+    if (wins.length) {
+      desktopRestore = wins.map((win) => win.id);
+      wins.forEach((win) => win.minimized = true);
+      nextActive(layout.space);
+    } else {
+      const ids = desktopRestore.length ? desktopRestore : layout.windows.filter((win) => win.space === layout.space).map((win) => win.id);
+      layout.windows.forEach((win) => {
+        if (ids.includes(win.id)) win.minimized = false;
+      });
+      desktopRestore = [];
+      nextActive(layout.space);
+    }
+    paint2();
+    save();
+  }
+  function replace(next) {
+    if (gesture) return;
+    const previous = new Map(layout.windows.map((win) => [win.id, win]));
+    layout = normalizeLayout(next);
+    desktopRestore = [];
+    layout.windows = layout.windows.map((win) => {
+      const old = previous.get(win.id);
+      return old && old.app === win.app && old.space === win.space ? Object.assign(old, win) : win;
+    });
+    for (const [id, entry] of entries) {
+      const win = layout.windows.find((win2) => win2.id === id), old = previous.get(id);
+      if (!win || old?.app !== win.app || old?.space !== win.space) {
+        entry.events.abort();
+        entry.content.destroy?.();
+        entry.panel.remove();
+        entries.delete(id);
+      }
+    }
+    for (const win of layout.windows) {
+      if (!entries.has(win.id)) add(win);
+    }
+    paint2();
+  }
+  for (const win of layout.windows) add(win);
+  return {
+    open,
+    activate,
+    close,
+    minimize,
+    setMode,
+    switchSpace,
+    arrange,
+    showDesktop,
+    paint: paint2,
+    replace,
+    get layout() {
+      return structuredClone(layout);
+    },
+    get busy() {
+      return !!gesture;
+    },
+    update() {
+      for (const entry of entries.values()) entry.content.update?.();
+    },
+    tick() {
+      for (const entry of entries.values()) entry.content.tick?.();
+    },
+    destroy() {
+      if (gesture) finish(false);
+      events.abort();
+      observer.disconnect();
+      for (const entry of entries.values()) {
+        entry.events.abort();
+        entry.content.destroy?.();
+        entry.panel.remove();
+      }
+      entries.clear();
+    }
+  };
+}
+
+// ../SpiderCalculator/math.js
+function calculate(text) {
+  const source = text.replaceAll("\xD7", "*").replaceAll("\xF7", "/").replaceAll("\u2212", "-");
+  const tokens = source.match(/(?:\d*\.?\d+(?:[eE][+-]?\d+)?)|[()+\-*/%]/g) || [];
+  if (tokens.join("") !== source.replace(/\s/g, ""))
+    throw Error("Use numbers, parentheses, +, \u2212, \xD7, \xF7 or %.");
+  let i = 0;
+  function atom() {
+    const t = tokens[i++];
+    if (t === "+") return atom();
+    if (t === "-") return -atom();
+    if (t === "(") {
+      const n = sum();
+      if (tokens[i++] !== ")") throw Error("Close the parentheses.");
+      return n;
+    }
+    if (!t || !/^\d*\.?\d/.test(t))
+      throw Error("Enter a complete calculation.");
+    return Number(t);
+  }
+  function product() {
+    let n = atom();
+    while (["*", "/", "%"].includes(tokens[i])) {
+      const op = tokens[i++], r = atom();
+      if ((op === "/" || op === "%") && r === 0)
+        throw Error("Cannot divide by zero.");
+      n = op === "*" ? n * r : op === "/" ? n / r : n % r;
+    }
+    return n;
+  }
+  function sum() {
+    let n = product();
+    while (["+", "-"].includes(tokens[i])) {
+      const op = tokens[i++], r = product();
+      n = op === "+" ? n + r : n - r;
+    }
+    return n;
+  }
+  if (tokens.length > 500) throw Error("Try a shorter calculation.");
+  const result = sum();
+  if (i !== tokens.length || !Number.isFinite(result))
+    throw Error("Enter a valid finite calculation.");
+  return Number(result.toPrecision(13));
+}
+
+// ../SpiderPlayground/contents.js
+function el(tag, className = "", text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== void 0) node.textContent = text;
+  return node;
+}
+function button(text, action, className = "") {
+  const node = el("button", className, text);
+  node.type = "button";
+  node.addEventListener("click", action);
+  return node;
+}
+var defaultCards = () => [
+  { id: "first", text: "A desktop that leaves room to think.", lane: "try" },
+  { id: "second", text: "Keep your place when you switch spaces.", lane: "keep" },
+  { id: "third", text: "What would make opening an app feel better?", lane: "change" }
+];
+var lanes = [["try", "Try"], ["keep", "Keep"], ["change", "Change"]];
+function cardsOf(value) {
+  return Array.isArray(value) ? value.filter((card) => card && typeof card.id === "string" && typeof card.text === "string" && lanes.some(([id]) => id === card.lane)).slice(0, 100) : defaultCards();
+}
+function createContent(win, body, { read, write: write2, open, library }) {
+  const space = win.space;
+  const get = (field, fallback) => read()[field]?.[space] ?? fallback;
+  if (win.app === "guide") {
+    body.classList.add("guide-content");
+    const emblem = el("div", "guide-emblem");
+    emblem.append(icon("spark"));
+    body.append(emblem, el("h1", "", "Your other desktop."), el("p", "intro", "A place to figure out how you want things to work."));
+    const instructions = el("div", "guide-instructions");
+    for (const [svg, text] of [["desktop", "Drag a title bar. Resize from any edge."], ["left", "Drag to a side to snap a window into place."], ["grid", "Switch rooms to make a little more space."]]) {
+      const row = el("p");
+      row.append(icon(svg), el("span", "", text));
+      instructions.append(row);
+    }
+    body.append(instructions);
+    const actions = el("div", "guide-actions");
+    actions.append(button("Open apps", library, "primary"), button("Start a thought", () => open("note"), "text-button"));
+    body.append(actions, el("p", "small-print", "\u2318 / Ctrl K opens apps. F6 switches windows. Your writing stays when you close a window."));
+    return {};
+  }
+  if (win.app === "note") {
+    let update = function() {
+      const value = String(get("notes", ""));
+      if (document.activeElement !== input) input.value = value;
+      count.textContent = input.value.length.toLocaleString() + " characters";
+    };
+    body.classList.add("note-content");
+    const heading = el("div", "note-heading");
+    heading.append(el("span", "", "A thought for " + (space === "studio" ? "the studio" : "the quiet room")), el("span", "note-dot", "\u25CF"));
+    const input = el("textarea", "note-editor");
+    input.setAttribute("aria-label", "Scratchpad text");
+    input.placeholder = "What should this OS feel like?\n\nStart anywhere.";
+    input.spellcheck = true;
+    input.maxLength = 1e5;
+    const foot = el("div", "note-footer"), count = el("span");
+    foot.append(el("span", "", "Yours to rearrange."), count);
+    body.append(heading, input, foot);
+    input.addEventListener("input", () => {
+      write2(["notes", space], input.value);
+      count.textContent = input.value.length.toLocaleString() + " characters";
+    });
+    input.addEventListener("blur", update);
+    update();
+    return { update };
+  }
+  if (win.app === "board") {
+    let update = function() {
+      if (document.activeElement !== input) input.value = String(get("boardDrafts", ""));
+      const value = cards(), next = JSON.stringify(value);
+      if (next === signature) return;
+      signature = next;
+      board.replaceChildren();
+      for (const [id, name] of lanes) {
+        const lane = el("section", "board-lane");
+        lane.dataset.lane = id;
+        const title = el("h2");
+        title.append(el("span", "", name), el("span", "lane-count", String(value.filter((card) => card.lane === id).length)));
+        lane.append(title);
+        for (const card of value.filter((card2) => card2.lane === id)) {
+          const item = el("article", "idea-card");
+          item.append(el("p", "", card.text));
+          const actions = el("div", "card-actions"), nextLane = lanes[(lanes.findIndex(([key2]) => key2 === id) + 1) % lanes.length];
+          const move = button("Move to " + nextLane[1], () => {
+            write2(["boards", space], cards().map((other) => other.id === card.id ? { ...other, lane: nextLane[0] } : other));
+            update();
+          }, "card-move");
+          const remove = button("", () => {
+            write2(["boards", space], cards().filter((other) => other.id !== card.id));
+            update();
+          }, "icon-button");
+          remove.append(icon("close"));
+          remove.setAttribute("aria-label", "Delete idea: " + card.text.slice(0, 60));
+          actions.append(move, remove);
+          item.append(actions);
+          lane.append(item);
+        }
+        if (!value.some((card) => card.lane === id)) lane.append(el("p", "lane-empty", "A little room for an idea."));
+        board.append(lane);
+      }
+      add.disabled = value.length >= 100;
+    };
+    body.classList.add("board-content");
+    const heading = el("div", "content-heading");
+    heading.append(el("h1", "", "Keep the good bits."), el("p", "", "Collect reactions as you try the desktop."));
+    const form = el("form", "board-form"), input = el("input");
+    input.placeholder = "An idea, a feeling, something to change\u2026";
+    input.setAttribute("aria-label", "New idea");
+    input.maxLength = 500;
+    input.required = true;
+    const add = el("button", "primary", "Add idea");
+    add.type = "submit";
+    form.append(input, add);
+    const board = el("div", "board-lanes");
+    body.append(heading, form, board);
+    let signature = "";
+    const cards = () => cardsOf(get("boards", null));
+    input.addEventListener("input", () => write2(["boardDrafts", space], input.value));
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text || cards().length >= 100) return;
+      write2(["boards", space], [...cards(), { id: crypto.randomUUID(), text, lane: "try" }]);
+      input.value = "";
+      write2(["boardDrafts", space], "");
+      update();
+      input.focus();
+    });
+    update();
+    return { update };
+  }
+  if (win.app === "timer") {
+    let tick2 = function() {
+      const t = remainingTime(get("timers", {}));
+      digits.textContent = Math.floor(t.remaining / 60) + ":" + String(t.remaining % 60).padStart(2, "0");
+      progress.style.strokeDashoffset = String(560 * (1 - t.remaining / t.duration));
+      toggle.textContent = t.running ? "Pause" : t.remaining === 0 ? "Start again" : "Start";
+      status2.textContent = t.remaining === 0 ? "Time for a breath." : t.running ? "A little time, just for this." : "Choose a duration and settle in.";
+      for (const option of durations.children) option.setAttribute("aria-pressed", String(Number(option.dataset.duration) === t.duration));
+    };
+    body.classList.add("timer-content");
+    const label = el("p", "timer-label", "One thing at a time."), face = el("div", "timer-face"), digits = el("div", "timer-digits");
+    const dial = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    dial.setAttribute("viewBox", "0 0 200 200");
+    dial.setAttribute("aria-hidden", "true");
+    dial.innerHTML = '<circle class="timer-track" cx="100" cy="100" r="89"/><circle class="timer-progress" cx="100" cy="100" r="89"/>';
+    const progress = dial.querySelector(".timer-progress");
+    face.append(dial, digits);
+    const durations = el("div", "duration-options");
+    for (const minutes of [5, 15, 25]) {
+      const option = button(minutes + " min", () => write2(["timers", space], { duration: minutes * 60, remaining: minutes * 60, endAt: 0 }));
+      option.dataset.duration = String(minutes * 60);
+      durations.append(option);
+    }
+    const controls = el("div", "timer-controls");
+    const toggle = button("Start", () => {
+      const t = remainingTime(get("timers", {}));
+      write2(["timers", space], t.running ? { duration: t.duration, remaining: t.remaining, endAt: 0 } : { duration: t.duration, remaining: t.remaining || t.duration, endAt: Date.now() + (t.remaining || t.duration) * 1e3 });
+    }, "primary");
+    const reset = button("Reset", () => {
+      const t = remainingTime(get("timers", {}));
+      write2(["timers", space], { duration: t.duration, remaining: t.duration, endAt: 0 });
+    }, "text-button");
+    controls.append(toggle, reset);
+    const status2 = el("p", "timer-status");
+    status2.setAttribute("role", "status");
+    body.append(label, face, durations, controls, status2);
+    tick2();
+    return { update: tick2, tick: tick2 };
+  }
+  if (win.app === "calculator") {
+    let store = function() {
+      write2(["calculations", space], { ...state2(), expression: input.value });
+    }, update = function() {
+      const value = state2();
+      if (document.activeElement !== input) input.value = value.expression;
+      answer.textContent = String(value.answer);
+    };
+    body.classList.add("calculator-content");
+    const form = el("form"), label = el("label", "", "Work it out"), input = el("input", "calculation-input");
+    input.setAttribute("aria-label", "Calculation");
+    input.placeholder = "(12 + 8) \xD7 3";
+    input.maxLength = 1e3;
+    input.inputMode = "decimal";
+    input.autocomplete = "off";
+    label.append(input);
+    const answer = el("output", "calculation-answer", "0");
+    answer.setAttribute("aria-label", "Answer");
+    answer.setAttribute("aria-live", "polite");
+    const keys = el("div", "calculator-keys");
+    const state2 = () => {
+      const raw = get("calculations", {});
+      return { expression: typeof raw.expression === "string" ? raw.expression : "", answer: Number.isFinite(raw.answer) ? raw.answer : 0 };
+    };
+    for (const text of ["7", "8", "9", "\xF7", "4", "5", "6", "\xD7", "1", "2", "3", "\u2212", "0", ".", "(", ")"]) {
+      const key2 = button(text, () => {
+        input.focus();
+        input.setRangeText(text, input.selectionStart, input.selectionEnd, "end");
+        store();
+      });
+      if ("\xF7\xD7\u2212".includes(text)) key2.classList.add("operator");
+      keys.append(key2);
+    }
+    const actions = el("div", "calculator-actions"), clear = button("Clear", () => {
+      write2(["calculations", space], { expression: "", answer: 0 });
+      input.value = "";
+      answer.textContent = "0";
+      error.textContent = "";
+    }), plus = button("+", () => {
+      input.focus();
+      input.setRangeText("+", input.selectionStart, input.selectionEnd, "end");
+      store();
+    }, "operator"), equals = el("button", "primary", "=");
+    equals.type = "submit";
+    equals.setAttribute("aria-label", "Calculate");
+    actions.append(clear, plus, equals);
+    const error = el("p", "calculation-error");
+    error.setAttribute("role", "alert");
+    form.append(label, answer, keys, actions, error);
+    body.append(form);
+    input.addEventListener("input", store);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      try {
+        const result = calculate(input.value);
+        write2(["calculations", space], { expression: input.value, answer: result });
+        answer.textContent = String(result);
+        error.textContent = "";
+      } catch (problem) {
+        error.textContent = problem.message;
+      }
+    });
+    update();
+    return { update };
+  }
+  if (win.app === "appearance") {
+    let choose = function(patch) {
+      write2(["appearance"], { ...read().appearance, ...patch });
+    }, update = function() {
+      const value = read().appearance || {};
+      for (const node of themes.children) node.setAttribute("aria-pressed", String(node.dataset.theme === (value.theme || "tide")));
+      for (const node of options.children) node.setAttribute("aria-pressed", String(node.dataset.pattern === (value.pattern || "orbits")));
+    };
+    body.classList.add("appearance-content");
+    body.append(el("h1", "", "Set the atmosphere."), el("p", "intro", "Same room. A different feeling."));
+    const field = el("fieldset"), legend = el("legend", "", "Desktop color"), themes = el("div", "theme-options");
+    field.append(legend, themes);
+    for (const [id, theme] of Object.entries(THEMES)) {
+      const option = button("", () => choose({ theme: id }), "theme-option");
+      option.dataset.theme = id;
+      const swatch = el("span", "theme-swatch");
+      swatch.style.background = theme.color;
+      swatch.append(icon("check"));
+      option.append(swatch, el("span", "", theme.name));
+      themes.append(option);
+    }
+    const patterns = el("fieldset"), patternLegend = el("legend", "", "Wallpaper"), options = el("div", "pattern-options");
+    patterns.append(patternLegend, options);
+    for (const [id, name] of [["orbits", "Orbits"], ["grid", "Grid"], ["plain", "Plain"]]) {
+      const option = button(name, () => choose({ pattern: id }));
+      option.dataset.pattern = id;
+      options.append(option);
+    }
+    body.append(field, patterns, el("p", "small-print", "This changes your playground. Keep experimenting."));
+    update();
+    return { update };
+  }
+  return {};
+}
+
+// ../SpiderPlayground/app.js
+var $ = (selector) => document.querySelector(selector);
+var sdk = await connect();
+var data = {};
+var manager = null;
+var session = null;
+var layoutKey = "";
+var state = null;
+var saveError = "";
+var libraryOrigin = null;
+var lastTaskActive = null;
+var shell = $("#shell");
+var status = $("#save-status");
+function notice(message) {
+  $("#notice").textContent = message;
+  $("#notice").hidden = !message;
+}
+function updateStatus() {
+  status.textContent = saveError ? "Save needs attention" : !sdk ? "Preview \xB7 changes last until reload" : state?.online ? "Spider connected" : "Offline \xB7 edits queued";
+  status.classList.toggle("has-error", !!saveError);
+}
+function write(path, value) {
+  let target = data;
+  for (const key2 of path.slice(0, -1)) {
+    if (!target[key2] || typeof target[key2] !== "object") target[key2] = {};
+    target = target[key2];
+  }
+  target[path.at(-1)] = structuredClone(value);
+  applyAppearance();
+  manager?.update();
+  if (!sdk) {
+    updateStatus();
+    return;
+  }
+  const writingSession = session;
+  sdk.write(path, value).then(() => {
+    if (session !== writingSession) return;
+    if (saveError) {
+      saveError = "";
+      notice("");
+    }
+    updateStatus();
+  }).catch((error) => {
+    if (session !== writingSession) return;
+    saveError = error.message;
+    notice("Could not save this change. " + error.message + " Keep this window open and check Spider\u2019s connection.");
+    updateStatus();
+  });
+}
+function applyAppearance() {
+  const value = data.appearance || {}, theme = THEMES[value.theme] || THEMES.tide;
+  shell.style.setProperty("--desk", theme.color);
+  shell.style.setProperty("--desk-line", theme.line);
+  shell.dataset.pattern = ["orbits", "grid", "plain"].includes(value.pattern) ? value.pattern : "orbits";
+}
+function paint(layout) {
+  for (const node of $("#spaces").children) node.setAttribute("aria-pressed", String(node.dataset.space === layout.space));
+  const wins = layout.windows.filter((win) => win.space === layout.space).sort((a, b) => a.order - b.order), tasks = $("#tasks");
+  for (const node of [...tasks.children]) if (!wins.some((win) => win.id === node.dataset.window)) node.remove();
+  for (const win of wins) {
+    let task = [...tasks.children].find((node) => node.dataset.window === win.id);
+    if (!task) {
+      const app = appById(win.app);
+      task = button("", () => manager.activate(win.id, true), "task");
+      task.dataset.window = win.id;
+      task.append(icon(app.icon), el("span", "", app.name));
+      tasks.append(task);
+    }
+    task.setAttribute("aria-label", (win.minimized ? "Restore " : "Switch to ") + appById(win.app).name);
+    task.setAttribute("aria-current", String(layout.active[layout.space] === win.id));
+    task.classList.toggle("is-minimized", win.minimized);
+  }
+  if (lastTaskActive !== layout.active[layout.space]) {
+    lastTaskActive = layout.active[layout.space];
+    [...tasks.children].find((node) => node.dataset.window === lastTaskActive)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+  $("#empty").hidden = wins.some((win) => !win.minimized);
+  $("#show-desktop").setAttribute("aria-label", wins.some((win) => !win.minimized) ? "Show desktop" : "Restore windows");
+  for (const node of $("#pinned").children) node.classList.toggle("is-open", wins.some((win) => win.app === node.dataset.app));
+}
+function makeManager(layout) {
+  manager = createWindows({
+    stage: $("#desktop"),
+    container: $("#windows"),
+    preview: $("#snap-preview"),
+    shield: $("#gesture-shield"),
+    layout,
+    createContent: (win, body) => createContent(win, body, { read: () => data, write, open: (id) => manager.open(id), library: openLibrary }),
+    onChange: (value) => {
+      layoutKey = JSON.stringify(value);
+      write(["layout"], value);
+    },
+    onPaint: paint,
+    onMenu: openWindowMenu
+  });
+  manager.paint();
+}
+function receive(next) {
+  const switched = session !== next.sessionId;
+  if (switched) {
+    for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
+    manager?.destroy();
+    manager = null;
+    session = next.sessionId;
+    saveError = "";
+    notice("");
+  }
+  state = next;
+  data = structuredClone(next.data || {});
+  const layout = normalizeLayout(data.layout), key2 = JSON.stringify(layout);
+  if (!manager) {
+    layoutKey = key2;
+    makeManager(layout);
+  } else if (key2 !== layoutKey && !manager.busy) {
+    layoutKey = key2;
+    manager.replace(layout);
+  }
+  applyAppearance();
+  manager.update();
+  updateStatus();
+  $("#fullscreen").setAttribute("aria-label", next.window?.fullscreen ? "Leave full screen" : "Enter full screen");
+  $("#fullscreen").replaceChildren(icon(next.window?.fullscreen ? "restore" : "expand"));
+  if (!data.layout) write(["layout"], manager.layout);
+}
+for (const space of SPACES) {
+  const item = button(space.name, () => manager.switchSpace(space.id));
+  item.dataset.space = space.id;
+  $("#spaces").append(item);
+}
+for (const app of APPS.filter((app2) => ["note", "board", "timer", "calculator"].includes(app2.id))) {
+  const item = button("", () => manager.open(app.id), "rail-button");
+  item.dataset.app = app.id;
+  item.setAttribute("aria-label", "Open " + app.name);
+  item.title = app.name;
+  item.append(icon(app.icon), el("span", "rail-label", app.id === "note" ? "Write" : app.id === "board" ? "Ideas" : app.id === "timer" ? "Focus" : "Calc"));
+  $("#pinned").append(item);
+}
+$("#brand-icon").append(icon("spark"));
+$("#library").append(icon("grid"), el("span", "rail-label", "Apps"));
+$("#appearance").append(icon("palette"));
+$("#help").append(icon("spark"));
+$("#search-icon").append(icon("search"));
+$("#fullscreen").append(icon("expand"));
+$("#arrange").append(icon("arrange"), el("span", "", "Arrange"));
+$("#show-desktop").append(icon("desktop"));
+for (const node of document.querySelectorAll("[data-dismiss]")) {
+  node.append(icon("close"));
+  node.addEventListener("click", () => node.closest("dialog").close());
+}
+for (const dialog of document.querySelectorAll("dialog")) dialog.addEventListener("click", (event) => {
+  if (event.target !== dialog) return;
+  const rect = dialog.getBoundingClientRect();
+  if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+});
+function show(dialog) {
+  if (!dialog.open) dialog.showModal();
+}
+function renderLibrary() {
+  const query = $("#app-search").value.trim().toLocaleLowerCase(), results = $("#app-results");
+  results.replaceChildren();
+  const matches = APPS.filter((app) => (app.name + " " + app.description).toLocaleLowerCase().includes(query));
+  for (const app of matches) {
+    const item = button("", () => {
+      $("#app-library").close();
+      libraryOrigin = null;
+      manager.open(app.id);
+    }, "app-choice");
+    item.dataset.app = app.id;
+    const mark = el("span", "app-choice-icon");
+    mark.append(icon(app.icon));
+    const label = el("span");
+    label.append(el("strong", "", app.name), el("span", "", app.description));
+    item.append(mark, label, icon("arrow"));
+    results.append(item);
+  }
+  if (!matches.length) results.append(el("p", "no-matches", "No apps match that search."));
+}
+function openLibrary() {
+  if ($("#app-library").open) return;
+  libraryOrigin = document.activeElement;
+  $("#app-search").value = "";
+  renderLibrary();
+  show($("#app-library"));
+  $("#app-search").focus();
+}
+$("#app-search").addEventListener("input", renderLibrary);
+$("#app-search").addEventListener("keydown", (event) => {
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    $("#app-results button")?.focus();
+  } else if (event.key === "Enter") {
+    event.preventDefault();
+    $("#app-results button")?.click();
+  }
+});
+$("#app-results").addEventListener("keydown", (event) => {
+  if (!["ArrowDown", "ArrowUp"].includes(event.key)) return;
+  const items = [...$("#app-results").querySelectorAll("button")], index = items.indexOf(document.activeElement);
+  event.preventDefault();
+  items[(index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+});
+$("#app-library").addEventListener("close", () => {
+  if (libraryOrigin?.isConnected) libraryOrigin.focus();
+  libraryOrigin = null;
+});
+function openWindowMenu(id) {
+  const win = manager.layout.windows.find((win2) => win2.id === id);
+  if (!win) return;
+  $("#window-menu-title").textContent = appById(win.app).name;
+  const actions = $("#window-actions");
+  actions.replaceChildren();
+  for (const [name, svg, action] of [
+    ["Snap left", "left", () => manager.setMode(id, "left")],
+    ["Snap right", "right", () => manager.setMode(id, "right")],
+    [win.mode === "maximized" ? "Restore size" : "Maximize", win.mode === "maximized" ? "restore" : "maximize", () => manager.setMode(id, win.mode === "maximized" ? "normal" : "maximized")],
+    ["Minimize", "minimize", () => manager.minimize(id)],
+    ["Close window", "close", () => manager.close(id)]
+  ]) {
+    const row = button("", () => {
+      $("#window-menu").close();
+      action();
+    }, "window-action");
+    row.append(icon(svg), el("span", "", name));
+    actions.append(row);
+  }
+  show($("#window-menu"));
+}
+$("#library").addEventListener("click", openLibrary);
+$("#empty-open").addEventListener("click", openLibrary);
+$("#appearance").addEventListener("click", () => manager.open("appearance"));
+$("#help").addEventListener("click", () => manager.open("guide"));
+$("#arrange").addEventListener("click", () => show($("#arrange-menu")));
+for (const id of ["tile", "cascade"]) $("#" + id).addEventListener("click", () => {
+  $("#arrange-menu").close();
+  if (!manager.arrange(id)) notice("There isn\u2019t enough room to tile these windows. Open the playground full screen, or move some work to another room.");
+  else if (!saveError) notice("");
+});
+$("#show-desktop").addEventListener("click", () => manager.showDesktop());
+$("#fullscreen").disabled = !sdk;
+$("#fullscreen").addEventListener("click", () => sdk?.request("fullscreen").catch((error) => notice(error.message)));
+document.addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
+    event.preventDefault();
+    if ($("#app-library").open) $("#app-library").close();
+    else if (!document.querySelector("dialog[open]")) openLibrary();
+  }
+});
+function tick() {
+  const now = /* @__PURE__ */ new Date();
+  $("#clock").textContent = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  $("#clock").dateTime = now.toISOString();
+  manager?.tick();
+}
+if (sdk) {
+  sdk.onState(receive);
+  sdk.onFocus(() => {
+    if (!document.querySelector("dialog[open]")) manager?.activate(manager.layout.active[manager.layout.space], true);
+  });
+} else {
+  receive({ sessionId: "preview", data: {}, online: false });
+}
+tick();
+setInterval(tick, 1e3);
+</script></body>
+</html>
