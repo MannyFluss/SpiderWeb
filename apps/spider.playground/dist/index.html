@@ -8,6 +8,7 @@
 
 
 
+
 <style>/* Sample-app panels and dialogs. Desktop and camera chrome live in canvas.css. */
 dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8fe;color:#1c2b4b;box-shadow:0 25px 100px #17244950;max-width:calc(100vw - 28px);max-height:calc(100dvh - 32px);overflow:auto}dialog::backdrop{background:#24395835;backdrop-filter:blur(5px)}.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.dialog-heading h1{font-size:25px;line-height:1.15;letter-spacing:-1px;font-weight:500}.dialog-heading h2{font-size:20px;letter-spacing:-.5px;font-weight:500}#app-library{width:530px}.search-field{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #c4cfe1;border-radius:7px;padding:9px 13px;margin-bottom:13px}.search-field svg{width:18px;height:18px;color:#8a9bb8}.search-field input{background:none;border:0;width:100%;outline:none;padding:2px;font-size:13px}.search-field:focus-within{outline:2px solid #5474d4}.app-choice{display:flex;align-items:center;gap:13px;text-align:left;width:100%;padding:10px 8px;border-radius:8px}.app-choice-icon{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:11px;background:#e4ebf8;color:#4561ad;flex-shrink:0}.app-choice-icon svg{width:23px;height:23px}.app-choice>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:2px}.app-choice strong{font-size:13px;font-weight:600}.app-choice span span{font-size:11px;color:#6c7b95}.app-choice>svg{width:16px;height:16px;color:#99a8c1}.dialog-hint{display:flex;justify-content:space-between;gap:12px;font-size:10px;color:#72829f;margin-top:18px}.no-matches{font-size:13px;padding:25px 8px}#window-menu,#arrange-menu{width:350px}.window-action{display:flex;align-items:center;gap:12px;padding:12px;border-radius:5px;width:100%;text-align:left}.window-action svg{width:18px;height:18px;color:#617aa7}.action-row{width:100%;text-align:left;padding:15px 10px;border-radius:7px;display:flex;flex-direction:column;gap:4px;font-weight:600}.action-row span{font-size:12px;font-weight:400;color:#6b7e9e}#notice{position:fixed;z-index:300;bottom:62px;left:85px;right:18px;background:#fff2e5;border:1px solid #dfbea0;border-radius:8px;padding:12px 17px;font-size:12px;box-shadow:0 5px 20px #31425c20;max-width:680px}
 .primary{padding:9px 17px;background:#3f59c7;color:white;border:1px solid #334db9;border-radius:6px;font-weight:600;font-size:12px}.primary:hover{background:#304ab5}.text-button{padding:9px 12px;font-size:12px;border-radius:6px;color:#526b9e}.intro{color:#647493;font-size:14px;line-height:1.55;max-width:32ch}.small-print{color:#7b89a0;font-size:10px;line-height:1.65;max-width:47ch}.guide-content{padding:24px 31px}.guide-emblem{display:flex;align-items:center;justify-content:center;width:47px;height:47px;background:#dce5fa;color:#4b63b4;border-radius:50%;margin-bottom:16px}.guide-emblem svg{width:28px;height:28px}.guide-content h1{font-size:30px;line-height:1.1;font-weight:500;letter-spacing:-1.3px;margin-bottom:10px}.guide-instructions{margin:22px 0}.guide-instructions p{display:flex;gap:12px;align-items:center;font-size:12px;color:#52698d;margin:13px 0}.guide-instructions svg{width:17px;height:17px;flex-shrink:0;color:#7c90b5}.guide-actions{display:flex;align-items:center;gap:8px;margin-bottom:17px}
@@ -34,6 +35,14 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
 @media(max-width:460px){.top-actions #help{display:none}.top-actions .icon-button{width:28px}.identity strong{font-size:12px}.work-heading h1{font-size:16px}.work-heading kbd{display:none}#spaces{gap:0}#spaces button{padding:6px;font-size:10px}.drawing-tools #redo{display:none}.canvas-tools{max-width:calc(100% - 20px);gap:1px}.canvas-tools select{width:101px}.canvas-tools button{min-width:26px}.canvas-tools #angle{min-width:35px}.canvas-tools #actual-size{width:44px}.drawing-tools{max-width:calc(100% - 20px)}.drawing-tools button{font-size:11px}#save-status{font-size:9px}}
 @media(pointer:coarse){.window-control{width:26px;height:26px;min-height:26px}.titlebar{height:46px;min-height:46px}.resize-handle{min-width:10px;min-height:10px}.edge-ne,.edge-nw,.edge-se,.edge-sw{width:20px;height:20px}}
 @media(prefers-reduced-motion:no-preference){dialog[open]{animation:appear .12s ease-out}@keyframes appear{from{opacity:.5}to{opacity:1}}}
+
+#life-canvas{z-index:4}#desktop[data-tool=plant] #canvas-surface{cursor:crosshair}.has-fullscreen>#life-canvas,.has-fullscreen>#world-whisper{display:none}
+.work-heading{gap:10px}.work-heading h1{font-size:18px}.work-heading #world-phase{margin:0 0 2px}.work-heading>div{min-width:160px}#explore-world{font-size:11px;padding:8px 12px;border-radius:7px;background:#dde8d8;border:1px solid #b5c5af;color:#416149;white-space:nowrap}#explore-world:hover{background:#d0e0ca}
+#plant-kind{display:none;width:112px!important;font-size:11px!important}#desktop[data-tool=plant] #plant-kind{display:block}#desktop[data-tool=plant] #ink-colors,#desktop[data-tool=plant] #pen-width{display:none}
+#world-whisper{position:absolute;left:20px;bottom:120px;margin:0;pointer-events:none;z-index:6;color:#4e6b58;font-size:11px;max-width:360px;background:#e4ebd8d9;padding:5px 9px;border-radius:5px}
+#neighbors-dialog{width:450px;max-width:calc(100vw - 28px);max-height:calc(100dvh - 28px);overflow-y:auto;padding:22px;background:#f4f7ee;color:#365541;border:1px solid #b3c4ae}.neighbors-intro{font-size:12px;line-height:1.65;margin:6px 0 16px;color:#6b806a}.neighbor-row{display:flex;align-items:center;gap:13px;padding:11px 0;border-top:1px solid #dbe3d3}.neighbor-dot{width:13px;height:20px;border-radius:5px 5px 2px 2px;flex-shrink:0;box-shadow:0 -5px 0 -1px #d9bf9c}.neighbor-row>div{flex:1;min-width:0}.neighbor-row strong{font-size:13px;margin-right:7px}.neighbor-role{font-size:10px;color:#6e826c}.neighbor-action{display:block;font-size:11px;color:#657c67;margin-top:2px}.neighbor-find{font-size:11px;border:1px solid #c3d1bb;border-radius:6px;padding:6px 11px;background:#e6eddc}.world-settings{border-top:1px solid #d3dec9;margin-top:10px;padding-top:15px;display:flex;gap:14px;align-items:center}.world-settings button{font-size:12px;border-radius:6px;background:#d9e5ce;padding:8px 12px}.world-settings span{font-size:10px;color:#788a71}
+@media(max-width:800px){#search-apps{display:none}.work-heading>div{min-width:0}.work-heading h1{font-size:16px}#explore-world{padding:7px 8px;font-size:10px}#world-whisper{display:none}.topbar{padding:0 10px}.top-actions #neighbors{width:30px;padding:4px;min-width:30px}.top-actions #neighbors span{display:none}.drawing-tools{bottom:116px}}
+@media(max-width:460px){.work-heading{gap:4px;padding:7px 10px}.work-heading h1{font-size:14px;white-space:nowrap}#spaces button{padding:6px 4px;font-size:9px}.work-heading #explore-world{font-size:9px;padding:6px}#neighbors-dialog{padding:16px}.neighbor-role{display:none}.neighbor-action{font-size:10px}}
 </style></head>
 <body>
   <main id="shell" aria-label="OS Playground">
@@ -43,19 +52,21 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
         <button id="library" class="icon-button" aria-label="Open playground apps" title="Apps (⌘/Ctrl K)"><span aria-hidden="true">●</span></button>
         <button id="appearance" class="icon-button" aria-label="Open Appearance" title="Appearance"></button>
         <button id="help" class="icon-button" aria-label="Open Start here" title="Start here"></button>
+        <button id="neighbors" class="quiet-button" aria-label="Meet the neighbors"></button>
         <button id="arrange" class="quiet-button" aria-label="Arrange windows"></button>
         <button id="fullscreen" class="icon-button" aria-label="Enter full screen" title="Fill the Spider window"></button>
         <time id="clock"></time>
       </div>
     </header>
-    <div class="work-heading"><div><p>Independent views. Room to play.</p><h1>Desktop</h1></div><nav id="spaces" aria-label="Workspaces"></nav><button id="search-apps">Search apps <kbd>⌘ K</kbd></button></div>
+    <div class="work-heading"><div><p id="world-phase">Morning in the commons</p><h1 id="world-title">Studio commons</h1></div><nav id="spaces" aria-label="Workspaces"></nav><button id="explore-world">Explore world</button><button id="search-apps">Search apps <kbd>⌘ K</kbd></button></div>
     <section id="desktop" aria-label="Playground desktop" tabindex="0">
       <canvas id="scenery" aria-hidden="true"></canvas>
       <canvas id="ink-canvas" aria-hidden="true"></canvas>
       <canvas id="live-ink" aria-hidden="true"></canvas>
+      <canvas id="life-canvas" aria-hidden="true"></canvas>
       <canvas id="crew" aria-hidden="true"></canvas>
       <div id="canvas-surface" aria-hidden="true"></div>
-      <div id="empty" hidden><p>A little breathing room.</p><button id="empty-open">Open an app</button></div>
+      <div id="empty" hidden><p>Your apps are at home.<br>Tap a house to open one.</p><button id="empty-open">Browse apps</button></div>
       <div id="world"></div>
       <div id="overlay-windows"></div>
       <div id="gesture-shield" hidden aria-hidden="true"></div>
@@ -63,10 +74,13 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
         <button id="pan" aria-label="Pan canvas" aria-pressed="false">Pan</button>
         <button id="draw" aria-label="Draw on canvas" aria-pressed="false">Draw</button>
         <button id="erase" aria-label="Erase drawing" aria-pressed="false">Erase</button>
+        <button id="plant" aria-label="Plant a garden" aria-pressed="false">Plant</button>
+        <select id="plant-kind" aria-label="Plant kind"><option value="flower">Flowers</option><option value="fern">Ferns</option><option value="tree">Trees</option><option value="remove">Remove plant</option></select>
         <div id="ink-colors" aria-label="Pen colors"></div>
         <select id="pen-width" aria-label="Pen width"><option value="2">Fine</option><option value="4" selected>Medium</option><option value="8">Broad</option></select>
         <button id="undo" aria-label="Undo drawing" disabled>Undo</button><button id="redo" aria-label="Redo drawing" disabled>Redo</button>
       </nav>
+      <p id="world-whisper"></p>
       <nav class="canvas-tools" aria-label="Canvas navigation">
         <select id="window-picker" aria-label="Go to window"><option value="">Go to…</option></select>
         <button id="zoom-out" aria-label="Zoom canvas out">−</button><button id="actual-size" aria-label="Reset canvas view">100%</button><button id="zoom-in" aria-label="Zoom canvas in">+</button>
@@ -84,6 +98,12 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
     <div class="dialog-heading"><h1 id="library-title">Make yourself at home.</h1><button class="icon-button" data-dismiss aria-label="Close apps"></button></div>
     <label class="search-field"><span id="search-icon"></span><input id="app-search" type="search" aria-label="Search playground apps" placeholder="Find an app…" autocomplete="off" /></label>
     <div id="app-results"></div><p class="dialog-hint">⌘ / Ctrl K to open apps <span>Esc to close</span></p>
+  </dialog>
+  <dialog id="neighbors-dialog" aria-labelledby="neighbors-title">
+    <div class="dialog-heading"><h2 id="neighbors-title">People of the commons</h2><button class="icon-button" data-dismiss aria-label="Close neighbors"></button></div>
+    <p class="neighbors-intro">Little lives around your work. They visit your apps, tend the gardens, and take a break by the pond. Tap someone in the world to say hello.</p>
+    <div id="neighbor-list"></div>
+    <div class="world-settings"><button id="pause-world" aria-label="Pause world" aria-pressed="false">Pause world</button><span id="world-rhythm">A day lasts 24 minutes.</span></div>
   </dialog>
   <dialog id="window-menu" aria-labelledby="window-menu-title">
     <div class="dialog-heading"><h2 id="window-menu-title">Window</h2><button class="icon-button" data-dismiss aria-label="Close window actions"></button></div>
@@ -291,14 +311,14 @@ function transformGesture(camera, anchor, mid, scale, rotation) {
 }
 var angleBetween = (a, b) => Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
 var angleDelta = (a, b) => (b - a + 540) % 360 - 180;
-function projectedRect(camera, rect) {
-  const points = [{ x: rect.x, y: rect.y }, { x: rect.x + rect.width, y: rect.y }, { x: rect.x, y: rect.y + rect.height }, { x: rect.x + rect.width, y: rect.y + rect.height }].map((p) => worldToScreen(camera, p));
+function projectedRect(camera, rect2) {
+  const points = [{ x: rect2.x, y: rect2.y }, { x: rect2.x + rect2.width, y: rect2.y }, { x: rect2.x, y: rect2.y + rect2.height }, { x: rect2.x + rect2.width, y: rect2.y + rect2.height }].map((p) => worldToScreen(camera, p));
   const x = Math.min(...points.map((p) => p.x)), y = Math.min(...points.map((p) => p.y));
   return { x, y, width: Math.max(...points.map((p) => p.x)) - x, height: Math.max(...points.map((p) => p.y)) - y };
 }
 function fitWorld(rects, bounds, angle = 0, margin = 48) {
   if (!rects.length) return normalizeCamera({});
-  const rotation = normalizeCamera({ angle }), projected = rects.map((rect) => projectedRect(rotation, rect));
+  const rotation = normalizeCamera({ angle }), projected = rects.map((rect2) => projectedRect(rotation, rect2));
   const left = Math.min(...projected.map((r) => r.x)), top = Math.min(...projected.map((r) => r.y));
   const width = Math.max(...projected.map((r) => r.x + r.width)) - left, height = Math.max(...projected.map((r) => r.y + r.height)) - top;
   const zoom = Math.max(MIN_ZOOM, Math.min(1, Math.max(1, bounds.width - margin * 2) / Math.max(1, width), Math.max(1, bounds.height - margin * 2) / Math.max(1, height)));
@@ -335,13 +355,13 @@ var appById = (id) => APPS.find((app) => app.id === id);
 function boundsOf(bounds) {
   return { width: Math.max(1, finite2(bounds.width, 800)), height: Math.max(1, finite2(bounds.height, 600)) };
 }
-function normalRect(rect = {}) {
-  rect = rect && typeof rect === "object" ? rect : {};
+function normalRect(rect2 = {}) {
+  rect2 = rect2 && typeof rect2 === "object" ? rect2 : {};
   return {
-    x: clamp2(finite2(rect.x, 40), -WORLD_LIMIT, WORLD_LIMIT),
-    y: clamp2(finite2(rect.y, 40), -WORLD_LIMIT, WORLD_LIMIT),
-    width: clamp2(finite2(rect.width, 440), 280, 4e3),
-    height: clamp2(finite2(rect.height, 360), 210, 4e3)
+    x: clamp2(finite2(rect2.x, 40), -WORLD_LIMIT, WORLD_LIMIT),
+    y: clamp2(finite2(rect2.y, 40), -WORLD_LIMIT, WORLD_LIMIT),
+    width: clamp2(finite2(rect2.width, 440), 280, 4e3),
+    height: clamp2(finite2(rect2.height, 360), 210, 4e3)
   };
 }
 function displayRect(win, bounds) {
@@ -358,12 +378,12 @@ function displayRect(win, bounds) {
   }
   return normalRect(win.rect);
 }
-function moveRect(rect, dx, dy, bounds) {
-  const r = normalRect(rect);
+function moveRect(rect2, dx, dy, bounds) {
+  const r = normalRect(rect2);
   return { ...r, x: clamp2(r.x + dx, -WORLD_LIMIT, WORLD_LIMIT), y: clamp2(r.y + dy, -WORLD_LIMIT, WORLD_LIMIT) };
 }
-function resizeRect(rect, edge, dx, dy, bounds) {
-  const r = normalRect(rect);
+function resizeRect(rect2, edge, dx, dy, bounds) {
+  const r = normalRect(rect2);
   let left = r.x, top = r.y, right = r.x + r.width, bottom = r.y + r.height;
   if (edge.includes("w")) left = clamp2(left + dx, right - 4e3, right - 280);
   if (edge.includes("e")) right = clamp2(right + dx, left + 280, left + 4e3);
@@ -441,7 +461,9 @@ function createFrames() {
 }
 
 // ../SpiderPlayground/navigation.js
-function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, isBlocked, isWindowMoving, cancelWindow, fitAll }) {
+function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, planting, onInteraction = () => {
+}, onGroundClick = () => {
+}, isBlocked, isWindowMoving, cancelWindow, fitAll }) {
   const events = new AbortController(), contacts = /* @__PURE__ */ new Map();
   let nav = null, legacy = null, wheelTimer = 0, recentLegacy = 0;
   const listen = (node, type, fn, options = {}) => node.addEventListener(type, fn, { ...options, signal: events.signal });
@@ -456,15 +478,19 @@ function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, i
     const current = nav;
     nav = null;
     if (current.kind === "draw" || current.kind === "erase") cancel ? ink.cancel() : ink.finish();
+    else if (current.kind === "plant") cancel ? planting.cancel() : planting.finish();
     else if (cancel) setCamera(current.origin);
     else if (current.moved) commit();
+    else if (current.kind === "pan" && current.click) onGroundClick(screenToWorld(getCamera(), current.start));
     for (const id of [...contacts.keys()]) release(id);
     stage.classList.remove("is-navigating");
+    onInteraction(false);
   }
   function pinch() {
     if (nav.kind === "draw" || nav.kind === "erase") ink.cancel();
+    if (nav.kind === "plant") planting.cancel();
     const [a, b] = contacts.values(), mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    nav = { ...nav, kind: "pinch", camera: { ...getCamera() }, anchor: mid, distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), angle: angleBetween(a, b), rotation: 0, moved: nav.moved };
+    nav = { ...nav, kind: "pinch", click: false, camera: { ...getCamera() }, anchor: mid, distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), angle: angleBetween(a, b), rotation: 0, moved: nav.moved };
   }
   listen(stage, "pointerdown", (event) => {
     if (isBlocked() || legacy || event.button > 1 || editable(event.target)) return;
@@ -490,10 +516,12 @@ function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, i
       return;
     }
     stage.focus({ preventScroll: true });
-    const tool = event.button === 1 ? "pan" : getTool(), kind = tool === "draw" ? "draw" : tool === "erase" ? "erase" : "pan";
-    nav = { kind, box, start: p, camera: { ...getCamera() }, origin: { ...getCamera() }, moved: false };
+    const tool = event.button === 1 ? "pan" : getTool(), kind = ["draw", "erase", "plant"].includes(tool) ? tool : "pan";
+    nav = { kind, box, start: p, camera: { ...getCamera() }, origin: { ...getCamera() }, moved: false, click: tool === "move" };
+    onInteraction(true);
     if (kind === "draw") ink.begin(screenToWorld(getCamera(), p));
     else if (kind === "erase") ink.erase(screenToWorld(getCamera(), p));
+    else if (kind === "plant") planting.begin(screenToWorld(getCamera(), p));
     else stage.classList.add("is-navigating");
   }, { capture: true });
   listen(stage, "pointermove", (event) => {
@@ -508,12 +536,14 @@ function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, i
       setCamera(transformGesture(nav.camera, nav.anchor, mid, Math.hypot(a.x - b.x, a.y - b.y) / nav.distance, nav.rotation));
       nav.moved = true;
     } else if (nav.kind === "pan") {
+      if (!nav.moved && Math.hypot(p.x - nav.start.x, p.y - nav.start.y) < 3) return;
       setCamera(normalizeCamera({ ...nav.camera, x: nav.camera.x + p.x - nav.start.x, y: nav.camera.y + p.y - nav.start.y }));
       nav.moved = true;
     } else if (nav.kind === "draw") {
       const samples = event.getCoalescedEvents?.() || [];
       for (const sample of samples.length ? samples : [event]) ink.append(screenToWorld(getCamera(), point(sample, nav.box)));
     } else if (nav.kind === "erase") ink.erase(screenToWorld(getCamera(), p));
+    else if (nav.kind === "plant") planting.append(screenToWorld(getCamera(), p));
   }, { passive: false });
   listen(stage, "pointerup", (event) => {
     if (!nav || !contacts.has(event.pointerId)) return;
@@ -533,16 +563,19 @@ function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, i
     const factor = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? stage.clientHeight : 1, camera = getCamera();
     if (event.ctrlKey || event.metaKey) setCamera(transformAt(camera, point(event), { zoom: camera.zoom * Math.exp(-Math.max(-500, Math.min(500, event.deltaY * factor)) * 2e-3) }));
     else setCamera({ ...camera, x: camera.x - event.deltaX * factor, y: camera.y - event.deltaY * factor });
+    onInteraction(true);
     clearTimeout(wheelTimer);
     wheelTimer = setTimeout(() => {
       wheelTimer = 0;
       commit();
+      onInteraction(false);
     }, 160);
   }, { passive: false });
   listen(stage, "gesturestart", (event) => {
     if (isBlocked() || nav || isWindowMoving() || event.target.closest(".window,.canvas-tools,.drawing-tools")) return;
     const anchor = Number.isFinite(event.clientX) ? point(event) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
     legacy = { camera: { ...getCamera() }, anchor, scale: Number(event.scale) || 1, angle: Number(event.rotation) || 0, rotation: 0 };
+    onInteraction(true);
     event.preventDefault();
   }, { passive: false });
   listen(stage, "gesturechange", (event) => {
@@ -558,6 +591,7 @@ function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, i
       legacy = null;
       recentLegacy = performance.now() + 250;
       commit();
+      onInteraction(false);
     }
   }
   listen(stage, "gestureend", finishLegacy, { passive: false });
@@ -588,6 +622,7 @@ function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, i
       clearTimeout(wheelTimer);
       wheelTimer = 0;
       commit();
+      onInteraction(false);
     }
   }
   listen(window, "blur", flush);
@@ -840,21 +875,184 @@ function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, 
   };
 }
 
+// ../SpiderPlayground/world-art.js
+var images = /* @__PURE__ */ new Map();
+function image(key2, width, height, draw) {
+  if (images.has(key2)) return images.get(key2);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  draw(canvas.getContext("2d"));
+  images.set(key2, canvas);
+  return canvas;
+}
+var rect = (c, color, x, y, w, h) => {
+  c.fillStyle = color;
+  c.fillRect(x, y, w, h);
+};
+function tree(stage = 3) {
+  return image("tree" + stage, 80, 100, (c) => {
+    if (stage < 3) {
+      const height = [18, 42, 68][stage], width = Math.round(height * 0.8);
+      c.imageSmoothingEnabled = false;
+      c.drawImage(tree(3), 40 - width / 2, 94 - height, width, height);
+      return;
+    }
+    rect(c, "#718c7133", 6, 85, 68, 9);
+    rect(c, "#796e55", 35, 42, 9, 48);
+    rect(c, "#b5a07b", 35, 45, 3, 40);
+    for (const [color, x, y, w, h] of [["#628775", 8, 28, 64, 38], ["#779a7b", 17, 12, 48, 55], ["#91ad83", 25, 4, 30, 64], ["#a9be8a", 21, 17, 32, 17], ["#b7c994", 29, 9, 16, 9], ["#658977", 10, 46, 16, 19], ["#658977", 48, 54, 18, 14]]) rect(c, color, x, y, w, h);
+    for (const [x, y] of [[22, 27], [43, 17], [51, 34], [29, 48]]) rect(c, "#c5d39c", x, y, 4, 4);
+  });
+}
+function plant(kind, stage = 3, color = 0) {
+  return image("plant" + kind + stage + color, 30, 40, (c) => {
+    rect(c, "#718c712d", 5, 34, 23, 4);
+    const top = stage === 0 ? 30 : stage === 1 ? 22 : stage === 2 ? 14 : 6;
+    rect(c, "#63876d", 14, top + 5, 3, 30 - top);
+    rect(c, "#91aa7d", 7, top + 12, 9, 4);
+    rect(c, "#7f9b74", 16, top + 8, 8, 4);
+    if (kind === "fern") {
+      for (let i = 0; i < stage + 2; i++) {
+        rect(c, "#6c9377", 4 + i * 2, 29 - i * 6, 11 - i * 2, 3);
+        rect(c, "#9ab88a", 16, 25 - i * 5, 11 - i * 2, 3);
+      }
+      return;
+    }
+    if (stage > 0) {
+      rect(c, ["#d4a16e", "#b68a9f", "#e1c47f"][color % 3], 10, top, 12, 8);
+      rect(c, "#eee0b0", 14, top + 2, 4, 4);
+    }
+  });
+}
+function house(color, night) {
+  return image("house" + color + night, 92, 94, (c) => {
+    rect(c, "#687b6533", 1, 79, 90, 9);
+    rect(c, "#c5bca1", 16, 36, 62, 44);
+    rect(c, "#e5dfc5", 16, 36, 8, 40);
+    rect(c, "#788b7e", 8, 29, 78, 12);
+    rect(c, color, 16, 20, 62, 13);
+    rect(c, color, 25, 11, 44, 13);
+    rect(c, color, 37, 5, 21, 10);
+    rect(c, "#687964", 38, 53, 17, 27);
+    rect(c, "#baac87", 41, 54, 3, 24);
+    rect(c, "#dfd1a0", 49, 65, 2, 2);
+    for (const x of [25, 62]) {
+      rect(c, "#728a7a", x - 2, 44, 12, 15);
+      rect(c, night ? "#f7d98d" : "#aec6be", x, 46, 8, 11);
+      rect(c, "#d3c7a8", x + 3, 46, 2, 11);
+    }
+    rect(c, "#948d73", 32, 79, 28, 5);
+    rect(c, "#c8bfa2", 28, 84, 36, 4);
+    rect(c, "#8b7d63", 65, 11, 9, 16);
+  });
+}
+function person(color, pose = 0) {
+  return image("person" + color + pose, 24, 32, (c) => {
+    rect(c, "#54716030", 2, 28, 21, 4);
+    const rows = ["....hhhh....", "...hhhhhh...", "...ssssss...", "...skssks...", "....ssss....", "...bbbbbb...", "..sbbbbbbs..", "..sbbbbbbs..", "...bbbbbb...", "...dddddd...", "...dd..dd...", "...kk..kk..."];
+    const palette2 = { h: "#615d52", s: "#deb79a", k: "#354d4c", b: color, d: "#536d72" };
+    rows.forEach((row, y) => [...row].forEach((p, x) => {
+      if (palette2[p]) rect(c, palette2[p], x * 2, y * 2 + (y > 9 ? x < 6 ? pose : -pose : 0), 2, 2);
+    }));
+    rect(c, "#d5c9a4", 5, 0, 14, 3);
+    if (pose === 3) {
+      rect(c, "#deb79a", 20, 9, 3, 7);
+      rect(c, "#deb79a", 19, 7, 4, 3);
+    }
+  });
+}
+var tones = ["#8c9f98", "#af8e9b", "#ae9d70", "#819b80", "#859cae", "#a5a185"];
+var inView = (x, y, w, h, v) => x + w > v.left && x < v.right && y + h > v.top && y < v.bottom;
+function label(c, text, x, y) {
+  c.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
+  c.textAlign = "center";
+  const w = c.measureText(text).width + 16;
+  rect(c, "#edf1dfe8", x - w / 2, y - 12, w, 19);
+  c.fillStyle = "#496452";
+  c.fillText(text, x, y + 1);
+}
+function drawSettlement(c, scene, view, zoom) {
+  if (zoom < 0.1) return;
+  c.lineJoin = "round";
+  c.lineCap = "round";
+  for (const path of scene.roads) {
+    c.beginPath();
+    path.forEach((p, i) => i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y));
+    c.strokeStyle = "#a4ac8a";
+    c.lineWidth = 22;
+    c.stroke();
+    c.strokeStyle = "#d0cbb0";
+    c.lineWidth = 18;
+    c.stroke();
+    c.strokeStyle = "#e1dbc0";
+    c.lineWidth = 2;
+    c.setLineDash([3, 16]);
+    c.stroke();
+    c.setLineDash([]);
+  }
+  const { x, y } = scene.commons;
+  if (inView(x - 200, y - 140, 400, 300, view)) {
+    c.fillStyle = "#b7c49b";
+    c.beginPath();
+    c.ellipse(x, y, 160, 95, -0.12, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#d7d2b4";
+    c.beginPath();
+    c.ellipse(x, y, 115, 64, 0, 0, Math.PI * 2);
+    c.fill();
+    for (const [color, dx, dy, w, h] of [["#8eab9f", -168, 22, 96, 43], ["#a3beb0", -180, 30, 120, 29], ["#86abb2", -174, 35, 108, 20], ["#b7d3ce", -154, 36, 54, 3], ["#b7d3ce", -118, 47, 33, 2], ["#ddd6b7", -78, 56, 17, 8], ["#ddd6b7", -61, 64, 15, 7]]) rect(c, color, x + dx, y + dy, w, h);
+    for (const dx of [-40, 12]) {
+      rect(c, "#7c8060", x + dx, y - 15, 7, 31);
+      rect(c, "#ba9f70", x + dx - 7, y - 14, 45, 8);
+      rect(c, "#9f8c66", x + dx - 7, y - 4, 45, 5);
+    }
+    c.drawImage(tree(), x - 154, y - 137);
+    c.drawImage(tree(), x + 101, y - 99);
+    for (let i = 0; i < 7; i++) c.drawImage(plant("flower", 3, i % 3), x - 92 + i * 24, y + 64 + i % 2 * 7);
+    if (zoom > 0.32) label(c, scene.space === "quiet" ? "Quiet grove" : "The commons", x, y - 55);
+  }
+  for (const [p, idx] of scene.places.map((p2, i) => [p2, i])) {
+    if (!inView(p.x - 125, p.y - 105, 250, 220, view)) continue;
+    if (p.open) {
+      rect(c, "#9bad8b66", p.x - 70, p.y - 29, 140, 68);
+      rect(c, "#c5c4a1", p.x - 35, p.y - 30, 70, 12);
+      rect(c, "#e2d8b7", p.x - 31, p.y - 28, 62, 7);
+      for (const dx of [-82, 61]) {
+        rect(c, "#9d9172", p.x + dx, p.y - 24, 22, 22);
+        rect(c, "#756f54", p.x + dx + 3, p.y - 21, 16, 15);
+        c.drawImage(plant("flower", Math.min(3, 1 + Math.floor(p.care / 4)), idx), p.x + dx - 3, p.y - 46);
+      }
+    } else c.drawImage(house(tones[idx], scene.phase.night), p.x - 46, p.y - 86);
+    const count = 2 + Math.min(5, Math.floor(p.care / 3));
+    for (let i = 0; i < count; i++) c.drawImage(plant(i % 3 === 0 ? "fern" : "flower", p.care > 3 ? 3 : 2, idx + i), p.x - 93 + i % 2 * 25, p.y + 10 + Math.floor(i / 2) * 16);
+    if (scene.phase.night && p.open && Date.now() - p.lastActiveAt < 18e4) {
+      rect(c, "#e8d49755", p.x - 35, p.y - 20, 70, 25);
+      rect(c, "#ebd59a", p.x - 32, p.y - 21, 64, 3);
+    }
+    if (zoom > 0.32) label(c, p.name, p.x, p.y + 63);
+  }
+  for (const p of scene.plants) {
+    const isTree = p.kind === "tree", w = isTree ? 80 : 30, h = isTree ? 100 : 40;
+    if (inView(p.x - w / 2, p.y - h, w, h, view)) c.drawImage(isTree ? tree(p.stage) : plant(p.kind, p.stage, p.id.charCodeAt(0) % 3), p.x - w / 2, p.y - h + 4);
+  }
+}
+
 // ../SpiderPlayground/scenery.js
-function createScenery({ canvas, frames, getBounds, getCamera, read }) {
+function createScenery({ canvas, frames, getBounds, getCamera, read, getScene }) {
   const ctx = canvas.getContext("2d", { alpha: false }), tiles = /* @__PURE__ */ new Map();
   let dpr = 1, appearanceKey = "";
   function tile(theme, pattern) {
     const key2 = theme.name + pattern;
     if (tiles.has(key2)) return tiles.get(key2);
-    const image = document.createElement("canvas");
-    image.width = 512;
-    image.height = 512;
-    const c = image.getContext("2d");
-    c.fillStyle = theme.color;
+    const image2 = document.createElement("canvas");
+    image2.width = 512;
+    image2.height = 512;
+    const c = image2.getContext("2d");
+    c.fillStyle = { Tide: "#d5e2d5", Iris: "#dddde0", Grove: "#cfddc4" }[theme.name] || theme.color;
     c.fillRect(0, 0, 512, 512);
     if (pattern !== "plain") {
-      c.fillStyle = theme.line;
+      c.fillStyle = theme.line + "99";
       for (let x = 0; x < 512; x += 32) for (let y = 0; y < 512; y += 32) c.fillRect(x, y, 1, 1);
       if (pattern !== "grid") {
         for (const [x, y, kind] of [[85, 110, 0], [368, 332, 1], [190, 440, 0]]) {
@@ -871,28 +1069,40 @@ function createScenery({ canvas, frames, getBounds, getCamera, read }) {
           c.fillRect(x - 6, y - 4, 2, 2);
           c.fillRect(x + 11, y - 12, 2, 2);
         }
-        c.strokeStyle = theme.line + "66";
-        c.setLineDash([3, 8]);
-        c.strokeRect(255, 60, 110, 62);
+        for (let i = 0; i < 100; i++) {
+          const x = (i * 137 + 41) % 512, y = (i * 191 + 29) % 512;
+          c.fillStyle = i % 3 ? "#96b29833" : "#edf0c966";
+          c.fillRect(x, y, 3, 2);
+          if (i % 4 === 0) c.fillRect(x + 2, y - 3, 2, 4);
+        }
       }
     }
-    const value = ctx.createPattern(image, "repeat");
+    const value = ctx.createPattern(image2, "repeat");
     tiles.set(key2, value);
     return value;
   }
   function paint2() {
     const appearance = read().appearance || {}, theme = THEMES[appearance.theme] || THEMES.tide, pattern = ["plain", "grid"].includes(appearance.pattern) ? appearance.pattern : "workshop";
-    if (getCamera().zoom < 0.2) {
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = theme.color;
-      ctx.fillRect(0, 0, getBounds().width, getBounds().height);
-      return;
-    }
-    const patternFill = tile(theme, pattern), matrix = cameraMatrix(getCamera());
-    patternFill.setTransform(new DOMMatrix(matrix));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = patternFill;
+    if (getCamera().zoom < 0.2) ctx.fillStyle = theme.color;
+    else {
+      const patternFill = tile(theme, pattern);
+      patternFill.setTransform(new DOMMatrix(cameraMatrix(getCamera())));
+      ctx.fillStyle = patternFill;
+    }
     ctx.fillRect(0, 0, getBounds().width, getBounds().height);
+    const scene = getScene?.();
+    if (scene) {
+      ctx.save();
+      ctx.setTransform(...cameraMatrix(getCamera(), dpr));
+      ctx.imageSmoothingEnabled = false;
+      drawSettlement(ctx, scene, visibleWorld(getCamera(), getBounds(), 120), getCamera().zoom);
+      ctx.restore();
+      ctx.fillStyle = scene.phase.light;
+      ctx.globalAlpha = scene.phase.tint;
+      ctx.fillRect(0, 0, getBounds().width, getBounds().height);
+      ctx.globalAlpha = 1;
+    }
   }
   const invalidate = () => frames.request(paint2);
   return { invalidate, resize() {
@@ -943,17 +1153,17 @@ var seated = [
   "..kkkkkkkk.."
 ];
 function sprite(rows, step = 0) {
-  const image = document.createElement("canvas");
-  image.width = 28;
-  image.height = 32;
-  const c = image.getContext("2d");
+  const image2 = document.createElement("canvas");
+  image2.width = 28;
+  image2.height = 32;
+  const c = image2.getContext("2d");
   rows.forEach((row, y) => [...row].forEach((pixel, x) => {
     if (!palette[pixel]) return;
     const offset = y > 10 && step ? x < 6 ? step : -step : 0;
     c.fillStyle = palette[pixel];
     c.fillRect(x * 2 + 2, y * 2 + offset, 2, 2);
   }));
-  return image;
+  return image2;
 }
 function createCrew({ canvas, frames, getBounds, getCamera, getWindows }) {
   const ctx = canvas.getContext("2d"), sprites = [sprite(standing, -2), sprite(standing, 2), sprite(seated)], motion = /* @__PURE__ */ new Map();
@@ -1007,7 +1217,7 @@ function createCrew({ canvas, frames, getBounds, getCamera, getWindows }) {
         squash = 1 + Math.sin(elapsed * 0.025) * Math.exp(-elapsed / 150) * 0.17;
         animate = true;
       }
-      const image = moving ? sprites[Math.floor(now / 110) % 2] : sprites[2];
+      const image2 = moving ? sprites[Math.floor(now / 110) % 2] : sprites[2];
       if (moving) {
         ctx.fillStyle = "#91a8aa";
         ctx.fillRect(r.x + 20, r.y + r.height + 1, Math.max(0, r.width - 40), 2);
@@ -1018,7 +1228,7 @@ function createCrew({ canvas, frames, getBounds, getCamera, getWindows }) {
         ctx.translate(x + 14, y + 28 + bounce);
         ctx.rotate(lean);
         ctx.scale(1 / squash, squash);
-        ctx.drawImage(image, -14, -28);
+        ctx.drawImage(image2, -14, -28);
         ctx.restore();
         if (settling && elapsed < 260 && !reduced) {
           ctx.fillStyle = "#a9bfc0";
@@ -1053,6 +1263,482 @@ function createCrew({ canvas, frames, getBounds, getCamera, getWindows }) {
     frames.cancel(paint2);
     motion.clear();
   } };
+}
+
+// ../SpiderPlayground/world-model.js
+var MAX_PLANTS = 192;
+var NEIGHBORS = [
+  { name: "Pip", role: "keeps the paths", color: "#6c8c9c" },
+  { name: "Moss", role: "tends the gardens", color: "#769777" },
+  { name: "Nori", role: "visits the workshops", color: "#b98572" },
+  { name: "Tavi", role: "looks after the commons", color: "#b6a168" },
+  { name: "Bea", role: "collects little ideas", color: "#9b86ab" },
+  { name: "Rue", role: "takes the long way home", color: "#7b9f9e" }
+];
+var COMMONS = { x: 275, y: 665 };
+var defaults = { guide: { x: 282, y: 505 }, note: { x: 700, y: 570 }, board: { x: 1080, y: 670 }, timer: { x: 1050, y: 220 }, calculator: { x: 1115, y: 450 }, appearance: { x: 680, y: 810 } };
+var bounded = (n, fallback, min, max) => Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback;
+function normalizeWorld(raw, now = Date.now()) {
+  const places = {};
+  for (const app of APPS) {
+    const value = raw?.places?.[app.id];
+    places[app.id] = { x: bounded(value?.x, defaults[app.id].x, -WORLD_LIMIT, WORLD_LIMIT), y: bounded(value?.y, defaults[app.id].y, -WORLD_LIMIT, WORLD_LIMIT), care: bounded(value?.care, 0, 0, 24), visits: bounded(value?.visits, 0, 0, 9999), lastActiveAt: bounded(value?.lastActiveAt, 0, 0, 864e13) };
+  }
+  const plants = {};
+  for (const [id, value] of Object.entries(raw?.plants || {}).slice(0, MAX_PLANTS)) {
+    if (!/^[\w-]{1,80}$/.test(id) || !value || !Number.isFinite(value.x) || !Number.isFinite(value.y) || !["flower", "tree", "fern"].includes(value.kind)) continue;
+    plants[id] = { x: bounded(value.x, 0, -WORLD_LIMIT, WORLD_LIMIT), y: bounded(value.y, 0, -WORLD_LIMIT, WORLD_LIMIT), kind: value.kind, plantedAt: bounded(value.plantedAt, now, 0, 864e13) };
+  }
+  return { startedAt: bounded(raw?.startedAt, now, 0, 864e13), places, plants };
+}
+function dayPhase(now, startedAt) {
+  const fraction = ((now - startedAt) / (24 * 60 * 1e3) % 1 + 1) % 1;
+  if (fraction < 0.22) return { name: "Morning", light: "#f1dfb4", tint: 0.045, night: false };
+  if (fraction < 0.52) return { name: "Daylight", light: "#fff1c9", tint: 0.015, night: false };
+  if (fraction < 0.73) return { name: "Golden hour", light: "#d9a788", tint: 0.12, night: false };
+  if (fraction < 0.84) return { name: "Dusk", light: "#7f7f9c", tint: 0.17, night: true };
+  return { name: "Night", light: "#344b66", tint: 0.25, night: true };
+}
+function growthStage(plant2, now) {
+  return Math.max(0, Math.min(3, Math.floor((now - plant2.plantedAt) / (plant2.kind === "tree" ? 5 * 60 * 1e3 : 90 * 1e3))));
+}
+function siteForWindow(win) {
+  return { x: Math.round(win.rect.x + win.rect.width / 2), y: Math.round(win.rect.y + win.rect.height + 34) };
+}
+var inside = (point, rect2) => point.x > rect2.x && point.x < rect2.x + rect2.width && point.y > rect2.y && point.y < rect2.y + rect2.height;
+function walkable(point, obstacles) {
+  if (!obstacles.some((rect2) => inside(point, rect2))) return { ...point };
+  const candidates = [];
+  for (const r of obstacles) {
+    const left = r.x - 2, right = r.x + r.width + 2, top = r.y - 2, bottom = r.y + r.height + 2;
+    candidates.push({ x: left, y: point.y }, { x: right, y: point.y }, { x: point.x, y: top }, { x: point.x, y: bottom }, { x: left, y: top }, { x: right, y: top }, { x: left, y: bottom }, { x: right, y: bottom });
+  }
+  return candidates.filter((p) => !obstacles.some((r) => inside(p, r))).sort((a, b) => Math.hypot(a.x - point.x, a.y - point.y) - Math.hypot(b.x - point.x, b.y - point.y))[0] || null;
+}
+function segmentClear(a, b, obstacles) {
+  for (const r of obstacles) {
+    let enter = 0, exit = 1;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    for (const [p, q] of [[-dx, a.x - r.x], [dx, r.x + r.width - a.x], [-dy, a.y - r.y], [dy, r.y + r.height - a.y]]) {
+      if (p === 0) {
+        if (q <= 0) {
+          enter = 2;
+          break;
+        }
+        continue;
+      }
+      const t = q / p;
+      if (p < 0) enter = Math.max(enter, t);
+      else exit = Math.min(exit, t);
+    }
+    if (enter < exit && exit > 0 && enter < 1) return false;
+  }
+  return true;
+}
+function buildRoutes(targets, obstacles) {
+  const safe = targets.map((point) => walkable(point, obstacles)), nodes = safe.filter(Boolean).map((p) => ({ ...p }));
+  for (const r of obstacles) for (const [x, y] of [[r.x - 2, r.y - 2], [r.x + r.width + 2, r.y - 2], [r.x - 2, r.y + r.height + 2], [r.x + r.width + 2, r.y + r.height + 2]]) if (!obstacles.some((other) => inside({ x, y }, other))) nodes.push({ x, y });
+  const edges = nodes.map(() => []);
+  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) if (segmentClear(nodes[i], nodes[j], obstacles)) {
+    const distance = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+    edges[i].push([j, distance]);
+    edges[j].push([i, distance]);
+  }
+  const indices = safe.map((p) => p ? nodes.findIndex((n) => n.x === p.x && n.y === p.y) : -1), cache = /* @__PURE__ */ new Map();
+  function route(from, to) {
+    const key2 = from + ":" + to;
+    if (cache.has(key2)) return cache.get(key2);
+    const start = indices[from], end = indices[to];
+    if (start < 0 || end < 0) return [];
+    const distances = nodes.map(() => Infinity), previous = nodes.map(() => -1), seen = /* @__PURE__ */ new Set();
+    distances[start] = 0;
+    for (let pass = 0; pass < nodes.length; pass++) {
+      let current = -1;
+      for (let i = 0; i < nodes.length; i++) if (!seen.has(i) && (current < 0 || distances[i] < distances[current])) current = i;
+      if (current < 0 || !Number.isFinite(distances[current]) || current === end) break;
+      seen.add(current);
+      for (const [next, cost] of edges[current]) if (distances[current] + cost < distances[next]) {
+        distances[next] = distances[current] + cost;
+        previous[next] = current;
+      }
+    }
+    if (!Number.isFinite(distances[end])) return [];
+    const path = [];
+    for (let id = end; id !== -1; id = previous[id]) {
+      path.unshift(nodes[id]);
+      if (id === start) break;
+    }
+    cache.set(key2, path);
+    return path;
+  }
+  return { route, points: safe, obstacles };
+}
+function buildSettlement(state2, windows, space, now = Date.now()) {
+  const places = APPS.map((app) => {
+    const win = windows.find((win2) => win2.space === space && win2.app === app.id && !win2.minimized && win2.mode === "normal");
+    return { id: app.id, name: app.name, ...state2.places[app.id], open: !!win, window: win?.rect || null };
+  });
+  const obstacles = places.map((place) => place.open ? { x: place.window.x - 14, y: place.window.y - 14, width: place.window.width + 28, height: place.window.height + 28 } : { x: place.x - 38, y: place.y - 65, width: 76, height: 70 });
+  const targets = [COMMONS, ...places.map((place) => ({ x: place.x, y: place.y + 26 }))], network = buildRoutes(targets, obstacles);
+  const roads = places.map((place, i) => network.route(0, i + 1)).filter((path) => path.length > 1);
+  const plants = Object.entries(state2.plants).map(([id, plant2]) => ({ id, ...plant2, stage: growthStage(plant2, now) }));
+  return { space, places, plants, commons: network.points[0] || COMMONS, network, roads, phase: dayPhase(now, state2.startedAt) };
+}
+function worldExtents(scene) {
+  return [{ x: scene.commons.x - 190, y: scene.commons.y - 140, width: 380, height: 300 }, ...scene.places.map((place) => ({ x: place.x - 95, y: place.y - 100, width: 190, height: 185 })), ...scene.plants.map((plant2) => plant2.kind === "tree" ? { x: plant2.x - 40, y: plant2.y - 96, width: 80, height: 100 } : { x: plant2.x - 15, y: plant2.y - 36, width: 30, height: 40 })];
+}
+
+// ../SpiderPlayground/living-world.js
+function createLivingWorld({ canvas, frames, read, write: write2, getLayout, getCamera, getBounds, onChange, onStatus, open, notice: notice2 }) {
+  const ctx = canvas.getContext("2d"), events = new AbortController(), media = matchMedia("(prefers-reduced-motion: reduce)");
+  const worlds = /* @__PURE__ */ new Map(), pending = /* @__PURE__ */ new Map();
+  let scene = null, sceneKey = "", geometryKey = "", agents = [], timer = 0, saveTimer = 0, dpr = 1, last = 0, disposed = false, flushing = false, suspended = false, draft = [], plantKind2 = "flower", ripple = null, statusKey = "", lastEpoch = 0, lastPaused;
+  const space = () => getLayout().space;
+  const paused = () => !!read().worldSettings?.paused;
+  const blocked = () => disposed || document.hidden || paused() || media.matches || suspended || getLayout().windows.some((w) => w.space === space() && !w.minimized && w.mode === "maximized");
+  function current() {
+    const id = space();
+    if (!worlds.has(id)) worlds.set(id, normalizeWorld(read().world?.[id]));
+    return worlds.get(id);
+  }
+  function queue(path, value) {
+    pending.set(JSON.stringify(path), { path, value: structuredClone(value) });
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flush, 1e3);
+  }
+  function flush() {
+    if (disposed || flushing) return;
+    clearTimeout(saveTimer);
+    saveTimer = 0;
+    flushing = true;
+    try {
+      for (const [key2, { path, value }] of [...pending]) {
+        write2(path, value);
+        if (pending.get(key2)?.value === value) pending.delete(key2);
+      }
+    } finally {
+      flushing = false;
+    }
+  }
+  function changed() {
+    onChange?.();
+    invalidate();
+    publish();
+  }
+  function rebuild(force = false) {
+    const layout = getLayout(), state2 = current();
+    if (!read().world?.[space()]?.startedAt && !pending.has(JSON.stringify(["world", space(), "startedAt"]))) queue(["world", space(), "startedAt"], state2.startedAt);
+    for (const win of layout.windows.filter((w) => w.space === space() && !w.minimized && w.mode === "normal")) {
+      const site = siteForWindow(win), place = state2.places[win.app];
+      if (place.x !== site.x || place.y !== site.y) {
+        Object.assign(place, site);
+        queue(["world", space(), "places", win.app], place);
+      }
+    }
+    const now = Date.now(), key2 = JSON.stringify([space(), state2.places, Object.entries(state2.plants).map(([id, p]) => [id, p.x, p.y, growthStage(p, now)]), layout.windows.map((w) => [w.app, w.space, w.minimized, w.mode, w.rect]), dayPhase(now, state2.startedAt).name]);
+    if (!force && key2 === sceneKey) {
+      publish();
+      return;
+    }
+    sceneKey = key2;
+    const oldSpace = scene?.space;
+    const geometry = JSON.stringify([space(), Object.entries(state2.places).map(([id, p]) => [id, p.x, p.y]), layout.windows.map((w) => [w.app, w.space, w.minimized, w.mode, w.rect])]), moved = geometry !== geometryKey;
+    geometryKey = geometry;
+    scene = buildSettlement(state2, layout.windows, space(), now);
+    if (oldSpace !== space() || !agents.length) {
+      agents = NEIGHBORS.map((neighbor, i) => {
+        const at = i % 3, point = scene.network.points[at] || scene.commons;
+        return { ...neighbor, index: i, x: point.x, y: point.y, at, goal: at, path: [], rest: 1 + i * 0.7, waveUntil: 0 };
+      });
+    } else if (moved) for (const agent of agents) {
+      agent.path = [];
+      agent.rest = 0.5 + agent.index * 0.2;
+      const p = walkable(agent, scene.network.obstacles) || scene.commons;
+      agent.x = p.x;
+      agent.y = p.y;
+      agent.at = nearest(agent);
+    }
+    canvas.dataset.residents = String(agents.length);
+    canvas.dataset.plants = String(scene.plants.length);
+    changed();
+  }
+  function nearest(p) {
+    let id = 0, d = Infinity;
+    scene.network.points.forEach((n, i) => {
+      if (n && segmentClear(p, n, scene.network.obstacles)) {
+        const next = Math.hypot(p.x - n.x, p.y - n.y);
+        if (next < d) {
+          d = next;
+          id = i;
+        }
+      }
+    });
+    return id;
+  }
+  function depart(agent) {
+    const warm = scene.places.map((p, i) => ({ id: i + 1, time: p.lastActiveAt })).sort((a, b) => b.time - a.time)[0];
+    const destination = warm?.time > Date.now() - 9e4 && agent.index % 3 === 1 ? warm.id : (agent.goal + 2 + agent.index) % 7;
+    agent.at = nearest(agent);
+    agent.goal = destination === agent.at ? (destination + 1) % 7 : destination;
+    const point = scene.network.points[agent.at], route = scene.network.route(agent.at, agent.goal);
+    agent.path = point && route.length ? [{ x: agent.x, y: agent.y }, point, ...route.slice(1)].slice(1).map((p) => ({ ...p })) : [];
+    if (!agent.path.length) agent.rest = 5;
+  }
+  function step(dt) {
+    for (const a of agents) {
+      if (a.waveUntil > performance.now()) continue;
+      if (a.rest > 0) {
+        a.rest -= dt;
+        if (a.rest <= 0) depart(a);
+        continue;
+      }
+      let distance = (29 + a.index * 2) * dt;
+      while (distance > 0 && a.path.length) {
+        const p = a.path[0], dx = p.x - a.x, dy = p.y - a.y, length = Math.hypot(dx, dy);
+        if (length <= distance) {
+          a.x = p.x;
+          a.y = p.y;
+          distance -= length;
+          a.path.shift();
+        } else {
+          a.x += dx / length * distance;
+          a.y += dy / length * distance;
+          distance = 0;
+        }
+      }
+      if (!a.path.length) {
+        a.at = a.goal;
+        a.rest = 5 + a.index * 1.7;
+      }
+    }
+  }
+  function publish() {
+    if (!scene) return;
+    const people = agents.map((a) => {
+      const place = scene.places[a.goal - 1], moving = a.path.length > 0, action = a.waveUntil > performance.now() ? "says hello" : a.goal === 0 ? moving ? "walking to the commons" : "taking a break by the pond" : moving ? "visiting " + place.name : a.index % 3 === 1 ? "tending the " + place.name + " garden" : "resting outside " + place.name;
+      return { name: a.name, role: a.role, color: a.color, action, x: a.x, y: a.y };
+    });
+    const state2 = { phase: scene.phase.name, paused: paused(), reduced: media.matches, space: space(), people, plants: scene.plants.length };
+    const key2 = JSON.stringify([state2.phase, state2.paused, state2.reduced, state2.space, state2.people.map((p) => p.action), state2.plants]);
+    if (key2 !== statusKey) {
+      statusKey = key2;
+      onStatus?.(state2);
+    }
+  }
+  function paint2(now = performance.now()) {
+    clearTimeout(timer);
+    timer = 0;
+    if (disposed || document.hidden) return;
+    const frozen = blocked(), dt = last ? Math.min(0.2, (now - last) / 1e3) : 0;
+    last = now;
+    if (!frozen) step(dt);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = false;
+    const view = visibleWorld(getCamera(), getBounds(), 80), zoom = getCamera().zoom;
+    if (scene && zoom > 0.14) {
+      ctx.setTransform(...cameraMatrix(getCamera(), dpr));
+      const { x, y } = scene.commons, t = frozen ? 0 : now * 1e-3;
+      ctx.fillStyle = "#deebce";
+      ctx.fillRect(x - 146 + Math.sin(t * 0.7) * 11, y + 42, 12, 2);
+      ctx.fillRect(x - 98 + Math.cos(t) * 9, y + 50, 9, 2);
+      for (let i = 0; i < 2; i++) {
+        const bx = x + Math.sin(t * 0.07 + i * 2) * 115, by = y + Math.cos(t * 0.1 + i) * 65 - 10;
+        ctx.fillStyle = "#eef0da";
+        ctx.fillRect(bx, by, 6, 4);
+        ctx.fillStyle = "#718977";
+        ctx.fillRect(bx + (Math.floor(t * 3 + i) % 2 ? 4 : -2), by - 2, 4, 2);
+      }
+      for (const a of [...agents].sort((a2, b) => a2.y - b.y)) {
+        if (a.x < view.left || a.x > view.right || a.y < view.top || a.y > view.bottom) continue;
+        const waving = a.waveUntil > now, walking = !frozen && a.path.length > 0, pose = waving ? 3 : walking ? Math.floor(now / 180 + a.index) % 2 ? 1 : -1 : 0;
+        ctx.drawImage(person(a.color, pose), Math.round(a.x - 12), Math.round(a.y - 28) + (walking ? Math.floor(now / 180) % 2 : 0));
+        if (waving) {
+          ctx.fillStyle = "#f3eed6";
+          ctx.fillRect(a.x - 9, a.y - 47, 20, 14);
+          ctx.fillStyle = "#567569";
+          ctx.font = "10px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("hi", a.x + 1, a.y - 36);
+        }
+      }
+      if (ripple && now - ripple.at < 1600) {
+        const radius = (now - ripple.at) / 70;
+        ctx.strokeStyle = "#edf0d9";
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 1 - (now - ripple.at) / 1600;
+        ctx.beginPath();
+        ctx.ellipse(ripple.x, ripple.y, radius, radius * 0.45, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      for (const p of draft) {
+        ctx.fillStyle = "#5e866c";
+        ctx.fillRect(p.x - 2, p.y - 9, 4, 9);
+        ctx.fillRect(p.x - 6, p.y - 8, 12, 3);
+      }
+    }
+    canvas.dataset.motion = frozen ? "paused" : "alive";
+    publish();
+    if (!frozen) timer = setTimeout(() => frames.request(paint2), 100);
+  }
+  function invalidate() {
+    if (!disposed && !document.hidden) frames.request(paint2);
+  }
+  function sync(path) {
+    if (lastPaused !== paused()) {
+      lastPaused = paused();
+      invalidate();
+      publish();
+    }
+    if (!path || path[0] === "world") {
+      for (const id of worlds.keys()) {
+        const raw = read().world?.[id];
+        if (raw) {
+          const next = normalizeWorld(raw), local = worlds.get(id);
+          for (const { path: p, value } of pending.values()) if (p[1] === id) {
+            if (p[2] === "places") next.places[p[3]] = structuredClone(value);
+            else if (p[2] === "startedAt") next.startedAt = value;
+          }
+          worlds.set(id, { ...next, startedAt: next.startedAt || local.startedAt });
+        }
+      }
+      rebuild();
+    } else if (path[0] === "worldSettings") {
+      invalidate();
+      publish();
+    }
+    const app = { notes: "note", boards: "board", timers: "timer", calculations: "calculator", ink: "guide" }[path?.[0]];
+    if (app && path[1] === space()) {
+      const p = current().places[app], now = Date.now();
+      if (now - p.lastActiveAt > 3e3) {
+        p.lastActiveAt = now;
+        p.care = Math.min(24, p.care + 1);
+        p.visits = Math.min(9999, p.visits + 1);
+        queue(["world", space(), "places", app], p);
+        rebuild();
+      }
+    }
+  }
+  function appendPlant(p) {
+    if (!draft.length || Math.hypot(p.x - draft.at(-1).x, p.y - draft.at(-1).y) > 36) {
+      if (draft.length < 32 && !scene.network.obstacles.some((r) => p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height)) draft.push(p);
+      invalidate();
+    }
+  }
+  const planting = { begin(p) {
+    draft = [];
+    appendPlant(p);
+  }, append: appendPlant, cancel() {
+    draft = [];
+    invalidate();
+  }, finish() {
+    const state2 = current(), plants = { ...state2.plants };
+    let count = 0;
+    for (const p of draft) {
+      if (plantKind2 === "remove") {
+        let nearest2 = null, distance = 42;
+        for (const [id, other] of Object.entries(plants)) {
+          const d = Math.hypot(p.x - other.x, p.y - other.y);
+          if (d < distance) {
+            nearest2 = id;
+            distance = d;
+          }
+        }
+        if (nearest2) {
+          delete plants[nearest2];
+          count++;
+        }
+      } else if (Object.keys(plants).length < MAX_PLANTS) {
+        plants[crypto.randomUUID()] = { ...p, kind: plantKind2, plantedAt: Date.now() };
+        count++;
+      }
+    }
+    draft = [];
+    if (count) {
+      state2.plants = plants;
+      flush();
+      write2(["world", space(), "plants"], plants);
+      rebuild(true);
+      notice2(plantKind2 === "remove" ? "Plant removed." : (count === 1 ? "A little life planted." : count + " little lives planted.") + " Flowers and ferns grow over a few minutes; trees take their time.", { transient: true });
+    } else if (Object.keys(plants).length >= MAX_PLANTS) notice2("This garden is full. Choose Remove plant to make a little room.");
+    invalidate();
+  } };
+  function groundClick(p) {
+    const resident = agents.find((a) => Math.hypot(a.x - p.x, a.y - p.y) < 28);
+    if (resident) {
+      resident.waveUntil = performance.now() + 1800;
+      statusKey = "";
+      publish();
+      invalidate();
+      return;
+    }
+    const home = scene.places.find((a) => !a.open && Math.abs(a.x - p.x) < 48 && p.y > a.y - 90 && p.y < a.y + 75);
+    if (home) {
+      open(home.id, { x: home.x, y: home.y });
+      return;
+    }
+    ripple = { ...p, at: performance.now() };
+    invalidate();
+  }
+  document.addEventListener("visibilitychange", () => {
+    last = 0;
+    if (document.hidden) {
+      clearTimeout(timer);
+      frames.cancel(paint2);
+    } else {
+      rebuild();
+      invalidate();
+    }
+  }, { signal: events.signal });
+  media.addEventListener("change", () => {
+    last = 0;
+    invalidate();
+    publish();
+  }, { signal: events.signal });
+  return {
+    sync,
+    rebuild,
+    invalidate,
+    planting,
+    groundClick,
+    get scene() {
+      return scene;
+    },
+    get extents() {
+      return scene ? worldExtents(scene) : [];
+    },
+    get people() {
+      return agents.map((a) => ({ ...a }));
+    },
+    setPlantKind(kind) {
+      if (["flower", "fern", "tree", "remove"].includes(kind)) plantKind2 = kind;
+    },
+    suspend(value) {
+      suspended = value;
+      last = 0;
+      invalidate();
+    },
+    tick() {
+      const epoch = Math.floor(Date.now() / 15e3);
+      if (epoch !== lastEpoch && !blocked()) {
+        lastEpoch = epoch;
+        rebuild();
+      }
+    },
+    resize() {
+      dpr = sizeCanvas(canvas, getBounds());
+      invalidate();
+    },
+    destroy() {
+      disposed = true;
+      clearTimeout(timer);
+      clearTimeout(saveTimer);
+      pending.clear();
+      events.abort();
+      frames.cancel(paint2);
+    }
+  };
 }
 
 // ../SpiderPlayground/icons.js
@@ -1093,7 +1779,7 @@ function icon(name) {
 }
 
 // ../SpiderPlayground/windows.js
-function createWindows({ stage, container, shield, layout: initial, createContent: createContent2, onChange, onPaint, onMenu, read, write: write2, notice: notice2, onTools }) {
+function createWindows({ stage, container, shield, layout: initial, createContent: createContent2, onChange, onPaint, onMenu, read, write: write2, notice: notice2, onTools, onWorldState }) {
   let layout = normalizeLayout(initial), gesture = null, desktopRestore = [], tool = "move", disposed = false;
   const entries = /* @__PURE__ */ new Map(), events = new AbortController(), frames = createFrames(), overlay = stage.querySelector("#overlay-windows");
   const bounds = () => boundsOf({ width: stage.clientWidth, height: stage.clientHeight });
@@ -1113,8 +1799,10 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     notice: notice2,
     onHistory: (state2) => onTools({ history: state2 })
   });
-  const scenery = createScenery({ canvas: stage.querySelector("#scenery"), frames, getBounds: bounds, getCamera: camera, read });
+  let habitat = null;
+  const scenery = createScenery({ canvas: stage.querySelector("#scenery"), frames, getBounds: bounds, getCamera: camera, read, getScene: () => habitat?.scene });
   const crew = createCrew({ canvas: stage.querySelector("#crew"), frames, getBounds: bounds, getCamera: camera, getWindows: () => fullscreen() ? [] : visible() });
+  habitat = createLivingWorld({ canvas: stage.querySelector("#life-canvas"), frames, read, write: write2, getLayout: () => layout, getCamera: camera, getBounds: bounds, onChange: () => scenery.invalidate(), onStatus: onWorldState, open, notice: notice2 });
   function save() {
     if (!disposed) onChange(structuredClone(layout));
   }
@@ -1123,6 +1811,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     ink.invalidate();
     scenery.invalidate();
     crew.invalidate();
+    habitat.invalidate();
   }
   function paintCamera() {
     const c = camera();
@@ -1149,19 +1838,19 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     entry.panel.inert = hidden;
     const parent2 = win.mode === "normal" ? container : overlay;
     if (entry.panel.parentElement !== parent2) parent2.append(entry.panel);
-    const rect = displayRect(win, bounds()), active = layout.active[layout.space] === win.id;
-    if (entry.x !== rect.x || entry.y !== rect.y) {
-      entry.panel.style.transform = `translate(${rect.x}px,${rect.y}px)`;
-      entry.x = rect.x;
-      entry.y = rect.y;
+    const rect2 = displayRect(win, bounds()), active = layout.active[layout.space] === win.id;
+    if (entry.x !== rect2.x || entry.y !== rect2.y) {
+      entry.panel.style.transform = `translate(${rect2.x}px,${rect2.y}px)`;
+      entry.x = rect2.x;
+      entry.y = rect2.y;
     }
-    if (entry.width !== rect.width) {
-      entry.panel.style.width = rect.width + "px";
-      entry.width = rect.width;
+    if (entry.width !== rect2.width) {
+      entry.panel.style.width = rect2.width + "px";
+      entry.width = rect2.width;
     }
-    if (entry.height !== rect.height) {
-      entry.panel.style.height = rect.height + "px";
-      entry.height = rect.height;
+    if (entry.height !== rect2.height) {
+      entry.panel.style.height = rect2.height + "px";
+      entry.height = rect2.height;
     }
     if (entry.order !== win.order) {
       entry.panel.style.zIndex = String(10 + win.order);
@@ -1188,6 +1877,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     stage.classList.toggle("has-fullscreen", !!full);
     onPaint(structuredClone(layout));
     paintCamera();
+    habitat.rebuild();
     graphics();
   }
   function restack(id) {
@@ -1296,13 +1986,13 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     bar.title = "Drag to move. Double-click for full screen. Alt + arrows to move; Shift + Alt + arrows to resize.";
     const controls = document.createElement("div");
     controls.className = "window-controls";
-    function control(color, symbol, label, action) {
+    function control(color, symbol, label2, action) {
       const node = document.createElement("button");
       node.type = "button";
       node.className = "window-control " + color;
       node.textContent = symbol;
-      node.title = label;
-      node.setAttribute("aria-label", label + " " + app.name);
+      node.title = label2;
+      node.setAttribute("aria-label", label2 + " " + app.name);
       listenWindow(node, "click", action);
       controls.append(node);
       return node;
@@ -1353,6 +2043,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
       win.expanded = false;
       paintWindow(entry);
       crew.invalidate();
+      habitat.rebuild();
       save();
     });
     for (const edge of ["n", "e", "s", "w", "ne", "nw", "se", "sw"]) {
@@ -1387,6 +2078,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
       document.body.classList.add("gesturing");
       shield.hidden = false;
       crew.setMoving(g.id, true);
+      habitat.suspend(true);
       if (g.win.mode !== "normal") {
         g.rect = { ...g.win.rect, x: g.start.x - g.win.rect.width * 0.4, y: g.start.y - 20 };
         g.win.mode = "normal";
@@ -1413,6 +2105,8 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     if (g.started) crew.setMoving(g.id, false);
     paintWindow(entries.get(g.id));
     if (g.started) {
+      habitat.suspend(false);
+      habitat.rebuild();
       onPaint(structuredClone(layout));
       if (commit) save();
     }
@@ -1422,7 +2116,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     setCamera(fitWorld(visible().filter((win) => win.mode === "normal").map((win) => win.rect), bounds(), camera().angle));
     save();
   }
-  const navigation = createNavigation({ stage, getCamera: camera, setCamera, commit: save, getTool: () => tool, ink, isBlocked: () => !!fullscreen(), isWindowMoving: () => !!gesture, cancelWindow: () => finish(false), fitAll });
+  const navigation = createNavigation({ stage, getCamera: camera, setCamera, commit: save, getTool: () => tool, ink, planting: habitat.planting, onInteraction: habitat.suspend, onGroundClick: habitat.groundClick, isBlocked: () => !!fullscreen(), isWindowMoving: () => !!gesture, cancelWindow: () => finish(false), fitAll });
   listen(document, "pointermove", move);
   listen(document, "pointerup", (event) => {
     if (event.pointerId === gesture?.pointer) finish();
@@ -1451,10 +2145,11 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     ink.resize();
     scenery.resize();
     crew.resize();
+    habitat.resize();
     paint2();
   });
   observer.observe(stage);
-  function open(appId) {
+  function open(appId, home) {
     const existing = layout.windows.find((win2) => win2.space === layout.space && win2.app === appId);
     if (existing) {
       reveal(existing.id);
@@ -1463,11 +2158,11 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     const app = appById(appId);
     if (!app) return;
     const b = bounds(), center = screenToWorld(camera(), { x: b.width / 2, y: b.height / 2 });
-    const win = { id: crypto.randomUUID(), app: appId, space: layout.space, rect: normalRect({ x: center.x - app.width / 2, y: center.y - app.height / 2, width: app.width, height: app.height }), mode: "normal", minimized: false, order: layout.windows.length + 1 };
+    const win = { id: crypto.randomUUID(), app: appId, space: layout.space, rect: normalRect({ x: (home || center).x - app.width / 2, y: home ? home.y - app.height - 34 : center.y - app.height / 2, width: app.width, height: app.height }), mode: "normal", minimized: false, order: layout.windows.length + 1 };
     layout.windows.push(win);
     add(win);
     activate(win.id, true);
-    if (b.width < 600) reveal(win.id);
+    if (home || b.width < 600) reveal(win.id);
   }
   function switchSpace(id) {
     if (!["studio", "quiet"].includes(id) || id === layout.space) return;
@@ -1534,6 +2229,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
   ink.resize();
   scenery.resize();
   crew.resize();
+  habitat.resize();
   return {
     open,
     activate,
@@ -1548,6 +2244,18 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     paint: paint2,
     replace,
     fitAll,
+    explore() {
+      setCamera(fitWorld([...visible().filter((w) => w.mode === "normal").map((w) => w.rect), ...habitat.extents], bounds(), camera().angle, 65));
+      save();
+    },
+    findNeighbor(name) {
+      const p = habitat.people.find((p2) => p2.name === name);
+      if (p) {
+        setCamera(fitWorld([{ x: p.x - 160, y: p.y - 130, width: 320, height: 260 }], bounds(), camera().angle, 60));
+        save();
+      }
+    },
+    setPlantKind: habitat.setPlantKind,
     zoom(factor) {
       const b = bounds();
       setCamera(transformAt(camera(), { x: b.width / 2, y: b.height / 2 }, { zoom: camera().zoom * factor }));
@@ -1582,9 +2290,13 @@ function createWindows({ stage, container, shield, layout: initial, createConten
       for (const entry of entries.values()) entry.content.update?.();
       ink.sync(path?.[0] === "ink");
       scenery.sync();
+      habitat.sync(path);
     },
     tick() {
-      if (!document.hidden) for (const entry of entries.values()) entry.content.tick?.();
+      if (!document.hidden) {
+        for (const entry of entries.values()) entry.content.tick?.();
+        habitat.tick();
+      }
     },
     destroy() {
       disposed = true;
@@ -1595,6 +2307,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
       ink.destroy();
       scenery.destroy();
       crew.destroy();
+      habitat.destroy();
       frames.destroy();
       for (const id of entries.keys()) removeEntry(id);
     }
@@ -1668,24 +2381,24 @@ var lanes = [["try", "Try"], ["keep", "Keep"], ["change", "Change"]];
 function cardsOf(value) {
   return Array.isArray(value) ? value.filter((card) => card && typeof card.id === "string" && typeof card.text === "string" && lanes.some(([id]) => id === card.lane)).slice(0, 100) : defaultCards();
 }
-function createContent(win, body, { read, write: write2, open, library }) {
+function createContent(win, body, { read, write: write2, open, library, explore }) {
   const space = win.space;
   const get = (field, fallback) => read()[field]?.[space] ?? fallback;
   if (win.app === "guide") {
     body.classList.add("guide-content");
     const emblem = el("div", "guide-emblem");
     emblem.append(icon("spark"));
-    body.append(emblem, el("h1", "", "Your other desktop."), el("p", "intro", "A place to figure out how you want things to work."));
+    body.append(emblem, el("h1", "", "A little world for your work."), el("p", "intro", "Your apps have a place here. So do a few neighbors."));
     const instructions = el("div", "guide-instructions");
-    for (const [svg, text] of [["desktop", "Drag windows freely. Drag empty canvas to pan."], ["left", "Pinch to zoom. Twist two fingers to rotate by 15\xB0."], ["pen", "Choose Draw and make the background your own."]]) {
+    for (const [svg, text] of [["desktop", "Move a window. Its crew carries it; the paths follow."], ["left", "Pan, pinch, or twist to see another side of the world."], ["pen", "Draw on the ground, or Plant something and watch it grow."]]) {
       const row = el("p");
       row.append(icon(svg), el("span", "", text));
       instructions.append(row);
     }
     body.append(instructions);
     const actions = el("div", "guide-actions");
-    actions.append(button("Open apps", library, "primary"), button("Start a thought", () => open("note"), "text-button"));
-    body.append(actions, el("p", "small-print", "Fit all brings your windows back. Your little crew helps carry them, then takes a break."));
+    actions.append(button("Explore the world", explore, "primary"), button("Open apps", library, "text-button"));
+    body.append(actions, el("p", "small-print", "Use an app and its garden fills out. Close it and a little house remains. Tap a house to return, or a neighbor to say hello."));
     return {};
   }
   if (win.app === "note") {
@@ -1788,7 +2501,7 @@ function createContent(win, body, { read, write: write2, open, library }) {
       for (const option of durations.children) option.setAttribute("aria-pressed", String(Number(option.dataset.duration) === t.duration));
     };
     body.classList.add("timer-content");
-    const label = el("p", "timer-label", "One thing at a time."), face = el("div", "timer-face"), digits = el("div", "timer-digits");
+    const label2 = el("p", "timer-label", "One thing at a time."), face = el("div", "timer-face"), digits = el("div", "timer-digits");
     const dial = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     dial.setAttribute("viewBox", "0 0 200 200");
     dial.setAttribute("aria-hidden", "true");
@@ -1813,7 +2526,7 @@ function createContent(win, body, { read, write: write2, open, library }) {
     controls.append(toggle, reset);
     const status2 = el("p", "timer-status");
     status2.setAttribute("role", "status");
-    body.append(label, face, durations, controls, status2);
+    body.append(label2, face, durations, controls, status2);
     tick2();
     return { update: tick2, tick: tick2 };
   }
@@ -1826,13 +2539,13 @@ function createContent(win, body, { read, write: write2, open, library }) {
       answer.textContent = String(value.answer);
     };
     body.classList.add("calculator-content");
-    const form = el("form"), label = el("label", "", "Work it out"), input = el("input", "calculation-input");
+    const form = el("form"), label2 = el("label", "", "Work it out"), input = el("input", "calculation-input");
     input.setAttribute("aria-label", "Calculation");
     input.placeholder = "(12 + 8) \xD7 3";
     input.maxLength = 1e3;
     input.inputMode = "decimal";
     input.autocomplete = "off";
-    label.append(input);
+    label2.append(input);
     const answer = el("output", "calculation-answer", "0");
     answer.setAttribute("aria-label", "Answer");
     answer.setAttribute("aria-live", "polite");
@@ -1865,7 +2578,7 @@ function createContent(win, body, { read, write: write2, open, library }) {
     actions.append(clear, plus, equals);
     const error = el("p", "calculation-error");
     error.setAttribute("role", "alert");
-    form.append(label, answer, keys, actions, error);
+    form.append(label2, answer, keys, actions, error);
     body.append(form);
     input.addEventListener("input", store);
     form.addEventListener("submit", (event) => {
@@ -1930,11 +2643,16 @@ var saveError = "";
 var libraryOrigin = null;
 var penColor = INK_COLORS[0];
 var penWidth = 4;
+var plantKind = "flower";
+var worldState = null;
+var noticeTimer = 0;
 var shell = $("#shell");
 var status = $("#save-status");
-function notice(message) {
+function notice(message, { transient = false } = {}) {
+  clearTimeout(noticeTimer);
   $("#notice").textContent = message;
   $("#notice").hidden = !message;
+  if (transient) noticeTimer = setTimeout(() => notice(""), 3e3);
 }
 function updateStatus() {
   status.textContent = saveError ? "Save needs attention" : !sdk ? "Preview \xB7 changes last until reload" : state?.online ? "Spider connected" : "Offline \xB7 edits queued";
@@ -1994,10 +2712,41 @@ function tools({ camera, tool, history }) {
     $("#actual-size").textContent = camera.zoom < 0.01 ? "<1%" : Math.round(camera.zoom * 100) + "%";
     $("#angle").textContent = camera.angle + "\xB0";
   }
-  if (tool) for (const id of ["pan", "draw", "erase"]) $("#" + id).setAttribute("aria-pressed", String(id === tool));
+  if (tool) for (const id of ["pan", "draw", "erase", "plant"]) $("#" + id).setAttribute("aria-pressed", String(id === tool));
   if (history) {
     $("#undo").disabled = !history.undo;
     $("#redo").disabled = !history.redo;
+  }
+}
+function worldStatus(value) {
+  worldState = value;
+  $("#world-title").textContent = value.space === "quiet" ? "Quiet grove" : "Studio commons";
+  $("#world-phase").textContent = value.phase + " \xB7 " + (value.paused ? "Life is resting" : "6 neighbors at home");
+  const gardener = value.people.find((p) => p.action.startsWith("tending"));
+  $("#world-whisper").textContent = value.paused ? "A quiet moment." : gardener ? gardener.name + " is " + gardener.action + "." : "A place for your work to put down roots.";
+  $("#pause-world").textContent = value.paused ? "Resume world" : "Pause world";
+  $("#pause-world").setAttribute("aria-label", value.paused ? "Resume world" : "Pause world");
+  $("#pause-world").setAttribute("aria-pressed", String(value.paused));
+  $("#world-rhythm").textContent = value.reduced ? "Motion follows your system preference." : "A day lasts 24 minutes.";
+  const list = $("#neighbor-list");
+  for (const p of value.people) {
+    let row = list.querySelector('[data-neighbor="' + p.name + '"]');
+    if (!row) {
+      row = el("div", "neighbor-row");
+      row.dataset.neighbor = p.name;
+      const dot = el("span", "neighbor-dot");
+      dot.style.background = p.color;
+      const copy = el("div");
+      copy.append(el("strong", "", p.name), el("span", "neighbor-role", p.role), el("span", "neighbor-action"));
+      const find = button("Find", () => {
+        $("#neighbors-dialog").close();
+        manager.findNeighbor(p.name);
+      }, "neighbor-find");
+      find.setAttribute("aria-label", "Find " + p.name);
+      row.append(dot, copy, find);
+      list.append(row);
+    }
+    row.querySelector(".neighbor-action").textContent = p.action;
   }
 }
 function makeManager(layout) {
@@ -2010,7 +2759,8 @@ function makeManager(layout) {
     write,
     notice,
     onTools: tools,
-    createContent: (win, body) => createContent(win, body, { read: () => data, write, open: (id) => manager.open(id), library: openLibrary }),
+    onWorldState: worldStatus,
+    createContent: (win, body) => createContent(win, body, { read: () => data, write, open: (id) => manager.open(id), library: openLibrary, explore: () => manager.explore() }),
     onChange: (value) => {
       layoutKey = JSON.stringify(value);
       write(["layout"], value);
@@ -2021,6 +2771,7 @@ function makeManager(layout) {
   manager.paint();
   manager.setColor(penColor);
   manager.setWidth(penWidth);
+  manager.setPlantKind(plantKind);
 }
 function receive(next) {
   const switched = session !== next.sessionId || workspace !== next.workspaceId;
@@ -2062,14 +2813,15 @@ $("#search-icon").append(icon("search"));
 $("#fullscreen").append(icon("expand"));
 $("#arrange").append(icon("arrange"), el("span", "", "Arrange"));
 $("#show-desktop").append(icon("desktop"));
+$("#neighbors").append(icon("spark"), el("span", "", "Neighbors"));
 for (const node of document.querySelectorAll("[data-dismiss]")) {
   node.append(icon("close"));
   node.addEventListener("click", () => node.closest("dialog").close());
 }
 for (const dialog of document.querySelectorAll("dialog")) dialog.addEventListener("click", (event) => {
   if (event.target !== dialog) return;
-  const rect = dialog.getBoundingClientRect();
-  if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+  const rect2 = dialog.getBoundingClientRect();
+  if (event.clientX < rect2.left || event.clientX > rect2.right || event.clientY < rect2.top || event.clientY > rect2.bottom) dialog.close();
 });
 function show(dialog) {
   if (!dialog.open) dialog.showModal();
@@ -2087,9 +2839,9 @@ function renderLibrary() {
     item.dataset.app = app.id;
     const mark = el("span", "app-choice-icon");
     mark.append(icon(app.icon));
-    const label = el("span");
-    label.append(el("strong", "", app.name), el("span", "", app.description));
-    item.append(mark, label, icon("arrow"));
+    const label2 = el("span");
+    label2.append(el("strong", "", app.name), el("span", "", app.description));
+    item.append(mark, label2, icon("arrow"));
     results.append(item);
   }
   if (!matches.length) results.append(el("p", "no-matches", "No apps match that search."));
@@ -2160,7 +2912,14 @@ $("#window-picker").addEventListener("change", (event) => {
   if (event.target.value) manager.reveal(event.target.value);
   event.target.value = "";
 });
-for (const id of ["pan", "draw", "erase"]) $("#" + id).addEventListener("click", () => manager.setTool(id));
+for (const id of ["pan", "draw", "erase", "plant"]) $("#" + id).addEventListener("click", () => manager.setTool(id));
+$("#plant-kind").addEventListener("change", (event) => {
+  plantKind = event.target.value;
+  manager.setPlantKind(plantKind);
+});
+$("#explore-world").addEventListener("click", () => manager.explore());
+$("#neighbors").addEventListener("click", () => show($("#neighbors-dialog")));
+$("#pause-world").addEventListener("click", () => write(["worldSettings", "paused"], !worldState?.paused));
 for (const [index, color] of INK_COLORS.entries()) {
   const node = button("", () => {
     penColor = color;
