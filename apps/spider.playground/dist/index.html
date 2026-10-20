@@ -36,7 +36,8 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
 @media(pointer:coarse){.window-control{width:26px;height:26px;min-height:26px}.titlebar{height:46px;min-height:46px}.resize-handle{min-width:10px;min-height:10px}.edge-ne,.edge-nw,.edge-se,.edge-sw{width:20px;height:20px}}
 @media(prefers-reduced-motion:no-preference){dialog[open]{animation:appear .12s ease-out}@keyframes appear{from{opacity:.5}to{opacity:1}}}
 
-#life-canvas{z-index:4}#desktop[data-tool=plant] #canvas-surface{cursor:crosshair}.has-fullscreen>#life-canvas,.has-fullscreen>#world-whisper{display:none}
+#life-canvas{z-index:4}#scenery-fallback{z-index:0}#desktop[data-tool=plant] #canvas-surface{cursor:crosshair}.has-fullscreen>#life-canvas,.has-fullscreen>#world-whisper{display:none}
+.guide-content{padding:20px 28px}.guide-emblem{width:36px;height:36px;margin-bottom:11px}.guide-instructions{margin:15px 0}.guide-actions{margin-bottom:10px}
 .work-heading{gap:10px}.work-heading h1{font-size:18px}.work-heading #world-phase{margin:0 0 2px}.work-heading>div{min-width:160px}#explore-world{font-size:11px;padding:8px 12px;border-radius:7px;background:#dde8d8;border:1px solid #b5c5af;color:#416149;white-space:nowrap}#explore-world:hover{background:#d0e0ca}
 #plant-kind{display:none;width:112px!important;font-size:11px!important}#desktop[data-tool=plant] #plant-kind{display:block}#desktop[data-tool=plant] #ink-colors,#desktop[data-tool=plant] #pen-width{display:none}
 #world-whisper{position:absolute;left:20px;bottom:120px;margin:0;pointer-events:none;z-index:6;color:#4e6b58;font-size:11px;max-width:360px;background:#e4ebd8d9;padding:5px 9px;border-radius:5px}
@@ -60,13 +61,13 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
     </header>
     <div class="work-heading"><div><p id="world-phase">Morning in the commons</p><h1 id="world-title">Studio commons</h1></div><nav id="spaces" aria-label="Workspaces"></nav><button id="explore-world">Explore world</button><button id="search-apps">Search apps <kbd>⌘ K</kbd></button></div>
     <section id="desktop" aria-label="Playground desktop" tabindex="0">
+      <canvas id="scenery-fallback" aria-hidden="true" hidden></canvas>
       <canvas id="scenery" aria-hidden="true"></canvas>
       <canvas id="ink-canvas" aria-hidden="true"></canvas>
       <canvas id="live-ink" aria-hidden="true"></canvas>
       <canvas id="life-canvas" aria-hidden="true"></canvas>
-      <canvas id="crew" aria-hidden="true"></canvas>
       <div id="canvas-surface" aria-hidden="true"></div>
-      <div id="empty" hidden><p>Your apps are at home.<br>Tap a house to open one.</p><button id="empty-open">Browse apps</button></div>
+      <div id="empty" hidden><p>A little room in the current.<br>Tap an app’s glowing marker to return.</p><button id="empty-open">Browse apps</button></div>
       <div id="world"></div>
       <div id="overlay-windows"></div>
       <div id="gesture-shield" hidden aria-hidden="true"></div>
@@ -74,8 +75,8 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
         <button id="pan" aria-label="Pan canvas" aria-pressed="false">Pan</button>
         <button id="draw" aria-label="Draw on canvas" aria-pressed="false">Draw</button>
         <button id="erase" aria-label="Erase drawing" aria-pressed="false">Erase</button>
-        <button id="plant" aria-label="Plant a garden" aria-pressed="false">Plant</button>
-        <select id="plant-kind" aria-label="Plant kind"><option value="flower">Flowers</option><option value="fern">Ferns</option><option value="tree">Trees</option><option value="remove">Remove plant</option></select>
+        <button id="plant" aria-label="Seed the current" aria-pressed="false">Seed</button>
+        <select id="plant-kind" aria-label="Seed kind"><option value="flower">Ripple</option><option value="fern">Eddy</option><option value="tree">Glow</option><option value="remove">Remove seed</option></select>
         <div id="ink-colors" aria-label="Pen colors"></div>
         <select id="pen-width" aria-label="Pen width"><option value="2">Fine</option><option value="4" selected>Medium</option><option value="8">Broad</option></select>
         <button id="undo" aria-label="Undo drawing" disabled>Undo</button><button id="redo" aria-label="Redo drawing" disabled>Redo</button>
@@ -100,8 +101,8 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
     <div id="app-results"></div><p class="dialog-hint">⌘ / Ctrl K to open apps <span>Esc to close</span></p>
   </dialog>
   <dialog id="neighbors-dialog" aria-labelledby="neighbors-title">
-    <div class="dialog-heading"><h2 id="neighbors-title">People of the commons</h2><button class="icon-button" data-dismiss aria-label="Close neighbors"></button></div>
-    <p class="neighbors-intro">Little lives around your work. They visit your apps, tend the gardens, and take a break by the pond. Tap someone in the world to say hello.</p>
+    <div class="dialog-heading"><h2 id="neighbors-title">People of the current</h2><button class="icon-button" data-dismiss aria-label="Close neighbors"></button></div>
+    <p class="neighbors-intro">They follow ripples, visit one another, and make room as windows arrive. Tap someone to say hello. Their footsteps leave little wakes.</p>
     <div id="neighbor-list"></div>
     <div class="world-settings"><button id="pause-world" aria-label="Pause world" aria-pressed="false">Pause world</button><span id="world-rhythm">A day lasts 24 minutes.</span></div>
   </dialog>
@@ -311,14 +312,14 @@ function transformGesture(camera, anchor, mid, scale, rotation) {
 }
 var angleBetween = (a, b) => Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
 var angleDelta = (a, b) => (b - a + 540) % 360 - 180;
-function projectedRect(camera, rect2) {
-  const points = [{ x: rect2.x, y: rect2.y }, { x: rect2.x + rect2.width, y: rect2.y }, { x: rect2.x, y: rect2.y + rect2.height }, { x: rect2.x + rect2.width, y: rect2.y + rect2.height }].map((p) => worldToScreen(camera, p));
+function projectedRect(camera, rect) {
+  const points = [{ x: rect.x, y: rect.y }, { x: rect.x + rect.width, y: rect.y }, { x: rect.x, y: rect.y + rect.height }, { x: rect.x + rect.width, y: rect.y + rect.height }].map((p) => worldToScreen(camera, p));
   const x = Math.min(...points.map((p) => p.x)), y = Math.min(...points.map((p) => p.y));
   return { x, y, width: Math.max(...points.map((p) => p.x)) - x, height: Math.max(...points.map((p) => p.y)) - y };
 }
 function fitWorld(rects, bounds, angle = 0, margin = 48) {
   if (!rects.length) return normalizeCamera({});
-  const rotation = normalizeCamera({ angle }), projected = rects.map((rect2) => projectedRect(rotation, rect2));
+  const rotation = normalizeCamera({ angle }), projected = rects.map((rect) => projectedRect(rotation, rect));
   const left = Math.min(...projected.map((r) => r.x)), top = Math.min(...projected.map((r) => r.y));
   const width = Math.max(...projected.map((r) => r.x + r.width)) - left, height = Math.max(...projected.map((r) => r.y + r.height)) - top;
   const zoom = Math.max(MIN_ZOOM, Math.min(1, Math.max(1, bounds.width - margin * 2) / Math.max(1, width), Math.max(1, bounds.height - margin * 2) / Math.max(1, height)));
@@ -355,13 +356,13 @@ var appById = (id) => APPS.find((app) => app.id === id);
 function boundsOf(bounds) {
   return { width: Math.max(1, finite2(bounds.width, 800)), height: Math.max(1, finite2(bounds.height, 600)) };
 }
-function normalRect(rect2 = {}) {
-  rect2 = rect2 && typeof rect2 === "object" ? rect2 : {};
+function normalRect(rect = {}) {
+  rect = rect && typeof rect === "object" ? rect : {};
   return {
-    x: clamp2(finite2(rect2.x, 40), -WORLD_LIMIT, WORLD_LIMIT),
-    y: clamp2(finite2(rect2.y, 40), -WORLD_LIMIT, WORLD_LIMIT),
-    width: clamp2(finite2(rect2.width, 440), 280, 4e3),
-    height: clamp2(finite2(rect2.height, 360), 210, 4e3)
+    x: clamp2(finite2(rect.x, 40), -WORLD_LIMIT, WORLD_LIMIT),
+    y: clamp2(finite2(rect.y, 40), -WORLD_LIMIT, WORLD_LIMIT),
+    width: clamp2(finite2(rect.width, 440), 280, 4e3),
+    height: clamp2(finite2(rect.height, 360), 210, 4e3)
   };
 }
 function displayRect(win, bounds) {
@@ -378,12 +379,12 @@ function displayRect(win, bounds) {
   }
   return normalRect(win.rect);
 }
-function moveRect(rect2, dx, dy, bounds) {
-  const r = normalRect(rect2);
+function moveRect(rect, dx, dy, bounds) {
+  const r = normalRect(rect);
   return { ...r, x: clamp2(r.x + dx, -WORLD_LIMIT, WORLD_LIMIT), y: clamp2(r.y + dy, -WORLD_LIMIT, WORLD_LIMIT) };
 }
-function resizeRect(rect2, edge, dx, dy, bounds) {
-  const r = normalRect(rect2);
+function resizeRect(rect, edge, dx, dy, bounds) {
+  const r = normalRect(rect);
   let left = r.x, top = r.y, right = r.x + r.width, bottom = r.y + r.height;
   if (edge.includes("w")) left = clamp2(left + dx, right - 4e3, right - 280);
   if (edge.includes("e")) right = clamp2(right + dx, left + 280, left + 4e3);
@@ -394,7 +395,7 @@ function resizeRect(rect2, edge, dx, dy, bounds) {
 function defaultLayout() {
   return { version: 2, space: "studio", cameras: { studio: normalizeCamera(), quiet: normalizeCamera() }, active: { studio: "first-note", quiet: null }, windows: [
     { id: "first-guide", app: "guide", space: "studio", rect: { x: 48, y: 40, width: 470, height: 430 }, mode: "normal", minimized: false, order: 1 },
-    { id: "first-note", app: "note", space: "studio", rect: { x: 480, y: 176, width: 440, height: 360 }, mode: "normal", minimized: false, order: 2 }
+    { id: "first-note", app: "note", space: "studio", rect: { x: 566, y: 76, width: 440, height: 360 }, mode: "normal", minimized: false, order: 2 }
   ] };
 }
 function normalizeLayout(value) {
@@ -417,6 +418,8 @@ function normalizeLayout(value) {
     });
   }
   windows.sort((a, b) => a.order - b.order).forEach((win, i) => win.order = i + 1);
+  const guide = windows.find((w) => w.id === "first-guide"), note = windows.find((w) => w.id === "first-note");
+  if (guide?.rect.x === 48 && guide.rect.y === 40 && guide.rect.width === 470 && guide.rect.height === 430 && note?.rect.x === 480 && note.rect.y === 176 && note.rect.width === 440 && note.rect.height === 360) Object.assign(note.rect, { x: 566, y: 76 });
   const active = {};
   for (const space of spaces) {
     const available = windows.filter((win) => win.space === space && !win.minimized);
@@ -686,7 +689,7 @@ function strokePath(points) {
   return path;
 }
 function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, getCamera, getBounds, notice: notice2, onHistory }) {
-  const ctx = canvas.getContext("2d"), live = liveCanvas.getContext("2d"), cache = /* @__PURE__ */ new Map(), histories = /* @__PURE__ */ new Map();
+  const ctx = canvas.getContext("2d"), live = liveCanvas.getContext("2d"), cache2 = /* @__PURE__ */ new Map(), histories = /* @__PURE__ */ new Map();
   let active = null, excluded = /* @__PURE__ */ new Map(), sceneKey = "", dpr = 1, color = INK_COLORS[0], width = 4, space = "studio", erasePoint = null, lastSource = null;
   const history = () => {
     if (!histories.has(space)) histories.set(space, { undo: [], redo: [] });
@@ -715,7 +718,7 @@ function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, 
       const alive = /* @__PURE__ */ new Set();
       for (const [id, raw] of Object.entries(strokes)) {
         if (!raw || count >= MAX_STROKES) continue;
-        const signature = JSON.stringify(raw), old = cache.get(id);
+        const signature = JSON.stringify(raw), old = cache2.get(id);
         let entry = old?.signature === signature ? old : null;
         if (!entry) {
           const stroke = normalizeStroke(raw);
@@ -726,9 +729,9 @@ function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, 
         points += entry.stroke.points.length;
         count++;
         alive.add(id);
-        cache.set(id, entry);
+        cache2.set(id, entry);
       }
-      for (const id of cache.keys()) if (!alive.has(id)) cache.delete(id);
+      for (const id of cache2.keys()) if (!alive.has(id)) cache2.delete(id);
       invalidate();
     }
     controls();
@@ -743,7 +746,7 @@ function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, 
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     const view = visibleWorld(getCamera(), getBounds(), 16);
-    for (const [id, entry] of cache) {
+    for (const [id, entry] of cache2) {
       const b = entry.bounds;
       if (excluded.has(id) || b.right < view.left || b.left > view.right || b.bottom < view.top || b.top > view.bottom) continue;
       ctx.strokeStyle = entry.stroke.color;
@@ -772,8 +775,8 @@ function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, 
   }
   function begin(point) {
     sync();
-    const total = [...cache.values()].reduce((n, item) => n + item.stroke.points.length, 0);
-    if (cache.size >= MAX_STROKES || total >= MAX_POINTS) {
+    const total = [...cache2.values()].reduce((n, item) => n + item.stroke.points.length, 0);
+    if (cache2.size >= MAX_STROKES || total >= MAX_POINTS) {
       notice2("This canvas is full. Erase a few marks or use the other workspace to keep drawing.");
       return;
     }
@@ -829,7 +832,7 @@ function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, 
     erasePoint = null;
     if (!point) return;
     const radius = 14 / getCamera().zoom;
-    for (const [id, entry] of [...cache].reverse()) if (!excluded.has(id) && strokeHit(point, entry.stroke, radius)) {
+    for (const [id, entry] of [...cache2].reverse()) if (!excluded.has(id) && strokeHit(point, entry.stroke, radius)) {
       excluded.set(id, entry);
       invalidate();
     }
@@ -867,7 +870,7 @@ function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, 
       frames.cancel(paint2);
       frames.cancel(paintLive);
       frames.cancel(eraseFrame);
-      cache.clear();
+      cache2.clear();
       histories.clear();
       active = null;
       excluded.clear();
@@ -875,403 +878,371 @@ function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, 
   };
 }
 
-// ../SpiderPlayground/world-art.js
-var images = /* @__PURE__ */ new Map();
-function image(key2, width, height, draw) {
-  if (images.has(key2)) return images.get(key2);
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  draw(canvas.getContext("2d"));
-  images.set(key2, canvas);
-  return canvas;
+// ../SpiderPlayground/liquid-model.js
+var FIELD_SIZE = 256;
+var MAX_PIXELS = 6e5;
+var MAX_IMPULSES = 32;
+function surfaceSize(width, height, budget = MAX_PIXELS) {
+  const scale = Math.min(1, Math.sqrt(budget / Math.max(1, width * height)));
+  return { width: Math.max(1, Math.floor(width * scale)), height: Math.max(1, Math.floor(height * scale)) };
 }
-var rect = (c, color, x, y, w, h) => {
-  c.fillStyle = color;
-  c.fillRect(x, y, w, h);
-};
-function tree(stage = 3) {
-  return image("tree" + stage, 80, 100, (c) => {
-    if (stage < 3) {
-      const height = [18, 42, 68][stage], width = Math.round(height * 0.8);
-      c.imageSmoothingEnabled = false;
-      c.drawImage(tree(3), 40 - width / 2, 94 - height, width, height);
-      return;
-    }
-    rect(c, "#718c7133", 6, 85, 68, 9);
-    rect(c, "#796e55", 35, 42, 9, 48);
-    rect(c, "#b5a07b", 35, 45, 3, 40);
-    for (const [color, x, y, w, h] of [["#628775", 8, 28, 64, 38], ["#779a7b", 17, 12, 48, 55], ["#91ad83", 25, 4, 30, 64], ["#a9be8a", 21, 17, 32, 17], ["#b7c994", 29, 9, 16, 9], ["#658977", 10, 46, 16, 19], ["#658977", 48, 54, 18, 14]]) rect(c, color, x, y, w, h);
-    for (const [x, y] of [[22, 27], [43, 17], [51, 34], [29, 48]]) rect(c, "#c5d39c", x, y, 4, 4);
-  });
-}
-function plant(kind, stage = 3, color = 0) {
-  return image("plant" + kind + stage + color, 30, 40, (c) => {
-    rect(c, "#718c712d", 5, 34, 23, 4);
-    const top = stage === 0 ? 30 : stage === 1 ? 22 : stage === 2 ? 14 : 6;
-    rect(c, "#63876d", 14, top + 5, 3, 30 - top);
-    rect(c, "#91aa7d", 7, top + 12, 9, 4);
-    rect(c, "#7f9b74", 16, top + 8, 8, 4);
-    if (kind === "fern") {
-      for (let i = 0; i < stage + 2; i++) {
-        rect(c, "#6c9377", 4 + i * 2, 29 - i * 6, 11 - i * 2, 3);
-        rect(c, "#9ab88a", 16, 25 - i * 5, 11 - i * 2, 3);
-      }
-      return;
-    }
-    if (stage > 0) {
-      rect(c, ["#d4a16e", "#b68a9f", "#e1c47f"][color % 3], 10, top, 12, 8);
-      rect(c, "#eee0b0", 14, top + 2, 4, 4);
-    }
-  });
-}
-function house(color, night) {
-  return image("house" + color + night, 92, 94, (c) => {
-    rect(c, "#687b6533", 1, 79, 90, 9);
-    rect(c, "#c5bca1", 16, 36, 62, 44);
-    rect(c, "#e5dfc5", 16, 36, 8, 40);
-    rect(c, "#788b7e", 8, 29, 78, 12);
-    rect(c, color, 16, 20, 62, 13);
-    rect(c, color, 25, 11, 44, 13);
-    rect(c, color, 37, 5, 21, 10);
-    rect(c, "#687964", 38, 53, 17, 27);
-    rect(c, "#baac87", 41, 54, 3, 24);
-    rect(c, "#dfd1a0", 49, 65, 2, 2);
-    for (const x of [25, 62]) {
-      rect(c, "#728a7a", x - 2, 44, 12, 15);
-      rect(c, night ? "#f7d98d" : "#aec6be", x, 46, 8, 11);
-      rect(c, "#d3c7a8", x + 3, 46, 2, 11);
-    }
-    rect(c, "#948d73", 32, 79, 28, 5);
-    rect(c, "#c8bfa2", 28, 84, 36, 4);
-    rect(c, "#8b7d63", 65, 11, 9, 16);
-  });
-}
-function person(color, pose = 0) {
-  return image("person" + color + pose, 24, 32, (c) => {
-    rect(c, "#54716030", 2, 28, 21, 4);
-    const rows = ["....hhhh....", "...hhhhhh...", "...ssssss...", "...skssks...", "....ssss....", "...bbbbbb...", "..sbbbbbbs..", "..sbbbbbbs..", "...bbbbbb...", "...dddddd...", "...dd..dd...", "...kk..kk..."];
-    const palette2 = { h: "#615d52", s: "#deb79a", k: "#354d4c", b: color, d: "#536d72" };
-    rows.forEach((row, y) => [...row].forEach((p, x) => {
-      if (palette2[p]) rect(c, palette2[p], x * 2, y * 2 + (y > 9 ? x < 6 ? pose : -pose : 0), 2, 2);
-    }));
-    rect(c, "#d5c9a4", 5, 0, 14, 3);
-    if (pose === 3) {
-      rect(c, "#deb79a", 20, 9, 3, 7);
-      rect(c, "#deb79a", 19, 7, 4, 3);
-    }
-  });
-}
-var tones = ["#8c9f98", "#af8e9b", "#ae9d70", "#819b80", "#859cae", "#a5a185"];
-var inView = (x, y, w, h, v) => x + w > v.left && x < v.right && y + h > v.top && y < v.bottom;
-function label(c, text, x, y) {
-  c.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
-  c.textAlign = "center";
-  const w = c.measureText(text).width + 16;
-  rect(c, "#edf1dfe8", x - w / 2, y - 12, w, 19);
-  c.fillStyle = "#496452";
-  c.fillText(text, x, y + 1);
-}
-function drawSettlement(c, scene, view, zoom) {
-  if (zoom < 0.1) return;
-  c.lineJoin = "round";
-  c.lineCap = "round";
-  for (const path of scene.roads) {
-    c.beginPath();
-    path.forEach((p, i) => i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y));
-    c.strokeStyle = "#a4ac8a";
-    c.lineWidth = 22;
-    c.stroke();
-    c.strokeStyle = "#d0cbb0";
-    c.lineWidth = 18;
-    c.stroke();
-    c.strokeStyle = "#e1dbc0";
-    c.lineWidth = 2;
-    c.setLineDash([3, 16]);
-    c.stroke();
-    c.setLineDash([]);
-  }
-  const { x, y } = scene.commons;
-  if (inView(x - 200, y - 140, 400, 300, view)) {
-    c.fillStyle = "#b7c49b";
-    c.beginPath();
-    c.ellipse(x, y, 160, 95, -0.12, 0, Math.PI * 2);
-    c.fill();
-    c.fillStyle = "#d7d2b4";
-    c.beginPath();
-    c.ellipse(x, y, 115, 64, 0, 0, Math.PI * 2);
-    c.fill();
-    for (const [color, dx, dy, w, h] of [["#8eab9f", -168, 22, 96, 43], ["#a3beb0", -180, 30, 120, 29], ["#86abb2", -174, 35, 108, 20], ["#b7d3ce", -154, 36, 54, 3], ["#b7d3ce", -118, 47, 33, 2], ["#ddd6b7", -78, 56, 17, 8], ["#ddd6b7", -61, 64, 15, 7]]) rect(c, color, x + dx, y + dy, w, h);
-    for (const dx of [-40, 12]) {
-      rect(c, "#7c8060", x + dx, y - 15, 7, 31);
-      rect(c, "#ba9f70", x + dx - 7, y - 14, 45, 8);
-      rect(c, "#9f8c66", x + dx - 7, y - 4, 45, 5);
-    }
-    c.drawImage(tree(), x - 154, y - 137);
-    c.drawImage(tree(), x + 101, y - 99);
-    for (let i = 0; i < 7; i++) c.drawImage(plant("flower", 3, i % 3), x - 92 + i * 24, y + 64 + i % 2 * 7);
-    if (zoom > 0.32) label(c, scene.space === "quiet" ? "Quiet grove" : "The commons", x, y - 55);
-  }
-  for (const [p, idx] of scene.places.map((p2, i) => [p2, i])) {
-    if (!inView(p.x - 125, p.y - 105, 250, 220, view)) continue;
-    if (p.open) {
-      rect(c, "#9bad8b66", p.x - 70, p.y - 29, 140, 68);
-      rect(c, "#c5c4a1", p.x - 35, p.y - 30, 70, 12);
-      rect(c, "#e2d8b7", p.x - 31, p.y - 28, 62, 7);
-      for (const dx of [-82, 61]) {
-        rect(c, "#9d9172", p.x + dx, p.y - 24, 22, 22);
-        rect(c, "#756f54", p.x + dx + 3, p.y - 21, 16, 15);
-        c.drawImage(plant("flower", Math.min(3, 1 + Math.floor(p.care / 4)), idx), p.x + dx - 3, p.y - 46);
-      }
-    } else c.drawImage(house(tones[idx], scene.phase.night), p.x - 46, p.y - 86);
-    const count = 2 + Math.min(5, Math.floor(p.care / 3));
-    for (let i = 0; i < count; i++) c.drawImage(plant(i % 3 === 0 ? "fern" : "flower", p.care > 3 ? 3 : 2, idx + i), p.x - 93 + i % 2 * 25, p.y + 10 + Math.floor(i / 2) * 16);
-    if (scene.phase.night && p.open && Date.now() - p.lastActiveAt < 18e4) {
-      rect(c, "#e8d49755", p.x - 35, p.y - 20, 70, 25);
-      rect(c, "#ebd59a", p.x - 32, p.y - 21, 64, 3);
-    }
-    if (zoom > 0.32) label(c, p.name, p.x, p.y + 63);
-  }
-  for (const p of scene.plants) {
-    const isTree = p.kind === "tree", w = isTree ? 80 : 30, h = isTree ? 100 : 40;
-    if (inView(p.x - w / 2, p.y - h, w, h, view)) c.drawImage(isTree ? tree(p.stage) : plant(p.kind, p.stage, p.id.charCodeAt(0) % 3), p.x - w / 2, p.y - h + 4);
-  }
-}
-
-// ../SpiderPlayground/scenery.js
-function createScenery({ canvas, frames, getBounds, getCamera, read, getScene }) {
-  const ctx = canvas.getContext("2d", { alpha: false }), tiles = /* @__PURE__ */ new Map();
-  let dpr = 1, appearanceKey = "";
-  function tile(theme, pattern) {
-    const key2 = theme.name + pattern;
-    if (tiles.has(key2)) return tiles.get(key2);
-    const image2 = document.createElement("canvas");
-    image2.width = 512;
-    image2.height = 512;
-    const c = image2.getContext("2d");
-    c.fillStyle = { Tide: "#d5e2d5", Iris: "#dddde0", Grove: "#cfddc4" }[theme.name] || theme.color;
-    c.fillRect(0, 0, 512, 512);
-    if (pattern !== "plain") {
-      c.fillStyle = theme.line + "99";
-      for (let x = 0; x < 512; x += 32) for (let y = 0; y < 512; y += 32) c.fillRect(x, y, 1, 1);
-      if (pattern !== "grid") {
-        for (const [x, y, kind] of [[85, 110, 0], [368, 332, 1], [190, 440, 0]]) {
-          c.fillStyle = "#b8c9c066";
-          c.fillRect(x - 12, y + 8, 36, 5);
-          c.fillStyle = "#7d9e8c";
-          c.fillRect(x + 2, y - 5, 3, 15);
-          c.fillRect(x - 6, y, 8, 3);
-          c.fillRect(x + 5, y - 8, 7, 3);
-          c.fillStyle = kind ? "#d49b79" : "#a9bca0";
-          c.fillRect(x - 8, y - 4, 7, 6);
-          c.fillRect(x + 9, y - 12, 6, 6);
-          c.fillStyle = "#eaf0e5";
-          c.fillRect(x - 6, y - 4, 2, 2);
-          c.fillRect(x + 11, y - 12, 2, 2);
-        }
-        for (let i = 0; i < 100; i++) {
-          const x = (i * 137 + 41) % 512, y = (i * 191 + 29) % 512;
-          c.fillStyle = i % 3 ? "#96b29833" : "#edf0c966";
-          c.fillRect(x, y, 3, 2);
-          if (i % 4 === 0) c.fillRect(x + 2, y - 3, 2, 4);
-        }
-      }
-    }
-    const value = ctx.createPattern(image2, "repeat");
-    tiles.set(key2, value);
-    return value;
-  }
-  function paint2() {
-    const appearance = read().appearance || {}, theme = THEMES[appearance.theme] || THEMES.tide, pattern = ["plain", "grid"].includes(appearance.pattern) ? appearance.pattern : "workshop";
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (getCamera().zoom < 0.2) ctx.fillStyle = theme.color;
-    else {
-      const patternFill = tile(theme, pattern);
-      patternFill.setTransform(new DOMMatrix(cameraMatrix(getCamera())));
-      ctx.fillStyle = patternFill;
-    }
-    ctx.fillRect(0, 0, getBounds().width, getBounds().height);
-    const scene = getScene?.();
-    if (scene) {
-      ctx.save();
-      ctx.setTransform(...cameraMatrix(getCamera(), dpr));
-      ctx.imageSmoothingEnabled = false;
-      drawSettlement(ctx, scene, visibleWorld(getCamera(), getBounds(), 120), getCamera().zoom);
-      ctx.restore();
-      ctx.fillStyle = scene.phase.light;
-      ctx.globalAlpha = scene.phase.tint;
-      ctx.fillRect(0, 0, getBounds().width, getBounds().height);
-      ctx.globalAlpha = 1;
-    }
-  }
-  const invalidate = () => frames.request(paint2);
-  return { invalidate, resize() {
-    dpr = sizeCanvas(canvas, getBounds());
-    invalidate();
-  }, sync() {
-    const key2 = JSON.stringify(read().appearance);
-    if (key2 !== appearanceKey) {
-      appearanceKey = key2;
-      invalidate();
-    }
-  }, destroy() {
-    frames.cancel(paint2);
-    tiles.clear();
+function createImpulsePool(limit = MAX_IMPULSES) {
+  const points = [];
+  return { add(p, radius = 65, strength = 0.08) {
+    if (!Number.isFinite(p?.x) || !Number.isFinite(p?.y)) return;
+    points.push({ x: p.x, y: p.y, radius: Math.max(8, Math.min(500, radius)), strength: Math.max(5e-3, Math.min(0.2, strength)) });
+    if (points.length > limit) points.shift();
+  }, drain() {
+    return points.splice(0);
+  }, clear() {
+    points.length = 0;
+  }, get size() {
+    return points.length;
   } };
 }
 
-// ../SpiderPlayground/crew.js
-var palette = { h: "#e8b46c", H: "#f5d190", s: "#e4b99b", d: "#334951", b: "#587e82", B: "#87aaa5", w: "#f1eee0", k: "#253942" };
-var standing = [
-  "....HHHH....",
-  "...HHHHHH...",
-  "..hhhhhhhh..",
-  "...ssssss...",
-  "...skssks...",
-  "....ssss....",
-  "..ssbbbbss..",
-  ".ssbbbbbbss.",
-  "..bbbbbbbb..",
-  "...bBBBBb...",
-  "...bb..bb...",
-  "...dd..dd...",
-  "...dd..dd...",
-  "..kkk..kkk.."
-];
-var seated = [
-  "....HHHH....",
-  "...HHHHHH...",
-  "..hhhhhhhh..",
-  "...ssssss...",
-  "...skssks...",
-  "....ssss....",
-  "...bbbbbb...",
-  "..ssbbbbss..",
-  "...bBBBBb...",
-  "...dd..dd...",
-  "...dddddd...",
-  "..kkkkkkkk.."
-];
-function sprite(rows, step = 0) {
-  const image2 = document.createElement("canvas");
-  image2.width = 28;
-  image2.height = 32;
-  const c = image2.getContext("2d");
-  rows.forEach((row, y) => [...row].forEach((pixel, x) => {
-    if (!palette[pixel]) return;
-    const offset = y > 10 && step ? x < 6 ? step : -step : 0;
-    c.fillStyle = palette[pixel];
-    c.fillRect(x * 2 + 2, y * 2 + offset, 2, 2);
-  }));
-  return image2;
-}
-function createCrew({ canvas, frames, getBounds, getCamera, getWindows }) {
-  const ctx = canvas.getContext("2d"), sprites = [sprite(standing, -2), sprite(standing, 2), sprite(seated)], motion = /* @__PURE__ */ new Map();
-  let dpr = 1, hidden = document.hidden, reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const events = new AbortController(), media = matchMedia("(prefers-reduced-motion: reduce)");
-  function setMoving(id, moving) {
-    const now = performance.now(), entry = motion.get(id) || { started: now, rect: null, speed: 0, last: now };
-    entry.moving = moving;
-    entry.released = moving ? 0 : now;
-    entry.started = moving ? now : entry.started;
-    motion.set(id, entry);
-    canvas.dataset.motion = moving ? "moving" : reduced ? "idle" : "settling";
-    invalidate();
+// ../SpiderPlayground/liquid-surface.js
+var vertex = `attribute vec2 aPosition;varying vec2 vUV;void main(){vUV=aPosition*.5+.5;gl_Position=vec4(aPosition,0.,1.);}`;
+var common = `precision highp float;
+varying vec2 vUV;uniform vec2 uView;uniform vec4 uCamera;
+vec2 world(vec2 uv){vec2 p=vec2(uv.x,1.-uv.y)*uView-uCamera.xy;return vec2(uCamera.z*p.x+uCamera.w*p.y,-uCamera.w*p.x+uCamera.z*p.y)/max(.0000000001,dot(uCamera.zw,uCamera.zw));}
+vec2 project(vec2 p,vec4 camera,vec2 view){vec2 s=vec2(camera.z*p.x-camera.w*p.y,camera.w*p.x+camera.z*p.y)+camera.xy;return vec2(s.x/view.x,1.-s.y/view.y);}
+`;
+var update = `${common}
+uniform sampler2D uState;uniform vec4 uPrevious;uniform vec2 uPreviousView;uniform float uTime;uniform float uAdvance;
+vec2 sampleState(vec2 uv){if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.)return vec2(.5019608);return texture2D(uState,uv).rg;}
+void main(){
+ vec2 p=world(vUV),uv=project(p,uPrevious,uPreviousView);uv-=vec2(sin(p.y*.004+uTime*.17),cos(p.x*.003-uTime*.13))*.00045*uAdvance;
+ vec2 h=sampleState(uv);vec2 cell=vec2(1./256.,0.);
+ float lap=sampleState(uv+cell).r+sampleState(uv-cell).r+sampleState(uv+cell.yx).r+sampleState(uv-cell.yx).r-4.*h.r;
+ float next=.5019608+(2.*h.r-h.g+.23*lap-.5019608)*.985;
+ gl_FragColor=vec4(mix(h.r,clamp(next,.12,.88),uAdvance),mix(h.g,h.r,uAdvance),0.,1.);
+}`;
+var display = `${common}
+uniform sampler2D uState;uniform vec4 uWindows[6];uniform int uCount;uniform float uTime;uniform float uNight;uniform vec3 uTint;uniform float uPattern;
+float box(vec2 p,vec4 r){vec2 q=abs(p-r.xy)-max(vec2(0.),r.zw-24.);return length(max(q,0.))+min(max(q.x,q.y),0.)-24.;}
+void main(){
+ vec2 p=world(vUV);float t=uTime;vec2 cell=vec2(1./256.,0.);float h=(texture2D(uState,vUV).r-.5019608)*4.;
+ vec2 grad=vec2(texture2D(uState,vUV+cell).r-texture2D(uState,vUV-cell).r,texture2D(uState,vUV+cell.yx).r-texture2D(uState,vUV-cell.yx).r);
+ float terrain=.5+.21*sin(p.x*.0037+sin(p.y*.0029+t*.12)*1.6)+.17*cos(p.y*.0043-t*.1+sin(p.x*.002)*1.2);
+ float distance=100000.;for(int i=0;i<6;i++){if(i<uCount){float d=box(p,uWindows[i]);float k=90.;float a=clamp(.5+.5*(distance-d)/k,0.,1.);distance=mix(distance,d,a)-k*a*(1.-a);}}
+ float shore=exp(-abs(distance)*.008),swell=sin(distance*.027-t*.9)*exp(-abs(distance)*.005);
+ float f=terrain+h*.6+swell*.08;vec3 deep=vec3(.41,.64,.69),pearl=vec3(.86,.92,.9),violet=vec3(.68,.68,.81),gold=vec3(.94,.89,.72);
+ vec3 color=mix(deep,pearl,smoothstep(.05,.85,f));color=mix(color,violet,(.5+.5*sin(f*7.+t*.1))*.22);
+ color=mix(color,gold,shore*.34);color=mix(color,pearl,(1.-smoothstep(-60.,65.,distance))*.38);
+ float contours=1.-smoothstep(.018,.065,abs(fract(f*7.+shore*.9)-.5));color+=vec3(.11,.16,.13)*contours*(uPattern>1.5?.03:uPattern>.5?.65:.32);
+ color+=vec3(.7,.85,.8)*clamp(dot(grad,vec2(-4.,6.)),0.,.16);color=mix(color,color*uTint,.2);color=mix(color,color*vec3(.65,.73,.86),uNight*.8);
+ gl_FragColor=vec4(color,1.);
+}`;
+var pointVertex = `precision highp float;attribute vec4 aSource;uniform vec4 uCamera;uniform vec2 uView;uniform float uTime;uniform float uMaxPoint;varying float vPower;
+void main(){vec2 p=vec2(uCamera.z*aSource.x-uCamera.w*aSource.y,uCamera.w*aSource.x+uCamera.z*aSource.y)+uCamera.xy;gl_Position=vec4(p.x/uView.x*2.-1.,1.-p.y/uView.y*2.,0.,1.);gl_PointSize=clamp(aSource.z*length(uCamera.zw)*256./uView.x*2.,2.,uMaxPoint);vPower=aSource.w*(.8+.2*sin(uTime+aSource.x*.01));}`;
+var pointFragment = `precision mediump float;varying float vPower;void main(){vec2 p=gl_PointCoord*2.-1.;gl_FragColor=vec4(exp(-dot(p,p)*5.)*vPower,0.,0.,0.);}`;
+function createScenery({ canvas, fallback, stage, frames, getBounds, getCamera, getWindows, read, getScene }) {
+  const events = new AbortController(), media = matchMedia("(prefers-reduced-motion: reduce)"), pool = createImpulsePool(), births = /* @__PURE__ */ new Map(), positions = /* @__PURE__ */ new Map();
+  let gl = null, resources = null, lost = false, disposed = false, timer = 0, last = 0, time = 0, inView = true, previous = null, previousView = null, appearanceKey = "", seedScene = null, seeds = new Float32Array(), frameCount = 0;
+  const fallbackCtx = fallback.getContext("2d", { alpha: false });
+  const cameraVector = (c) => {
+    const a = c.angle * Math.PI / 180;
+    return new Float32Array([c.x, c.y, Math.cos(a) * c.zoom, Math.sin(a) * c.zoom]);
+  };
+  const frozen = () => media.matches || !!read().worldSettings?.paused || stage.classList.contains("has-fullscreen");
+  function stop() {
+    clearTimeout(timer);
+    timer = 0;
+    frames.cancel(paint2);
+    last = 0;
+  }
+  function fail() {
+    resources = null;
+    canvas.hidden = true;
+    fallback.hidden = false;
+    canvas.dataset.renderer = "canvas-fallback";
+  }
+  function initialize() {
+    try {
+      let shader = function(type, source) {
+        const s = gl.createShader(type);
+        shaders.push(s);
+        gl.shaderSource(s, source);
+        gl.compileShader(s);
+        return s;
+      }, program = function(v, f, names) {
+        const p = gl.createProgram();
+        programs.push(p);
+        gl.attachShader(p, shader(gl.VERTEX_SHADER, v));
+        gl.attachShader(p, shader(gl.FRAGMENT_SHADER, f));
+        gl.linkProgram(p);
+        if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw Error(gl.getProgramInfoLog(p) + " " + shaders.map((s) => gl.getShaderInfoLog(s)).join(" "));
+        return { p, uniforms: Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)])), attribute: gl.getAttribLocation(p, v === vertex ? "aPosition" : "aSource") };
+      }, buffer = function(data2) {
+        const b = gl.createBuffer();
+        buffers.push(b);
+        gl.bindBuffer(gl.ARRAY_BUFFER, b);
+        gl.bufferData(gl.ARRAY_BUFFER, data2, gl.DYNAMIC_DRAW);
+        return b;
+      };
+      gl = canvas.getContext("webgl", { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: "low-power" });
+      if (!gl) {
+        fail();
+        return;
+      }
+      const shaders = [], programs = [], buffers = [], textures = [], framebuffers = [];
+      resources = { shaders, programs, buffers, textures, framebuffers };
+      resources.update = program(vertex, update, ["uView", "uCamera", "uPrevious", "uPreviousView", "uState", "uTime", "uAdvance"]);
+      resources.display = program(vertex, display, ["uView", "uCamera", "uState", "uWindows[0]", "uCount", "uTime", "uNight", "uTint", "uPattern"]);
+      resources.points = program(pointVertex, pointFragment, ["uView", "uCamera", "uTime", "uMaxPoint"]);
+      resources.quad = buffer(new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]));
+      resources.sources = buffer(16);
+      for (let i = 0; i < 2; i++) {
+        const texture = gl.createTexture();
+        textures.push(texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, FIELD_SIZE, FIELD_SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        const fbo = gl.createFramebuffer();
+        framebuffers.push(fbo);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+        if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw Error("Incomplete liquid field");
+        gl.clearColor(0.5019608, 0.5019608, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+      }
+      resources.front = 0;
+      resources.maxPoint = Math.min(128, gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE)[1]);
+      previous = cameraVector(getCamera());
+      previousView = [getBounds().width, getBounds().height];
+      lost = false;
+      canvas.hidden = false;
+      fallback.hidden = true;
+      canvas.dataset.renderer = "webgl";
+      canvas.dataset.grid = String(FIELD_SIZE);
+    } catch (error) {
+      canvas.dataset.error = String(error.message).slice(0, 500);
+      release();
+      fail();
+    }
+  }
+  function release() {
+    if (gl && resources && !lost) {
+      for (const b of resources.buffers) gl.deleteBuffer(b);
+      for (const t of resources.textures) gl.deleteTexture(t);
+      for (const f of resources.framebuffers) gl.deleteFramebuffer(f);
+      for (const p of resources.programs) gl.deleteProgram(p);
+      for (const s of resources.shaders) gl.deleteShader(s);
+    }
+    resources = null;
+  }
+  function shapes(now) {
+    const wins = getWindows().slice(0, 6), alive = new Set(wins.map((w) => w.id));
+    for (const id of births.keys()) if (!alive.has(id)) {
+      births.delete(id);
+      positions.delete(id);
+    }
+    return wins.map((w) => {
+      if (!births.has(w.id)) {
+        births.set(w.id, now);
+        pool.add({ x: w.rect.x + w.rect.width / 2, y: w.rect.y + w.rect.height / 2 }, 300, 0.12);
+      }
+      const t = media.matches ? 1 : Math.min(1, (now - births.get(w.id)) / 620), ease = 1 - Math.pow(1 - t, 3), r = w.rect, old = positions.get(w.id);
+      if (old) {
+        const dx = r.x - old.x, dy = r.y - old.y;
+        if (Math.hypot(dx, dy) > 1 || r.width !== old.width || r.height !== old.height) pool.add({ x: r.x + r.width / 2 - Math.sign(dx) * r.width / 2, y: r.y + r.height / 2 - Math.sign(dy) * r.height / 2 }, 120, 0.06);
+      }
+      positions.set(w.id, { ...r });
+      return { x: r.x + r.width * (1 - ease) / 2, y: r.y + r.height * (1 - ease) / 2, width: r.width * ease, height: r.height * ease };
+    });
+  }
+  function use(program, c) {
+    gl.useProgram(program.p);
+    gl.uniform2f(program.uniforms.uView, getBounds().width, getBounds().height);
+    gl.uniform4fv(program.uniforms.uCamera, c);
+    if (program.uniforms.uTime) gl.uniform1f(program.uniforms.uTime, time);
+  }
+  function quad(p) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, resources.quad);
+    gl.enableVertexAttribArray(p.attribute);
+    gl.vertexAttribPointer(p.attribute, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.disableVertexAttribArray(p.attribute);
+  }
+  function splat(data2, c) {
+    if (!data2.length) return;
+    const p = resources.points;
+    use(p, c);
+    gl.uniform1f(p.uniforms.uMaxPoint, resources.maxPoint);
+    gl.bindBuffer(gl.ARRAY_BUFFER, resources.sources);
+    gl.bufferData(gl.ARRAY_BUFFER, data2, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(p.attribute);
+    gl.vertexAttribPointer(p.attribute, 4, gl.FLOAT, false, 0, 0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
+    gl.colorMask(true, false, false, false);
+    gl.drawArrays(gl.POINTS, 0, data2.length / 4);
+    gl.colorMask(true, true, true, true);
+    gl.disable(gl.BLEND);
+    gl.disableVertexAttribArray(p.attribute);
+  }
+  function paintGPU(rects, impulses, advance) {
+    const c = cameraVector(getCamera()), r = resources, next = 1 - r.front;
+    gl.viewport(0, 0, FIELD_SIZE, FIELD_SIZE);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffers[next]);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, r.textures[r.front]);
+    use(r.update, c);
+    gl.uniform4fv(r.update.uniforms.uPrevious, previous || c);
+    gl.uniform2fv(r.update.uniforms.uPreviousView, previousView || [getBounds().width, getBounds().height]);
+    gl.uniform1f(r.update.uniforms.uAdvance, advance ? 1 : 0);
+    gl.uniform1i(r.update.uniforms.uState, 0);
+    quad(r.update);
+    const scene = getScene();
+    if (scene !== seedScene) {
+      seedScene = scene;
+      seeds = new Float32Array((scene?.plants || []).flatMap((p) => [p.x, p.y, p.kind === "tree" ? 100 : p.kind === "fern" ? 65 : 35, 8e-3 + p.stage * 2e-3]));
+    }
+    if (advance) splat(seeds, c);
+    splat(new Float32Array(impulses.flatMap((p) => [p.x, p.y, p.radius, p.strength])), c);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.bindTexture(gl.TEXTURE_2D, r.textures[next]);
+    use(r.display, c);
+    gl.uniform1i(r.display.uniforms.uState, 0);
+    const windows = new Float32Array(24);
+    rects.forEach((v, i) => windows.set([v.x + v.width / 2, v.y + v.height / 2, v.width / 2, v.height / 2], i * 4));
+    gl.uniform4fv(r.display.uniforms["uWindows[0]"], windows);
+    gl.uniform1i(r.display.uniforms.uCount, rects.length);
+    gl.uniform1f(r.display.uniforms.uNight, scene?.phase.night ? 0.35 : 0);
+    const appearance = read().appearance || {}, theme = appearance.theme;
+    gl.uniform3fv(r.display.uniforms.uTint, theme === "iris" ? [1, 0.87, 1.12] : theme === "grove" ? [0.86, 1.05, 0.86] : [0.88, 1.03, 1.08]);
+    gl.uniform1f(r.display.uniforms.uPattern, appearance.pattern === "plain" ? 2 : appearance.pattern === "grid" ? 1 : 0);
+    quad(r.display);
+    r.front = next;
+    previous = c;
+    previousView = [getBounds().width, getBounds().height];
+  }
+  function paintFallback(rects, impulses) {
+    const c = fallbackCtx, b = getBounds();
+    c.setTransform(fallback.width / b.width, 0, 0, fallback.height / b.height, 0, 0);
+    const g = c.createLinearGradient(0, 0, b.width, b.height);
+    g.addColorStop(0, "#d3e4e0");
+    g.addColorStop(0.5, "#a9cbd1");
+    g.addColorStop(1, "#ccc7d9");
+    c.fillStyle = g;
+    c.fillRect(0, 0, b.width, b.height);
+    c.save();
+    c.transform(...cameraMatrix(getCamera()));
+    for (const r of rects) for (let i = 5; i >= 0; i--) {
+      c.strokeStyle = i % 2 ? "#ecedd466" : "#7baeb46b";
+      c.lineWidth = 10;
+      c.beginPath();
+      c.roundRect(r.x - i * 20, r.y - i * 20, r.width + i * 40, r.height + i * 40, 30 + i * 6);
+      c.stroke();
+    }
+    c.strokeStyle = "#f5edc9";
+    c.lineWidth = 3;
+    for (const p of impulses) {
+      c.beginPath();
+      c.arc(p.x, p.y, p.radius * 0.5, 0, Math.PI * 2);
+      c.stroke();
+    }
+    c.restore();
   }
   function paint2(now = performance.now()) {
-    if (hidden) return;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.imageSmoothingEnabled = false;
-    if (getCamera().zoom < 0.15) {
-      canvas.dataset.motion = "idle";
-      return;
-    }
-    ctx.setTransform(...cameraMatrix(getCamera(), dpr));
-    const view = visibleWorld(getCamera(), getBounds(), 60), alive = /* @__PURE__ */ new Set();
-    let animate = false;
-    for (const win of getWindows()) {
-      if (win.mode !== "normal" || win.minimized) continue;
-      alive.add(win.id);
-      const r = win.rect;
-      if (r.x + r.width + 40 < view.left || r.x - 40 > view.right || r.y + r.height + 50 < view.top || r.y > view.bottom) continue;
-      const m = motion.get(win.id), moving = !!m?.moving, elapsed = m?.released ? now - m.released : 1e4, settling = elapsed < 650;
-      let speed = 0, lean = 0, bounce = 0, squash = 1;
-      if (moving && m) {
-        if (m.rect) {
-          const dt = Math.max(8, now - m.last);
-          m.speed = m.speed * 0.5 + (r.x - m.rect.x) / dt * 0.5;
-          if (r.x !== m.rect.x || r.y !== m.rect.y || r.width !== m.rect.width || r.height !== m.rect.height) m.lastMove = now;
-        } else m.lastMove = now;
-        m.rect = { ...r };
-        m.last = now;
-        speed = Math.min(1, Math.abs(m.speed));
-        if (!reduced && now - m.lastMove < 160) {
-          lean = Math.max(-0.22, Math.min(0.22, m.speed * 0.13));
-          bounce = Math.sin(now * 0.028) * Math.min(2.2, 1 + speed);
-          squash = 1 + 0.12 * Math.sin((now - m.started) * 0.028);
-          animate = true;
-        }
-      } else if (settling && !reduced) {
-        bounce = -Math.sin(elapsed * 0.025) * Math.exp(-elapsed / 180) * 4;
-        squash = 1 + Math.sin(elapsed * 0.025) * Math.exp(-elapsed / 150) * 0.17;
-        animate = true;
-      }
-      const image2 = moving ? sprites[Math.floor(now / 110) % 2] : sprites[2];
-      if (moving) {
-        ctx.fillStyle = "#91a8aa";
-        ctx.fillRect(r.x + 20, r.y + r.height + 1, Math.max(0, r.width - 40), 2);
-      }
-      for (let i = 0; i < 2; i++) {
-        const x = i === 0 ? r.x + 18 : r.x + r.width - 46, y = r.y + r.height + (moving ? 3 : 1);
-        ctx.save();
-        ctx.translate(x + 14, y + 28 + bounce);
-        ctx.rotate(lean);
-        ctx.scale(1 / squash, squash);
-        ctx.drawImage(image2, -14, -28);
-        ctx.restore();
-        if (settling && elapsed < 260 && !reduced) {
-          ctx.fillStyle = "#a9bfc0";
-          const spread = elapsed * 0.035;
-          ctx.fillRect(x - spread, y + 28, 3, 2);
-          ctx.fillRect(x + 24 + spread, y + 27, 2, 2);
-        }
-      }
-    }
-    for (const id of motion.keys()) if (!alive.has(id)) motion.delete(id);
-    const state2 = animate ? [...motion.values()].some((m) => m.moving) ? "moving" : "settling" : "idle";
-    if (canvas.dataset.motion !== state2) canvas.dataset.motion = state2;
-    if (animate) frames.request(paint2);
+    clearTimeout(timer);
+    timer = 0;
+    if (disposed || document.hidden || !inView) return;
+    const paused = frozen(), dt = last ? Math.min(0.06, (now - last) / 1e3) : 0;
+    last = now;
+    if (!paused) time += dt;
+    const rects = shapes(now), impulses = pool.drain();
+    if (resources && !lost) paintGPU(rects, impulses, !paused);
+    else paintFallback(rects, impulses);
+    frameCount++;
+    canvas.dataset.motion = paused ? "paused" : "flowing";
+    if (frameCount % 30 === 0) canvas.dataset.frames = String(frameCount);
+    if (!paused) timer = setTimeout(() => frames.request(paint2), 22);
   }
   function invalidate() {
-    if (!hidden) frames.request(paint2);
+    if (!disposed && !document.hidden && inView) frames.request(paint2);
   }
-  document.addEventListener("visibilitychange", () => {
-    hidden = document.hidden;
-    if (hidden) frames.cancel(paint2);
-    else invalidate();
-  }, { signal: events.signal });
-  media.addEventListener("change", () => {
-    reduced = media.matches;
+  const observer = new IntersectionObserver((entries) => {
+    inView = entries[0].isIntersecting;
+    if (inView) invalidate();
+    else stop();
+  });
+  observer.observe(stage);
+  canvas.addEventListener("webglcontextlost", (event) => {
+    event.preventDefault();
+    lost = true;
+    resources = null;
+    canvas.hidden = true;
+    fallback.hidden = false;
+    canvas.dataset.renderer = "context-lost";
     invalidate();
   }, { signal: events.signal });
-  return { invalidate, setMoving, resize() {
-    dpr = sizeCanvas(canvas, getBounds());
+  canvas.addEventListener("webglcontextrestored", () => {
+    initialize();
     invalidate();
-  }, destroy() {
-    events.abort();
-    frames.cancel(paint2);
-    motion.clear();
-  } };
+  }, { signal: events.signal });
+  document.addEventListener("visibilitychange", () => document.hidden ? stop() : invalidate(), { signal: events.signal });
+  media.addEventListener("change", invalidate, { signal: events.signal });
+  initialize();
+  return {
+    invalidate,
+    poke(p, radius, strength) {
+      pool.add(p, radius, strength);
+      invalidate();
+    },
+    resize() {
+      const s = surfaceSize(getBounds().width, getBounds().height);
+      canvas.width = fallback.width = s.width;
+      canvas.height = fallback.height = s.height;
+      canvas.dataset.pixels = String(s.width * s.height);
+      invalidate();
+    },
+    sync() {
+      const key2 = JSON.stringify([read().appearance, read().worldSettings]);
+      if (key2 !== appearanceKey) {
+        appearanceKey = key2;
+        invalidate();
+      }
+    },
+    destroy() {
+      disposed = true;
+      stop();
+      observer.disconnect();
+      events.abort();
+      pool.clear();
+      release();
+      births.clear();
+      positions.clear();
+    }
+  };
+}
+
+// ../SpiderPlayground/placement.js
+var separated = (a, b, gap = 38) => a.x + a.width + gap <= b.x || b.x + b.width + gap <= a.x || a.y + a.height + gap <= b.y || b.y + b.height + gap <= a.y;
+function placeWindow(size, windows, center) {
+  const occupied = windows.filter((w) => !w.minimized && w.mode === "normal").map((w) => w.rect), gap = 44;
+  const origin = { x: center.x - size.width / 2, y: center.y - size.height / 2, ...size }, candidates = [origin];
+  for (const r of occupied) {
+    candidates.push({ ...origin, x: r.x + r.width + gap, y: r.y }, { ...origin, x: r.x - size.width - gap, y: r.y }, { ...origin, x: r.x, y: r.y + r.height + gap }, { ...origin, x: r.x, y: r.y - size.height - gap });
+  }
+  const free = candidates.filter((r) => occupied.every((other) => separated(r, other, gap)));
+  if (free.length) return free.sort((a, b) => Math.hypot(a.x + size.width / 2 - center.x, a.y + size.height / 2 - center.y) - Math.hypot(b.x + size.width / 2 - center.x, b.y + size.height / 2 - center.y))[0];
+  const right = Math.max(origin.x, ...occupied.map((r) => r.x + r.width + gap));
+  return { ...origin, x: right };
 }
 
 // ../SpiderPlayground/world-model.js
 var MAX_PLANTS = 192;
 var NEIGHBORS = [
-  { name: "Pip", role: "keeps the paths", color: "#6c8c9c" },
-  { name: "Moss", role: "tends the gardens", color: "#769777" },
-  { name: "Nori", role: "visits the workshops", color: "#b98572" },
-  { name: "Tavi", role: "looks after the commons", color: "#b6a168" },
+  { name: "Pip", role: "follows the ripples", color: "#6c8c9c" },
+  { name: "Moss", role: "grows little currents", color: "#769777" },
+  { name: "Nori", role: "explores the islands", color: "#b98572" },
+  { name: "Tavi", role: "likes a little company", color: "#b6a168" },
   { name: "Bea", role: "collects little ideas", color: "#9b86ab" },
   { name: "Rue", role: "takes the long way home", color: "#7b9f9e" }
 ];
@@ -1299,15 +1270,15 @@ function dayPhase(now, startedAt) {
   if (fraction < 0.84) return { name: "Dusk", light: "#7f7f9c", tint: 0.17, night: true };
   return { name: "Night", light: "#344b66", tint: 0.25, night: true };
 }
-function growthStage(plant2, now) {
-  return Math.max(0, Math.min(3, Math.floor((now - plant2.plantedAt) / (plant2.kind === "tree" ? 5 * 60 * 1e3 : 90 * 1e3))));
+function growthStage(plant, now) {
+  return Math.max(0, Math.min(3, Math.floor((now - plant.plantedAt) / (plant.kind === "tree" ? 5 * 60 * 1e3 : 90 * 1e3))));
 }
 function siteForWindow(win) {
   return { x: Math.round(win.rect.x + win.rect.width / 2), y: Math.round(win.rect.y + win.rect.height + 34) };
 }
-var inside = (point, rect2) => point.x > rect2.x && point.x < rect2.x + rect2.width && point.y > rect2.y && point.y < rect2.y + rect2.height;
+var inside = (point, rect) => point.x > rect.x && point.x < rect.x + rect.width && point.y > rect.y && point.y < rect.y + rect.height;
 function walkable(point, obstacles) {
-  if (!obstacles.some((rect2) => inside(point, rect2))) return { ...point };
+  if (!obstacles.some((rect) => inside(point, rect))) return { ...point };
   const candidates = [];
   for (const r of obstacles) {
     const left = r.x - 2, right = r.x + r.width + 2, top = r.y - 2, bottom = r.y + r.height + 2;
@@ -1344,10 +1315,10 @@ function buildRoutes(targets, obstacles) {
     edges[i].push([j, distance]);
     edges[j].push([i, distance]);
   }
-  const indices = safe.map((p) => p ? nodes.findIndex((n) => n.x === p.x && n.y === p.y) : -1), cache = /* @__PURE__ */ new Map();
+  const indices = safe.map((p) => p ? nodes.findIndex((n) => n.x === p.x && n.y === p.y) : -1), cache2 = /* @__PURE__ */ new Map();
   function route(from, to) {
     const key2 = from + ":" + to;
-    if (cache.has(key2)) return cache.get(key2);
+    if (cache2.has(key2)) return cache2.get(key2);
     const start = indices[from], end = indices[to];
     if (start < 0 || end < 0) return [];
     const distances = nodes.map(() => Infinity), previous = nodes.map(() => -1), seen = /* @__PURE__ */ new Set();
@@ -1368,7 +1339,7 @@ function buildRoutes(targets, obstacles) {
       path.unshift(nodes[id]);
       if (id === start) break;
     }
-    cache.set(key2, path);
+    cache2.set(key2, path);
     return path;
   }
   return { route, points: safe, obstacles };
@@ -1378,24 +1349,122 @@ function buildSettlement(state2, windows, space, now = Date.now()) {
     const win = windows.find((win2) => win2.space === space && win2.app === app.id && !win2.minimized && win2.mode === "normal");
     return { id: app.id, name: app.name, ...state2.places[app.id], open: !!win, window: win?.rect || null };
   });
-  const obstacles = places.map((place) => place.open ? { x: place.window.x - 14, y: place.window.y - 14, width: place.window.width + 28, height: place.window.height + 28 } : { x: place.x - 38, y: place.y - 65, width: 76, height: 70 });
+  const obstacles = places.map((place) => place.open ? { x: place.window.x - 44, y: place.window.y - 44, width: place.window.width + 88, height: place.window.height + 88 } : { x: place.x - 38, y: place.y - 65, width: 76, height: 70 });
   const targets = [COMMONS, ...places.map((place) => ({ x: place.x, y: place.y + 26 }))], network = buildRoutes(targets, obstacles);
   const roads = places.map((place, i) => network.route(0, i + 1)).filter((path) => path.length > 1);
-  const plants = Object.entries(state2.plants).map(([id, plant2]) => ({ id, ...plant2, stage: growthStage(plant2, now) }));
+  const plants = Object.entries(state2.plants).map(([id, plant]) => ({ id, ...plant, stage: growthStage(plant, now) }));
   return { space, places, plants, commons: network.points[0] || COMMONS, network, roads, phase: dayPhase(now, state2.startedAt) };
 }
 function worldExtents(scene) {
-  return [{ x: scene.commons.x - 190, y: scene.commons.y - 140, width: 380, height: 300 }, ...scene.places.map((place) => ({ x: place.x - 95, y: place.y - 100, width: 190, height: 185 })), ...scene.plants.map((plant2) => plant2.kind === "tree" ? { x: plant2.x - 40, y: plant2.y - 96, width: 80, height: 100 } : { x: plant2.x - 15, y: plant2.y - 36, width: 30, height: 40 })];
+  return [{ x: scene.commons.x - 190, y: scene.commons.y - 140, width: 380, height: 300 }, ...scene.places.map((place) => ({ x: place.x - 95, y: place.y - 100, width: 190, height: 185 })), ...scene.plants.map((plant) => plant.kind === "tree" ? { x: plant.x - 40, y: plant.y - 96, width: 80, height: 100 } : { x: plant.x - 15, y: plant.y - 36, width: 30, height: 40 })];
+}
+
+// ../SpiderPlayground/citizen-art.js
+var cache = /* @__PURE__ */ new Map();
+function citizen(color, pose = 2) {
+  const key2 = color + pose;
+  if (cache.has(key2)) return cache.get(key2);
+  const image = document.createElement("canvas");
+  image.width = 32;
+  image.height = 42;
+  const c = image.getContext("2d");
+  const rows = [".....hhhhhh.....", "....hhhhhhhh....", "....hssssssh....", "....ssssssss....", "....ssksksss....", ".....ssssss.....", "......ssss......", "....bbbbbbbb....", "...sbbbbbbbbs...", "...sbbbbbbbbs...", "....bbbbbbbb....", "....bbBBBBbb....", ".....dddddd.....", ".....dd..dd.....", ".....dd..dd.....", "....kkk..kkk...."];
+  const palette = { h: "#575e63", s: "#deb99e", k: "#314b59", b: color, B: "#c5d7d0", d: "#536d7a" };
+  rows.forEach((row, y) => [...row].forEach((p, x) => {
+    if (!palette[p] || pose === 4 && y > 12) return;
+    const stride = pose < 2 && y > 12 ? x < 8 ? pose ? 2 : -2 : pose ? -2 : 2 : 0;
+    c.fillStyle = pose === 6 && y === 4 && p === "k" ? "#b58e79" : palette[p];
+    c.fillRect(x * 2, y * 2 + stride + 5, 2, 2);
+  }));
+  c.fillStyle = "#cedbbd";
+  c.fillRect(10, 3, 12, 4);
+  c.fillStyle = "#91b2a5";
+  c.fillRect(8, 6, 16, 2);
+  if (pose === 3) {
+    c.fillStyle = "#deb99e";
+    c.fillRect(26, 14, 4, 12);
+    c.fillRect(25, 10, 5, 5);
+  }
+  if (pose === 4) {
+    c.fillStyle = "#536d7a";
+    c.fillRect(11, 30, 16, 4);
+    c.fillRect(23, 32, 5, 6);
+    c.fillStyle = "#314b59";
+    c.fillRect(23, 37, 7, 3);
+  }
+  if (pose === 5) {
+    c.fillStyle = "#deb99e";
+    c.fillRect(21, 20, 5, 7);
+    c.fillRect(19, 19, 6, 3);
+  }
+  cache.set(key2, image);
+  return image;
+}
+
+// ../SpiderPlayground/residents.js
+function steerResident(a, dt, obstacles, others, pointer, now) {
+  let target = a.path[0], speed = 54 + a.index * 3;
+  a.evading = false;
+  a.curious = false;
+  if (obstacles.some((r) => inside(a, r))) {
+    target = walkable(a, obstacles);
+    speed = 140;
+    a.evading = true;
+  } else if (pointer && now - pointer.at < 1500 && Math.hypot(pointer.x - a.x, pointer.y - a.y) < 110 && a.index % 2 === 0) {
+    a.curious = true;
+    const dx2 = pointer.x - a.x, dy2 = pointer.y - a.y, d = Math.max(1, Math.hypot(dx2, dy2));
+    target = d > 48 ? { x: pointer.x - dx2 / d * 45, y: pointer.y - dy2 / d * 45 } : null;
+    speed = 44;
+  }
+  if (!a.evading && !a.curious && a.rest > 0) target = null;
+  let dx = target ? target.x - a.x : 0, dy = target ? target.y - a.y : 0, distance = Math.hypot(dx, dy);
+  if (distance > 0) {
+    dx = dx / distance * speed;
+    dy = dy / distance * speed;
+  }
+  for (const b of others) {
+    if (a === b) continue;
+    const x = a.x - b.x, y = a.y - b.y, d = Math.hypot(x, y);
+    if (d > 0 && d < 35) {
+      dx += x / d * (35 - d) * 3;
+      dy += y / d * (35 - d) * 3;
+    }
+  }
+  if (!a.evading) for (const r of obstacles) {
+    const px = Math.max(r.x, Math.min(r.x + r.width, a.x)), py = Math.max(r.y, Math.min(r.y + r.height, a.y)), x = a.x - px, y = a.y - py, d = Math.hypot(x, y);
+    if (d > 0 && d < 24) {
+      dx += x / d * (24 - d) * 6;
+      dy += y / d * (24 - d) * 6;
+    }
+  }
+  const blend = 1 - Math.exp(-dt * 9), magnitude = Math.hypot(dx, dy);
+  if (magnitude > speed) {
+    dx *= speed / magnitude;
+    dy *= speed / magnitude;
+  }
+  a.vx = (a.vx || 0) * (1 - blend) + dx * blend;
+  a.vy = (a.vy || 0) * (1 - blend) + dy * blend;
+  a.x += a.vx * dt;
+  a.y += a.vy * dt;
+  if (Math.abs(a.vx) > 3) a.facing = a.vx < 0 ? -1 : 1;
+  if (!a.evading && !a.curious && target && distance < Math.max(10, speed * dt * 2)) {
+    a.path.shift();
+    if (!a.path.length) {
+      a.at = a.goal;
+      a.rest = 2.5 + a.index * 0.6;
+    }
+  }
+  return Math.hypot(a.vx, a.vy);
 }
 
 // ../SpiderPlayground/living-world.js
-function createLivingWorld({ canvas, frames, read, write: write2, getLayout, getCamera, getBounds, onChange, onStatus, open, notice: notice2 }) {
+function createLivingWorld({ canvas, frames, read, write: write2, getLayout, getCamera, getBounds, onChange, onStatus, open, notice: notice2, onWake }) {
   const ctx = canvas.getContext("2d"), events = new AbortController(), media = matchMedia("(prefers-reduced-motion: reduce)");
   const worlds = /* @__PURE__ */ new Map(), pending = /* @__PURE__ */ new Map();
-  let scene = null, sceneKey = "", geometryKey = "", agents = [], timer = 0, saveTimer = 0, dpr = 1, last = 0, disposed = false, flushing = false, suspended = false, draft = [], plantKind2 = "flower", ripple = null, statusKey = "", lastEpoch = 0, lastPaused;
+  let scene = null, sceneKey = "", geometryKey = "", agents = [], timer = 0, saveTimer = 0, dpr = 1, last = 0, disposed = false, flushing = false, suspended = false, draft = [], plantKind2 = "flower", ripple = null, statusKey = "", lastEpoch = 0, lastPaused, pointer = null, inView = true;
   const space = () => getLayout().space;
   const paused = () => !!read().worldSettings?.paused;
-  const blocked = () => disposed || document.hidden || paused() || media.matches || suspended || getLayout().windows.some((w) => w.space === space() && !w.minimized && w.mode === "maximized");
+  const blocked = () => disposed || document.hidden || !inView || paused() || media.matches || suspended || getLayout().windows.some((w) => w.space === space() && !w.minimized && w.mode === "maximized");
   function current() {
     const id = space();
     if (!worlds.has(id)) worlds.set(id, normalizeWorld(read().world?.[id]));
@@ -1447,15 +1516,12 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
     scene = buildSettlement(state2, layout.windows, space(), now);
     if (oldSpace !== space() || !agents.length) {
       agents = NEIGHBORS.map((neighbor, i) => {
-        const at = i % 3, point = scene.network.points[at] || scene.commons;
-        return { ...neighbor, index: i, x: point.x, y: point.y, at, goal: at, path: [], rest: 1 + i * 0.7, waveUntil: 0 };
+        const angle = i * Math.PI / 3, point = walkable({ x: scene.commons.x + Math.cos(angle) * 85, y: scene.commons.y + Math.sin(angle) * 65 }, scene.network.obstacles) || scene.commons;
+        return { ...neighbor, index: i, x: point.x, y: point.y, at: 0, goal: 0, path: [], rest: 0.5 + i * 0.25, waveUntil: 0, facing: i % 2 ? -1 : 1 };
       });
     } else if (moved) for (const agent of agents) {
       agent.path = [];
-      agent.rest = 0.5 + agent.index * 0.2;
-      const p = walkable(agent, scene.network.obstacles) || scene.commons;
-      agent.x = p.x;
-      agent.y = p.y;
+      agent.rest = 0.2 + agent.index * 0.1;
       agent.at = nearest(agent);
     }
     canvas.dataset.residents = String(agents.length);
@@ -1484,38 +1550,26 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
     agent.path = point && route.length ? [{ x: agent.x, y: agent.y }, point, ...route.slice(1)].slice(1).map((p) => ({ ...p })) : [];
     if (!agent.path.length) agent.rest = 5;
   }
-  function step(dt) {
+  function step(dt, now) {
+    const obstacles = getLayout().windows.filter((w) => w.space === space() && !w.minimized && w.mode === "normal").map((w) => ({ x: w.rect.x - 18, y: w.rect.y - 18, width: w.rect.width + 36, height: w.rect.height + 36 }));
     for (const a of agents) {
       if (a.waveUntil > performance.now()) continue;
       if (a.rest > 0) {
         a.rest -= dt;
         if (a.rest <= 0) depart(a);
-        continue;
       }
-      let distance = (29 + a.index * 2) * dt;
-      while (distance > 0 && a.path.length) {
-        const p = a.path[0], dx = p.x - a.x, dy = p.y - a.y, length = Math.hypot(dx, dy);
-        if (length <= distance) {
-          a.x = p.x;
-          a.y = p.y;
-          distance -= length;
-          a.path.shift();
-        } else {
-          a.x += dx / length * distance;
-          a.y += dy / length * distance;
-          distance = 0;
-        }
-      }
-      if (!a.path.length) {
-        a.at = a.goal;
-        a.rest = 5 + a.index * 1.7;
+      const speed = steerResident(a, dt, obstacles, agents, pointer, now);
+      a.speed = speed;
+      if (speed > 12 && now - (a.lastWake || 0) > 270) {
+        a.lastWake = now;
+        onWake?.(a, 30, 0.018);
       }
     }
   }
   function publish() {
     if (!scene) return;
     const people = agents.map((a) => {
-      const place = scene.places[a.goal - 1], moving = a.path.length > 0, action = a.waveUntil > performance.now() ? "says hello" : a.goal === 0 ? moving ? "walking to the commons" : "taking a break by the pond" : moving ? "visiting " + place.name : a.index % 3 === 1 ? "tending the " + place.name + " garden" : "resting outside " + place.name;
+      const place = scene.places[a.goal - 1], moving = a.path.length > 0, action = a.waveUntil > performance.now() ? "says hello" : a.evading ? "making room for a window" : a.curious ? "following a ripple" : a.goal === 0 ? moving ? "wandering through the current" : "watching the currents" : moving ? "visiting " + place.name : a.index % 3 === 1 ? "shaping the " + place.name + " field" : "resting near " + place.name;
       return { name: a.name, role: a.role, color: a.color, action, x: a.x, y: a.y };
     });
     const state2 = { phase: scene.phase.name, paused: paused(), reduced: media.matches, space: space(), people, plants: scene.plants.length };
@@ -1528,31 +1582,48 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
   function paint2(now = performance.now()) {
     clearTimeout(timer);
     timer = 0;
-    if (disposed || document.hidden) return;
+    if (disposed || document.hidden || !inView) return;
     const frozen = blocked(), dt = last ? Math.min(0.2, (now - last) / 1e3) : 0;
     last = now;
-    if (!frozen) step(dt);
+    if (!frozen) step(dt, now);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = false;
     const view = visibleWorld(getCamera(), getBounds(), 80), zoom = getCamera().zoom;
     if (scene && zoom > 0.14) {
       ctx.setTransform(...cameraMatrix(getCamera(), dpr));
-      const { x, y } = scene.commons, t = frozen ? 0 : now * 1e-3;
-      ctx.fillStyle = "#deebce";
-      ctx.fillRect(x - 146 + Math.sin(t * 0.7) * 11, y + 42, 12, 2);
-      ctx.fillRect(x - 98 + Math.cos(t) * 9, y + 50, 9, 2);
-      for (let i = 0; i < 2; i++) {
-        const bx = x + Math.sin(t * 0.07 + i * 2) * 115, by = y + Math.cos(t * 0.1 + i) * 65 - 10;
-        ctx.fillStyle = "#eef0da";
-        ctx.fillRect(bx, by, 6, 4);
-        ctx.fillStyle = "#718977";
-        ctx.fillRect(bx + (Math.floor(t * 3 + i) % 2 ? 4 : -2), by - 2, 4, 2);
+      for (const p of scene.places.filter((p2) => !p2.open)) {
+        if (p.x < view.left || p.x > view.right || p.y < view.top || p.y > view.bottom) continue;
+        const pulse = frozen ? 0 : Math.sin(now * 15e-4 + p.x) * 2;
+        ctx.fillStyle = "#e8efddc9";
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y - 15, 30 + pulse, 21 + pulse, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#688e9c";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = "#668b9f";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y - 15, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = "11px -apple-system,sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#365b70";
+        ctx.fillText(p.name, p.x, p.y + 26);
       }
       for (const a of [...agents].sort((a2, b) => a2.y - b.y)) {
         if (a.x < view.left || a.x > view.right || a.y < view.top || a.y > view.bottom) continue;
-        const waving = a.waveUntil > now, walking = !frozen && a.path.length > 0, pose = waving ? 3 : walking ? Math.floor(now / 180 + a.index) % 2 ? 1 : -1 : 0;
-        ctx.drawImage(person(a.color, pose), Math.round(a.x - 12), Math.round(a.y - 28) + (walking ? Math.floor(now / 180) % 2 : 0));
+        const waving = a.waveUntil > now, walking = !frozen && a.speed > 8, pose = waving ? 3 : walking ? Math.floor(now / 140 + a.index) % 2 : a.curious ? 5 : now % 4200 < 130 ? 6 : a.index % 3 === 0 ? 4 : 2;
+        ctx.fillStyle = "#426e8230";
+        ctx.beginPath();
+        ctx.ellipse(a.x, a.y + 2, 17, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.save();
+        ctx.translate(a.x, a.y + (walking ? Math.sin(now * 0.018) * 1.5 : frozen ? 0 : Math.sin(now * 2e-3 + a.index) * 0.6));
+        ctx.rotate(frozen ? 0 : Math.max(-0.08, Math.min(0.08, (a.vx || 0) * 1e-3)));
+        ctx.scale(a.facing || 1, 1);
+        ctx.drawImage(citizen(a.color, pose), -20, -48, 40, 52);
+        ctx.restore();
         if (waving) {
           ctx.fillStyle = "#f3eed6";
           ctx.fillRect(a.x - 9, a.y - 47, 20, 14);
@@ -1563,10 +1634,10 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
         }
       }
       if (ripple && now - ripple.at < 1600) {
-        const radius = (now - ripple.at) / 70;
+        const age = Math.max(0, now - ripple.at), radius = age / 70;
         ctx.strokeStyle = "#edf0d9";
         ctx.lineWidth = 2;
-        ctx.globalAlpha = 1 - (now - ripple.at) / 1600;
+        ctx.globalAlpha = 1 - age / 1600;
         ctx.beginPath();
         ctx.ellipse(ripple.x, ripple.y, radius, radius * 0.45, 0, 0, Math.PI * 2);
         ctx.stroke();
@@ -1580,7 +1651,7 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
     }
     canvas.dataset.motion = frozen ? "paused" : "alive";
     publish();
-    if (!frozen) timer = setTimeout(() => frames.request(paint2), 100);
+    if (!frozen) timer = setTimeout(() => frames.request(paint2), 22);
   }
   function invalidate() {
     if (!disposed && !document.hidden) frames.request(paint2);
@@ -1616,6 +1687,7 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
         p.care = Math.min(24, p.care + 1);
         p.visits = Math.min(9999, p.visits + 1);
         queue(["world", space(), "places", app], p);
+        onWake?.(p, 180, 0.1);
         rebuild();
       }
     }
@@ -1660,8 +1732,8 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
       flush();
       write2(["world", space(), "plants"], plants);
       rebuild(true);
-      notice2(plantKind2 === "remove" ? "Plant removed." : (count === 1 ? "A little life planted." : count + " little lives planted.") + " Flowers and ferns grow over a few minutes; trees take their time.", { transient: true });
-    } else if (Object.keys(plants).length >= MAX_PLANTS) notice2("This garden is full. Choose Remove plant to make a little room.");
+      notice2(plantKind2 === "remove" ? "Seed removed." : count === 1 ? "A new current seeded." : count + " new currents seeded.", { transient: true });
+    } else if (Object.keys(plants).length >= MAX_PLANTS) notice2("The field has enough seeds. Choose Remove seed to make room.");
     invalidate();
   } };
   function groundClick(p) {
@@ -1679,6 +1751,7 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
       return;
     }
     ripple = { ...p, at: performance.now() };
+    onWake?.(p, 150, 0.15);
     invalidate();
   }
   document.addEventListener("visibilitychange", () => {
@@ -1696,12 +1769,25 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
     invalidate();
     publish();
   }, { signal: events.signal });
+  const observer = new IntersectionObserver((entries) => {
+    inView = entries[0].isIntersecting;
+    if (inView) invalidate();
+    else {
+      clearTimeout(timer);
+      frames.cancel(paint2);
+      last = 0;
+    }
+  });
+  observer.observe(canvas);
   return {
     sync,
     rebuild,
     invalidate,
     planting,
     groundClick,
+    pointer(p) {
+      pointer = { ...p, at: performance.now() };
+    },
     get scene() {
       return scene;
     },
@@ -1736,6 +1822,7 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
       clearTimeout(saveTimer);
       pending.clear();
       events.abort();
+      observer.disconnect();
       frames.cancel(paint2);
     }
   };
@@ -1800,9 +1887,8 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     onHistory: (state2) => onTools({ history: state2 })
   });
   let habitat = null;
-  const scenery = createScenery({ canvas: stage.querySelector("#scenery"), frames, getBounds: bounds, getCamera: camera, read, getScene: () => habitat?.scene });
-  const crew = createCrew({ canvas: stage.querySelector("#crew"), frames, getBounds: bounds, getCamera: camera, getWindows: () => fullscreen() ? [] : visible() });
-  habitat = createLivingWorld({ canvas: stage.querySelector("#life-canvas"), frames, read, write: write2, getLayout: () => layout, getCamera: camera, getBounds: bounds, onChange: () => scenery.invalidate(), onStatus: onWorldState, open, notice: notice2 });
+  const scenery = createScenery({ canvas: stage.querySelector("#scenery"), fallback: stage.querySelector("#scenery-fallback"), stage, frames, getBounds: bounds, getCamera: camera, getWindows: () => visible().filter((w) => w.mode === "normal"), read, getScene: () => habitat?.scene });
+  habitat = createLivingWorld({ canvas: stage.querySelector("#life-canvas"), frames, read, write: write2, getLayout: () => layout, getCamera: camera, getBounds: bounds, onChange: () => scenery.invalidate(), onStatus: onWorldState, open, notice: notice2, onWake: scenery.poke });
   function save() {
     if (!disposed) onChange(structuredClone(layout));
   }
@@ -1810,8 +1896,14 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     if (fullscreen()) return;
     ink.invalidate();
     scenery.invalidate();
-    crew.invalidate();
     habitat.invalidate();
+  }
+  function emerge(entry) {
+    entry.animation?.cancel();
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    entry.panel.dataset.emerging = "true";
+    entry.animation = entry.panel.animate([{ clipPath: "inset(49.5% 49.5% round 22px)", opacity: 0.3 }, { clipPath: "inset(0% 0% round 9px)", opacity: 1 }], { duration: 620, easing: "cubic-bezier(.16,1,.3,1)" });
+    entry.animation.finished.then(() => entry.panel.dataset.emerging = "false", () => entry.panel.dataset.emerging = "false");
   }
   function paintCamera() {
     const c = camera();
@@ -1836,21 +1928,23 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     const win = entry.win, hidden = win.space !== layout.space || win.minimized || !!full && win.id !== full.id;
     entry.panel.hidden = hidden;
     entry.panel.inert = hidden;
+    if (entry.wasHidden && !hidden) emerge(entry);
+    entry.wasHidden = hidden;
     const parent2 = win.mode === "normal" ? container : overlay;
     if (entry.panel.parentElement !== parent2) parent2.append(entry.panel);
-    const rect2 = displayRect(win, bounds()), active = layout.active[layout.space] === win.id;
-    if (entry.x !== rect2.x || entry.y !== rect2.y) {
-      entry.panel.style.transform = `translate(${rect2.x}px,${rect2.y}px)`;
-      entry.x = rect2.x;
-      entry.y = rect2.y;
+    const rect = displayRect(win, bounds()), active = layout.active[layout.space] === win.id;
+    if (entry.x !== rect.x || entry.y !== rect.y) {
+      entry.panel.style.transform = `translate(${rect.x}px,${rect.y}px)`;
+      entry.x = rect.x;
+      entry.y = rect.y;
     }
-    if (entry.width !== rect2.width) {
-      entry.panel.style.width = rect2.width + "px";
-      entry.width = rect2.width;
+    if (entry.width !== rect.width) {
+      entry.panel.style.width = rect.width + "px";
+      entry.width = rect.width;
     }
-    if (entry.height !== rect2.height) {
-      entry.panel.style.height = rect2.height + "px";
-      entry.height = rect2.height;
+    if (entry.height !== rect.height) {
+      entry.panel.style.height = rect.height + "px";
+      entry.height = rect.height;
     }
     if (entry.order !== win.order) {
       entry.panel.style.zIndex = String(10 + win.order);
@@ -1955,6 +2049,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
   }
   function removeEntry(id) {
     const entry = entries.get(id);
+    entry?.animation?.cancel();
     entry?.events.abort();
     entry?.content.destroy?.();
     entry?.panel.remove();
@@ -1986,13 +2081,13 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     bar.title = "Drag to move. Double-click for full screen. Alt + arrows to move; Shift + Alt + arrows to resize.";
     const controls = document.createElement("div");
     controls.className = "window-controls";
-    function control(color, symbol, label2, action) {
+    function control(color, symbol, label, action) {
       const node = document.createElement("button");
       node.type = "button";
       node.className = "window-control " + color;
       node.textContent = symbol;
-      node.title = label2;
-      node.setAttribute("aria-label", label2 + " " + app.name);
+      node.title = label;
+      node.setAttribute("aria-label", label + " " + app.name);
       listenWindow(node, "click", action);
       controls.append(node);
       return node;
@@ -2019,6 +2114,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     container.append(panel);
     const entry = { win, panel, bar, green, yellow, lastFocus: null, events: windowEvents, content: createContent2(win, body) };
     entries.set(win.id, entry);
+    if (win.space === layout.space && !win.minimized) emerge(entry);
     listenWindow(panel, "pointerdown", () => activate(win.id));
     listenWindow(panel, "focusin", (event) => {
       entry.lastFocus = event.target;
@@ -2038,12 +2134,13 @@ function createWindows({ stage, container, shield, layout: initial, createConten
       if (!event.altKey || !event.key.startsWith("Arrow")) return;
       event.preventDefault();
       const step = event.shiftKey ? 12 : 20, dx = event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0, dy = event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0;
+      entry.animation?.cancel();
       win.mode = "normal";
       win.rect = event.shiftKey ? resizeRect(win.rect, "se", dx, dy) : moveRect(win.rect, dx, dy);
       win.expanded = false;
       paintWindow(entry);
-      crew.invalidate();
       habitat.rebuild();
+      scenery.invalidate();
       save();
     });
     for (const edge of ["n", "e", "s", "w", "ne", "nw", "se", "sw"]) {
@@ -2058,6 +2155,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
   function start(event, win, edge) {
     if (event.button !== 0 || event.isPrimary === false || gesture || navigation.busy || tool === "pan" || event.target.closest("button,input,textarea,select,a")) return;
     event.preventDefault();
+    entries.get(win.id)?.animation?.cancel();
     activate(win.id);
     const box = stage.getBoundingClientRect(), p = screenToWorld(camera(), { x: event.clientX - box.left, y: event.clientY - box.top });
     gesture = { id: win.id, win, edge, pointer: event.pointerId, target: event.currentTarget, x: event.clientX, y: event.clientY, box, start: p, rect: { ...win.rect }, original: structuredClone(win), started: false };
@@ -2077,8 +2175,6 @@ function createWindows({ stage, container, shield, layout: initial, createConten
       g.started = true;
       document.body.classList.add("gesturing");
       shield.hidden = false;
-      crew.setMoving(g.id, true);
-      habitat.suspend(true);
       if (g.win.mode !== "normal") {
         g.rect = { ...g.win.rect, x: g.start.x - g.win.rect.width * 0.4, y: g.start.y - 20 };
         g.win.mode = "normal";
@@ -2091,7 +2187,8 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     const p = screenToWorld(camera(), { x: event.clientX - g.box.left, y: event.clientY - g.box.top }), dx = p.x - g.start.x, dy = p.y - g.start.y;
     g.win.rect = g.edge ? resizeRect(g.rect, g.edge, dx, dy) : moveRect(g.rect, dx, dy);
     frames.request(paintGesture);
-    crew.invalidate();
+    scenery.invalidate();
+    habitat.invalidate();
   }
   function finish(commit = true) {
     const g = gesture;
@@ -2102,11 +2199,10 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     if (!commit) Object.assign(g.win, g.original);
     shield.hidden = true;
     document.body.classList.remove("gesturing");
-    if (g.started) crew.setMoving(g.id, false);
     paintWindow(entries.get(g.id));
     if (g.started) {
-      habitat.suspend(false);
       habitat.rebuild();
+      scenery.invalidate();
       onPaint(structuredClone(layout));
       if (commit) save();
     }
@@ -2120,6 +2216,17 @@ function createWindows({ stage, container, shield, layout: initial, createConten
   listen(document, "pointermove", move);
   listen(document, "pointerup", (event) => {
     if (event.pointerId === gesture?.pointer) finish();
+  });
+  let lastWake = 0;
+  listen(stage, "pointermove", (event) => {
+    if (event.target.closest(".drawing-tools,.canvas-tools,button,select") || fullscreen()) return;
+    const box = stage.getBoundingClientRect(), p = screenToWorld(camera(), { x: event.clientX - box.left, y: event.clientY - box.top });
+    habitat.pointer(p);
+    const now = performance.now();
+    if (now - lastWake > 65 && (event.buttons || !event.target.closest(".window"))) {
+      lastWake = now;
+      scenery.poke(p, event.buttons ? 90 : 38, event.buttons ? 0.07 : 0.025);
+    }
   });
   for (const type of ["pointercancel", "lostpointercapture"]) listen(document, type, (event) => {
     if (event.pointerId === gesture?.pointer) finish(false);
@@ -2144,7 +2251,6 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     navigation.cancel();
     ink.resize();
     scenery.resize();
-    crew.resize();
     habitat.resize();
     paint2();
   });
@@ -2158,11 +2264,13 @@ function createWindows({ stage, container, shield, layout: initial, createConten
     const app = appById(appId);
     if (!app) return;
     const b = bounds(), center = screenToWorld(camera(), { x: b.width / 2, y: b.height / 2 });
-    const win = { id: crypto.randomUUID(), app: appId, space: layout.space, rect: normalRect({ x: (home || center).x - app.width / 2, y: home ? home.y - app.height - 34 : center.y - app.height / 2, width: app.width, height: app.height }), mode: "normal", minimized: false, order: layout.windows.length + 1 };
+    const anchor = home ? { x: home.x, y: home.y - app.height / 2 - 34 } : center, rect = normalRect(placeWindow({ width: app.width, height: app.height }, visible(), anchor));
+    const win = { id: crypto.randomUUID(), app: appId, space: layout.space, rect, mode: "normal", minimized: false, order: layout.windows.length + 1 };
     layout.windows.push(win);
     add(win);
     activate(win.id, true);
-    if (home || b.width < 600) reveal(win.id);
+    setCamera(fitWorld(visible().filter((w) => w.mode === "normal").map((w) => w.rect), b, camera().angle, 48));
+    save();
   }
   function switchSpace(id) {
     if (!["studio", "quiet"].includes(id) || id === layout.space) return;
@@ -2228,7 +2336,6 @@ function createWindows({ stage, container, shield, layout: initial, createConten
   for (const win of layout.windows) add(win);
   ink.resize();
   scenery.resize();
-  crew.resize();
   habitat.resize();
   return {
     open,
@@ -2306,7 +2413,6 @@ function createWindows({ stage, container, shield, layout: initial, createConten
       observer.disconnect();
       ink.destroy();
       scenery.destroy();
-      crew.destroy();
       habitat.destroy();
       frames.destroy();
       for (const id of entries.keys()) removeEntry(id);
@@ -2388,9 +2494,9 @@ function createContent(win, body, { read, write: write2, open, library, explore 
     body.classList.add("guide-content");
     const emblem = el("div", "guide-emblem");
     emblem.append(icon("spark"));
-    body.append(emblem, el("h1", "", "A little world for your work."), el("p", "intro", "Your apps have a place here. So do a few neighbors."));
+    body.append(emblem, el("h1", "", "A world in motion."), el("p", "intro", "Windows shape the current. Little lives find their own way through it."));
     const instructions = el("div", "guide-instructions");
-    for (const [svg, text] of [["desktop", "Move a window. Its crew carries it; the paths follow."], ["left", "Pan, pinch, or twist to see another side of the world."], ["pen", "Draw on the ground, or Plant something and watch it grow."]]) {
+    for (const [svg, text] of [["desktop", "Open an app. Watch it unfold into its own island."], ["left", "Move windows to reshape the surface. Pan, pinch, or twist."], ["pen", "Draw, seed a current, or touch the surface to send a ripple."]]) {
       const row = el("p");
       row.append(icon(svg), el("span", "", text));
       instructions.append(row);
@@ -2398,11 +2504,11 @@ function createContent(win, body, { read, write: write2, open, library, explore 
     body.append(instructions);
     const actions = el("div", "guide-actions");
     actions.append(button("Explore the world", explore, "primary"), button("Open apps", library, "text-button"));
-    body.append(actions, el("p", "small-print", "Use an app and its garden fills out. Close it and a little house remains. Tap a house to return, or a neighbor to say hello."));
+    body.append(actions, el("p", "small-print", "Neighbors wander, follow ripples, and make room for your work. Closed apps leave a glowing marker you can tap to return."));
     return {};
   }
   if (win.app === "note") {
-    let update = function() {
+    let update2 = function() {
       const value = String(get("notes", ""));
       if (document.activeElement !== input) input.value = value;
       count.textContent = input.value.length.toLocaleString() + " characters";
@@ -2422,12 +2528,12 @@ function createContent(win, body, { read, write: write2, open, library, explore 
       write2(["notes", space], input.value);
       count.textContent = input.value.length.toLocaleString() + " characters";
     });
-    input.addEventListener("blur", update);
-    update();
-    return { update };
+    input.addEventListener("blur", update2);
+    update2();
+    return { update: update2 };
   }
   if (win.app === "board") {
-    let update = function() {
+    let update2 = function() {
       if (document.activeElement !== input) input.value = String(get("boardDrafts", ""));
       const value = cards(), next = JSON.stringify(value);
       if (next === signature) return;
@@ -2445,11 +2551,11 @@ function createContent(win, body, { read, write: write2, open, library, explore 
           const actions = el("div", "card-actions"), nextLane = lanes[(lanes.findIndex(([key2]) => key2 === id) + 1) % lanes.length];
           const move = button("Move to " + nextLane[1], () => {
             write2(["boards", space], cards().map((other) => other.id === card.id ? { ...other, lane: nextLane[0] } : other));
-            update();
+            update2();
           }, "card-move");
           const remove = button("", () => {
             write2(["boards", space], cards().filter((other) => other.id !== card.id));
-            update();
+            update2();
           }, "icon-button");
           remove.append(icon("close"));
           remove.setAttribute("aria-label", "Delete idea: " + card.text.slice(0, 60));
@@ -2485,11 +2591,11 @@ function createContent(win, body, { read, write: write2, open, library, explore 
       write2(["boards", space], [...cards(), { id: crypto.randomUUID(), text, lane: "try" }]);
       input.value = "";
       write2(["boardDrafts", space], "");
-      update();
+      update2();
       input.focus();
     });
-    update();
-    return { update };
+    update2();
+    return { update: update2 };
   }
   if (win.app === "timer") {
     let tick2 = function() {
@@ -2501,7 +2607,7 @@ function createContent(win, body, { read, write: write2, open, library, explore 
       for (const option of durations.children) option.setAttribute("aria-pressed", String(Number(option.dataset.duration) === t.duration));
     };
     body.classList.add("timer-content");
-    const label2 = el("p", "timer-label", "One thing at a time."), face = el("div", "timer-face"), digits = el("div", "timer-digits");
+    const label = el("p", "timer-label", "One thing at a time."), face = el("div", "timer-face"), digits = el("div", "timer-digits");
     const dial = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     dial.setAttribute("viewBox", "0 0 200 200");
     dial.setAttribute("aria-hidden", "true");
@@ -2526,26 +2632,26 @@ function createContent(win, body, { read, write: write2, open, library, explore 
     controls.append(toggle, reset);
     const status2 = el("p", "timer-status");
     status2.setAttribute("role", "status");
-    body.append(label2, face, durations, controls, status2);
+    body.append(label, face, durations, controls, status2);
     tick2();
     return { update: tick2, tick: tick2 };
   }
   if (win.app === "calculator") {
     let store = function() {
       write2(["calculations", space], { ...state2(), expression: input.value });
-    }, update = function() {
+    }, update2 = function() {
       const value = state2();
       if (document.activeElement !== input) input.value = value.expression;
       answer.textContent = String(value.answer);
     };
     body.classList.add("calculator-content");
-    const form = el("form"), label2 = el("label", "", "Work it out"), input = el("input", "calculation-input");
+    const form = el("form"), label = el("label", "", "Work it out"), input = el("input", "calculation-input");
     input.setAttribute("aria-label", "Calculation");
     input.placeholder = "(12 + 8) \xD7 3";
     input.maxLength = 1e3;
     input.inputMode = "decimal";
     input.autocomplete = "off";
-    label2.append(input);
+    label.append(input);
     const answer = el("output", "calculation-answer", "0");
     answer.setAttribute("aria-label", "Answer");
     answer.setAttribute("aria-live", "polite");
@@ -2578,7 +2684,7 @@ function createContent(win, body, { read, write: write2, open, library, explore 
     actions.append(clear, plus, equals);
     const error = el("p", "calculation-error");
     error.setAttribute("role", "alert");
-    form.append(label2, answer, keys, actions, error);
+    form.append(label, answer, keys, actions, error);
     body.append(form);
     input.addEventListener("input", store);
     form.addEventListener("submit", (event) => {
@@ -2592,13 +2698,13 @@ function createContent(win, body, { read, write: write2, open, library, explore 
         error.textContent = problem.message;
       }
     });
-    update();
-    return { update };
+    update2();
+    return { update: update2 };
   }
   if (win.app === "appearance") {
     let choose = function(patch) {
       write2(["appearance"], { ...read().appearance, ...patch });
-    }, update = function() {
+    }, update2 = function() {
       const value = read().appearance || {}, pattern = ["plain", "grid"].includes(value.pattern) ? value.pattern : "workshop";
       for (const node of themes.children) node.setAttribute("aria-pressed", String(node.dataset.theme === (value.theme || "tide")));
       for (const node of options.children) node.setAttribute("aria-pressed", String(node.dataset.pattern === pattern));
@@ -2618,14 +2724,14 @@ function createContent(win, body, { read, write: write2, open, library, explore 
     }
     const patterns = el("fieldset"), patternLegend = el("legend", "", "Wallpaper"), options = el("div", "pattern-options");
     patterns.append(patternLegend, options);
-    for (const [id, name] of [["workshop", "Workshop"], ["grid", "Grid"], ["plain", "Plain"]]) {
+    for (const [id, name] of [["workshop", "Flow"], ["grid", "Contours"], ["plain", "Quiet"]]) {
       const option = button(name, () => choose({ pattern: id }));
       option.dataset.pattern = id;
       options.append(option);
     }
     body.append(field, patterns, el("p", "small-print", "This changes your playground. Keep experimenting."));
-    update();
-    return { update };
+    update2();
+    return { update: update2 };
   }
   return {};
 }
@@ -2648,6 +2754,14 @@ var worldState = null;
 var noticeTimer = 0;
 var shell = $("#shell");
 var status = $("#save-status");
+var pendingWrites = /* @__PURE__ */ new Map();
+function assign(target, path, value) {
+  for (const key2 of path.slice(0, -1)) {
+    if (!target[key2] || typeof target[key2] !== "object") target[key2] = {};
+    target = target[key2];
+  }
+  target[path.at(-1)] = structuredClone(value);
+}
 function notice(message, { transient = false } = {}) {
   clearTimeout(noticeTimer);
   $("#notice").textContent = message;
@@ -2659,28 +2773,26 @@ function updateStatus() {
   status.classList.toggle("has-error", !!saveError);
 }
 function write(path, value) {
-  let target = data;
-  for (const key2 of path.slice(0, -1)) {
-    if (!target[key2] || typeof target[key2] !== "object") target[key2] = {};
-    target = target[key2];
-  }
-  target[path.at(-1)] = structuredClone(value);
+  const key2 = JSON.stringify(path), pending = { path: [...path], value: structuredClone(value) };
+  if (sdk) pendingWrites.set(key2, pending);
+  assign(data, path, value);
   applyAppearance();
   manager?.update(path);
   if (!sdk) {
     updateStatus();
     return;
   }
-  const writingSession = session;
+  const writingSession = session, writingWorkspace = workspace;
   sdk.write(path, value).then(() => {
-    if (session !== writingSession) return;
+    if (session !== writingSession || workspace !== writingWorkspace) return;
+    if (pendingWrites.get(key2) === pending) pendingWrites.delete(key2);
     if (saveError) {
       saveError = "";
       notice("");
     }
     updateStatus();
   }).catch((error) => {
-    if (session !== writingSession) return;
+    if (session !== writingSession || workspace !== writingWorkspace) return;
     saveError = error.message;
     notice("Could not save this change. " + error.message + " Keep this window open and check Spider\u2019s connection.");
     updateStatus();
@@ -2720,10 +2832,10 @@ function tools({ camera, tool, history }) {
 }
 function worldStatus(value) {
   worldState = value;
-  $("#world-title").textContent = value.space === "quiet" ? "Quiet grove" : "Studio commons";
-  $("#world-phase").textContent = value.phase + " \xB7 " + (value.paused ? "Life is resting" : "6 neighbors at home");
-  const gardener = value.people.find((p) => p.action.startsWith("tending"));
-  $("#world-whisper").textContent = value.paused ? "A quiet moment." : gardener ? gardener.name + " is " + gardener.action + "." : "A place for your work to put down roots.";
+  $("#world-title").textContent = value.space === "quiet" ? "Quiet currents" : "Studio tides";
+  $("#world-phase").textContent = value.phase + " \xB7 " + (value.paused ? "A still moment" : "6 lives in the current");
+  const explorer = value.people.find((p) => p.action === "following a ripple" || p.action === "making room for a window");
+  $("#world-whisper").textContent = value.paused ? "A quiet moment." : explorer ? explorer.name + " is " + explorer.action + "." : "Move through the world. Leave a little wake.";
   $("#pause-world").textContent = value.paused ? "Resume world" : "Pause world";
   $("#pause-world").setAttribute("aria-label", value.paused ? "Resume world" : "Pause world");
   $("#pause-world").setAttribute("aria-pressed", String(value.paused));
@@ -2776,6 +2888,7 @@ function makeManager(layout) {
 function receive(next) {
   const switched = session !== next.sessionId || workspace !== next.workspaceId;
   if (switched) {
+    pendingWrites.clear();
     for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
     manager?.destroy();
     manager = null;
@@ -2786,6 +2899,7 @@ function receive(next) {
   }
   state = next;
   data = structuredClone(next.data || {});
+  for (const pending of pendingWrites.values()) assign(data, pending.path, pending.value);
   const layout = normalizeLayout(data.layout), key2 = JSON.stringify(layout);
   if (!manager) {
     layoutKey = key2;
@@ -2820,8 +2934,8 @@ for (const node of document.querySelectorAll("[data-dismiss]")) {
 }
 for (const dialog of document.querySelectorAll("dialog")) dialog.addEventListener("click", (event) => {
   if (event.target !== dialog) return;
-  const rect2 = dialog.getBoundingClientRect();
-  if (event.clientX < rect2.left || event.clientX > rect2.right || event.clientY < rect2.top || event.clientY > rect2.bottom) dialog.close();
+  const rect = dialog.getBoundingClientRect();
+  if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
 });
 function show(dialog) {
   if (!dialog.open) dialog.showModal();
@@ -2839,9 +2953,9 @@ function renderLibrary() {
     item.dataset.app = app.id;
     const mark = el("span", "app-choice-icon");
     mark.append(icon(app.icon));
-    const label2 = el("span");
-    label2.append(el("strong", "", app.name), el("span", "", app.description));
-    item.append(mark, label2, icon("arrow"));
+    const label = el("span");
+    label.append(el("strong", "", app.name), el("span", "", app.description));
+    item.append(mark, label, icon("arrow"));
     results.append(item);
   }
   if (!matches.length) results.append(el("p", "no-matches", "No apps match that search."));
