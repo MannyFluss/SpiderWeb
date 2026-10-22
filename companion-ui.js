@@ -2,6 +2,13 @@ import {createKnowledgePanel} from './knowledge-panel.js';
 
 const activeStates=new Set(['queued','running','working','retrying']);
 const text=(value,fallback='')=>typeof value==='string'?value:fallback;
+const providerName=value=>value==='chatgpt-codex'?'ChatGPT subscription':value==='ollama'?'Ollama Cloud':null;
+function provenanceLabel(value) {
+  const provider=providerName(value?.provider);
+  if(!provider||value?.harness!=='hermes')return '';
+  const requested=text(value.requestedModel),actual=text(value.actualModel);
+  return ['Hermes',provider,actual?`Model: ${actual}`:requested?`Requested: ${requested}`:'Model not recorded',!actual?'Actual model not recorded':actual!==requested&&requested?`Requested: ${requested}`:''].filter(Boolean).join(' · ');
+}
 
 function draftPreview(container,html,manifest,doc) {
   if(typeof html!=='string'||html.length>4_000_000)throw Error('Draft preview is not available.');
@@ -41,6 +48,7 @@ export function createCompanion({button,request,knowledge,document:doc=document}
   const dialog=doc.createElement('dialog');dialog.className='companion-panel';dialog.setAttribute('aria-labelledby','companion-title');
   dialog.innerHTML=`<div class="companion-head"><h2 id="companion-title">Companion</h2><button type="button" aria-label="Close companion">×</button></div>
     <p class="companion-readiness" role="status">Connecting to your companion…</p><p class="companion-cloud-setup" hidden><a target="_blank" rel="noopener noreferrer">Connect Ollama Cloud</a></p>
+    <section class="companion-provider" aria-labelledby="companion-provider-title" hidden><h3 id="companion-provider-title">Model connection</h3><p class="companion-provider-selection"></p><p class="companion-provider-mode"></p><p class="companion-provider-auth"></p><p class="companion-provider-catalog"></p><p class="companion-provider-inference"></p><p class="companion-provider-error companion-error" role="status" hidden></p></section>
     <section class="companion-terminal" aria-labelledby="hermes-terminal-title"><h3 id="hermes-terminal-title">Hermes terminal</h3><p>Send prompts to your existing Hermes conversation. Signal messages share this saved history.</p><p class="companion-history-status" role="status">Open the companion to load saved messages.</p><div class="companion-transcript" role="log" aria-label="Hermes conversation" aria-live="polite"></div><div class="companion-history-actions"><button class="companion-history-older" type="button" disabled>Earlier messages</button><button class="companion-history-latest" type="button" hidden>Latest messages</button></div><form class="companion-request"><label for="companion-prompt">What would you like to work on?</label><textarea id="companion-prompt" rows="3" maxlength="32000" required placeholder="Ask Hermes…" aria-describedby="hermes-terminal-help"></textarea><span id="hermes-terminal-help">Enter to send · Shift+Enter for a new line</span><button class="primary" type="submit">Send request</button></form></section>
     <p class="companion-feedback" role="status" hidden></p>
     <section><h3>Working</h3><div class="companion-work"></div></section>
@@ -68,6 +76,7 @@ export function createCompanion({button,request,knowledge,document:doc=document}
       const states={saved:'Saved',queued:'Queued',pending:'Waiting to send',sent:'Sent',unconfirmed:'Send unconfirmed',failed:'Send failed',unknown:'Delivery not recorded'};
       const delivery=states[message.delivery?.state]||'Delivery not recorded';
       row.append(make('div',[who,channel,direction,stamp,delivery].filter(Boolean).join(' · '),'companion-message-meta'),make('pre',text(message.content)));
+      const provenance=provenanceLabel(message.provenance);if(provenance)row.append(make('p',provenance,'companion-message-provenance'));
       const part=message.fragment;if(part?.earlier===true||part?.later===true)row.append(make('p',[part.earlier?'Continued from earlier history.':'',part.later?'Continues in later history.':''].filter(Boolean).join(' '),'companion-message-meta'));
       log.append(row);
     }
@@ -91,20 +100,35 @@ export function createCompanion({button,request,knowledge,document:doc=document}
   }
   function render() {
     const work=Array.isArray(state?.work)?state.work:[],proposals=Array.isArray(state?.proposals)?state.proposals:[];
-    const running=work.filter(item=>activeStates.has(item.status)),drafts=proposals.filter(item=>!['accepted','rejected','dismissed'].includes(item.status));
+    const running=work.filter(item=>activeStates.has(item.status)&&item.heldByPolicy!==true),drafts=proposals.filter(item=>!['accepted','rejected','dismissed'].includes(item.status));
     const working=running.some(item=>['running','working'].includes(item.status));
     button.replaceChildren(make('span','✳','companion-thread'),make('span',running.length?`${working?'Working':'Waiting'} ${running.length}`:drafts.length?`Review ${drafts.length}`:'Companion'));
     button.dataset.working=String(online&&working);
     button.setAttribute('aria-label',running.length?`Companion: ${running.length} tasks in progress`:drafts.length?`Companion: ${drafts.length} drafts to review`:'Open companion');
     $('.companion-readiness').textContent=!online?'Mac unreachable. Showing the last available companion status.':statusError||text(state?.readiness?.message,state?.readiness?.ready===true?'Ready for your next request.':state?'Your companion is preparing. Other apps are available.':'Connecting to your companion…');
-    const cloud=state?.readiness?.transport?.cloud;let signIn;
+    const provider=state?.provider,name=providerName(provider?.id),restricted=provider?.mode==='observational';
+    $('.companion-provider').hidden=!name;
+    $('.companion-provider-selection').textContent=name?[name,text(provider.requestedModel,'Model not configured')].join(' · '):'';
+    $('.companion-provider-mode').textContent=provider?.mode==='observational'?'Observational mode. Answers and shared context are available; proposals, app builds and delegation are disabled.':provider?.mode==='collaborative'?'Collaborative mode. Working drafts require your review.':'Companion mode is not recorded.';
+    const auth={chatgpt:'Native ChatGPT sign-in available.','needs-login':'Native ChatGPT sign-in required.','wrong-account':'The native client is not signed in with ChatGPT.',unavailable:'Native sign-in status is unavailable.',connected:'Ollama Cloud transport connected.',unknown:'Sign-in status is not checked yet.'};
+    $('.companion-provider-auth').textContent=auth[provider?.auth?.state]||auth.unknown;
+    const catalog={listed:'The configured model is listed. Completed requests verify access.',missing:'The configured model is not listed.',unavailable:'Model listing is unavailable.',unknown:'Model listing is not checked yet.'};
+    $('.companion-provider-catalog').textContent=catalog[provider?.catalog?.state]||catalog.unknown;
+    const completion=provenanceLabel(provider?.inference?.provenance);
+    $('.companion-provider-inference').textContent=completion?'Last completed request: '+completion:'No completed request is recorded for this provider and model.';
+    const failures={'provider-auth':'ChatGPT sign-in needs attention.','provider-limit':'The provider limit was reached.','native-unavailable':'The managed native client is unavailable.','native-protocol':'The native connection could not complete the request.','native-tool-surface':'The native tool restrictions could not be verified.','provider-model':'The native model did not match the configured model.','request-budget':'This request reached its model-call limit.','model-request':'The model request did not complete.','policy-blocked':'A change-producing response was blocked by observational mode.'};
+    const error=provider?.error,message=error?.providerStatus===429?failures['provider-limit']:failures[error?.reason],providerWaiting=['waiting','failed'].includes(provider?.inference?.state);
+    const retry=new Date(typeof error?.retryAt==='number'?error.retryAt*1000:NaN);
+    $('.companion-provider-error').hidden=!providerWaiting||!message;
+    $('.companion-provider-error').textContent=message?message+(provider?.inference?.state==='waiting'&&Number.isFinite(retry.getTime())?' Next retry: '+retry.toLocaleString()+'.':''):'';
+    const cloud=!provider||provider.id==='ollama'?state?.readiness?.transport?.cloud:null;let signIn;
     try{const url=new URL(cloud?.signInUrl);if(url.protocol==='https:'&&url.hostname==='ollama.com'&&url.pathname==='/connect'&&!url.username&&!url.password)signIn=url.href;}catch{}
     $('.companion-cloud-setup').hidden=!online||cloud?.ready===true||!signIn;
     if(signIn)$('.companion-cloud-setup a').href=signIn;else $('.companion-cloud-setup a').removeAttribute('href');
     for(const control of dialog.querySelectorAll('input,textarea,button'))if(!control.closest('.knowledge-panel'))control.disabled=mutating||!online;
     $('.companion-head button').disabled=false;
     $('.companion-request button').disabled=mutating||!online||!available||state?.readiness?.ready!==true;
-    const visibleWork=work.filter(item=>!(item.priority==='quiet'&&item.status==='complete'&&(item.phase==='digested'||item.result?.kind==='skip')));
+    const visibleWork=work.filter(item=>item.heldByPolicy!==true&&!(item.priority==='quiet'&&item.status==='complete'&&(item.phase==='digested'||item.result?.kind==='skip')));
     const list=$('.companion-work');list.replaceChildren();
     if(!visibleWork.length)list.append(make('p','No work in progress.','companion-empty'));
     for(const job of visibleWork.slice(0,20)) {
@@ -112,11 +136,16 @@ export function createCompanion({button,request,knowledge,document:doc=document}
       row.append(make('h4',text(job.title,'Companion request')),make('p',text(job.phase,text(job.status,'Waiting'))));
       if(job.result?.kind==='answer'&&typeof job.result.content==='string')row.append(make('pre',job.result.content));
       if(job.error)row.append(make('p',text(job.error),'companion-error'));
+      if(job.status==='retrying'){
+        const failure=job.lastFailure,reasons={'provider-auth':'Provider sign-in needs attention.','provider-limit':'The provider limit was reached.','model-request':'The model request did not complete.','dependency-import':'A managed dependency is unavailable.','invalid-json':'The model response could not be read.','invalid-result':'The model response was not usable.','result-persistence':'The result could not be saved.'};
+        const reason=failure?.providerStatus===429?reasons['provider-limit']:reasons[failure?.reason];
+        if(reason){const retry=new Date(typeof job.retryAt==='number'?job.retryAt*1000:NaN);row.append(make('p',reason+' Your request is saved.'+(Number.isFinite(retry.getTime())?' Next retry: '+retry.toLocaleString()+'.':''),'companion-error'));}
+      }
       const events=Array.isArray(job.events)?job.events:[];
       if(events.length){const details=make('details'),summary=make('summary','Work history'),ol=make('ol');for(const event of events.slice(-12))ol.append(make('li',text(event.message,text(event.phase))));details.append(summary,ol);row.append(details);}
       list.append(row);
     }
-    const reviews=$('.companion-proposals'),fingerprint=JSON.stringify([drafts,online,available,mutating,state?.generation]);
+    const reviews=$('.companion-proposals'),fingerprint=JSON.stringify([drafts,online,available,mutating,state?.generation,restricted]);
     if(reviews.dataset.fingerprint!==fingerprint) {
     for(const dispose of previews)dispose();previews.clear();
     const expanded=new Set([...reviews.querySelectorAll('article')].filter(row=>row.querySelector('details')?.open).map(row=>row.dataset.proposal));reviews.replaceChildren();reviews.dataset.fingerprint=fingerprint;
@@ -130,7 +159,7 @@ export function createCompanion({button,request,knowledge,document:doc=document}
       if(checks.length){const evidence=make('ul');for(const check of checks)evidence.append(make('li',`${text(check.name,'Check')}: ${text(check.status,'pending')}${check.output?' — '+text(check.output):''}`));details.append(evidence);}
       row.append(details);
       if(proposal.artifact?.kind==='app') {
-        const open=make('button',proposal.requiresRestore?'Restore and check preview':'Open interactive preview','companion-preview-open'),preview=make('div',undefined,'companion-preview-host');open.type='button';open.disabled=!online||!available||mutating;
+        const open=make('button',proposal.requiresRestore?'Restore and check preview':'Open interactive preview','companion-preview-open'),preview=make('div',undefined,'companion-preview-host');open.type='button';open.disabled=!online||!available||mutating||restricted;
         open.onclick=async()=>{
           open.disabled=true;const current=generation;
           try{
@@ -153,7 +182,7 @@ export function createCompanion({button,request,knowledge,document:doc=document}
         row.append(open,preview);
       }
       const actions=make('div',undefined,'companion-actions'),accept=make('button','Accept draft'),reject=make('button','Dismiss');accept.type=reject.type='button';accept.className='primary';
-      accept.disabled=!online||!available||mutating||proposal.reviewable!==true;
+      accept.disabled=!online||!available||mutating||restricted||proposal.reviewable!==true;
       accept.onclick=()=>mutate({action:'accept',id:proposal.id,version:proposal.version,expectedGeneration:state.generation});
       reject.disabled=!online||!available||mutating;reject.onclick=()=>mutate({action:'reject',id:proposal.id,version:proposal.version,expectedGeneration:state.generation});actions.append(accept,reject);row.append(actions);reviews.append(row);
     }
@@ -166,9 +195,9 @@ export function createCompanion({button,request,knowledge,document:doc=document}
     $('.companion-native').hidden=!native;$('.companion-native').textContent=text(native?.message);
     $('.companion-native-setup').hidden=!native;$('.companion-native-setup').disabled=!online||!available||mutating;
     $('.companion-coding-status').textContent=text(state?.codingTeam?.message,'Choose an existing coding teammate to help with app work.');
-    $('.companion-coding-load').disabled=!online||!available||mutating;
-    $('.companion-coding-save').disabled=!online||!available||mutating||!codingTargets[$('.companion-coding-target').value];
-    $('.companion-coding-clear').disabled=!online||!available||mutating||!state?.codingTeam?.target;
+    $('.companion-coding-load').disabled=!online||!available||mutating||restricted;
+    $('.companion-coding-save').disabled=!online||!available||mutating||restricted||!codingTargets[$('.companion-coding-target').value];
+    $('.companion-coding-clear').disabled=!online||!available||mutating||restricted||!state?.codingTeam?.target;
     const signal=state?.signal;
     const expired=signal?.pairingState==='expired'||(typeof signal?.expiresAt==='string'&&Date.parse(signal.expiresAt)<=Date.now());
     const waiting=!expired&&!signal?.linked&&(['creating','waiting'].includes(signal?.pairingState)||Date.now()<pairingPendingUntil);

@@ -11,6 +11,9 @@ dialog.companion-panel{box-sizing:border-box;position:fixed;inset:0 0 0 auto;mar
 .companion-head button{font-size:24px;line-height:1;padding:6px 11px}
 .companion-panel p{font-size:14px;line-height:1.6;max-width:70ch;overflow-wrap:anywhere}
 .companion-readiness{min-height:2.8em;color:var(--muted)}
+.companion-provider p{margin:6px 0;font-size:13px}
+.companion-provider-selection{font-weight:600}
+.companion-provider-catalog,.companion-provider-inference{color:var(--muted)}
 .companion-request{display:grid;gap:10px;margin:22px 0}
 .companion-request label{font-weight:600;font-size:15px}
 .companion-request textarea{box-sizing:border-box;resize:vertical;min-height:90px;width:100%;font:inherit;font-size:15px;line-height:1.5;color:var(--ink);background:#fbfdfd;border:1px solid var(--line);border-radius:9px;padding:12px}
@@ -43,6 +46,7 @@ dialog.companion-panel{box-sizing:border-box;position:fixed;inset:0 0 0 auto;mar
 .companion-message{padding:12px 14px;border-bottom:1px solid var(--line);min-width:0}
 .companion-message:last-child{border-bottom:0}
 .companion-message-meta{font-size:11px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}
+.companion-panel .companion-message-provenance{font-size:11px;line-height:1.6;color:var(--muted);margin:7px 0 0}
 .companion-panel .companion-message pre{margin:7px 0 0;padding:0;border:0;background:transparent;max-height:none;font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace}
 .companion-transcript>.companion-empty{padding:0 14px}
 .companion-history-actions{display:flex;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap}

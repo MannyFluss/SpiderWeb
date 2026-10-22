@@ -106,7 +106,7 @@ async function api(path, body, method) {
     access: accessRequired,
     token: deviceToken,
   });} catch(error) {
-    if (accessRequired && ["access", "access-or-network"].includes(error.kind)) {
+    if (accessRequired && error.kind === "access") {
       accessPaused = true; accessError = error;
       for (const entry of terminalConnections.values()) entry.close();
       $("#access-status").textContent = connectionMessage(error);
