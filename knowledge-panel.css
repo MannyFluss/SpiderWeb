@@ -1,0 +1,26 @@
+.knowledge-panel{margin-top:14px;font-size:14px}
+.knowledge-panel>summary{font-weight:600}
+.knowledge-panel .knowledge-muted{color:var(--muted);font-size:13px}
+.knowledge-panel .knowledge-tabs,.knowledge-panel .knowledge-tools,.knowledge-panel .knowledge-citations{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.knowledge-panel .knowledge-tabs button[aria-selected=true]{color:var(--accent);border-color:var(--accent);font-weight:650}
+.knowledge-panel .knowledge-source-list{display:grid;gap:0;border-bottom:1px solid var(--line)}
+.knowledge-panel .knowledge-source{display:flex;flex-direction:column;gap:4px;width:100%;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;padding:12px 2px;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.knowledge-panel .knowledge-source small{color:var(--muted);font-size:12px}
+.knowledge-panel .knowledge-search,.knowledge-panel form,.knowledge-panel label{display:grid;gap:8px}
+.knowledge-panel input,.knowledge-panel textarea{box-sizing:border-box;width:100%;min-width:0;max-width:100%;font:inherit;color:var(--ink);padding:10px;border:1px solid var(--line);border-radius:6px;background:#fbfdfd}
+.knowledge-panel button{max-width:100%;overflow-wrap:anywhere}
+.knowledge-panel .knowledge-search button,.knowledge-panel form button{justify-self:start}
+.knowledge-panel .knowledge-source-detail{margin-top:20px}
+.knowledge-panel .knowledge-currentness,.knowledge-panel .knowledge-confidence{font-size:12px;color:var(--muted)}
+.knowledge-panel .knowledge-provenance{display:grid;grid-template-columns:1fr;gap:4px;margin:12px 0;overflow-wrap:anywhere}
+.knowledge-panel .knowledge-provenance dt{font-size:12px;color:var(--muted);margin-top:8px}
+.knowledge-panel .knowledge-provenance dd{margin:0;line-height:1.5;user-select:text}
+.knowledge-panel .knowledge-source-detail details button{display:block;margin:8px 0;text-align:left;font-size:12px;white-space:normal}
+.knowledge-panel .knowledge-memory{border-top:1px solid var(--line);padding:18px 0}
+.knowledge-panel .knowledge-memory h4{margin-bottom:4px}
+.knowledge-panel .knowledge-feedback{padding-left:11px;border-left:3px solid var(--accent);overflow-wrap:anywhere}
+.knowledge-panel .knowledge-feedback[data-error=true]{border-color:#8d352d;color:#8d352d}
+.knowledge-panel .knowledge-confirmation{padding:12px;border-left:3px solid #8d352d;background:#fbfdfd}
+.knowledge-panel .knowledge-confirmation button{margin-right:8px;margin-top:8px}
+.knowledge-panel .knowledge-portable{border-top:1px solid var(--line);padding-top:12px;margin-top:20px}
+.knowledge-panel [hidden]{display:none!important}

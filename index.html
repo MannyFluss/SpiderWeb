@@ -13,6 +13,8 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 5v30M5 20h30M9 9l22 22M31 9L9 31' stroke='%23234453' stroke-width='3'/%3E%3Ccircle cx='20' cy='20' r='6' fill='%23d4e9e4' stroke='%23234453' stroke-width='3'/%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./companion-ui.css" />
+    <link rel="stylesheet" href="./knowledge-panel.css" />
     <script type="module" src="./app.js"></script>
   </head>
   <body>
@@ -81,6 +83,7 @@
           ><span class="spider-mark">✳</span> Spider</a
         ><span id="connection-status" class="status-pill">Connecting</span>
         <div class="header-actions">
+          <button id="companion-toggle" class="companion-toggle" aria-label="Open companion" aria-haspopup="dialog"><span aria-hidden="true">✳</span> Companion</button>
           <button id="app-menu-toggle" class="app-menu-toggle" aria-label="Open apps" title="Apps (Option–Space to search)" aria-haspopup="dialog" aria-controls="app-dialog" aria-expanded="false"><span aria-hidden="true">●</span></button>
           <button id="settings-toggle" class="settings-toggle" aria-label="Settings" title="Settings" aria-haspopup="dialog"><span aria-hidden="true">⚙</span></button>
         </div>

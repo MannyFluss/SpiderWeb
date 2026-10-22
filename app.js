@@ -5,6 +5,7 @@ import { createDesktop } from "./desktop.js";
 import { createLauncher } from "./launcher.js";
 import { clientStorage } from "./client-storage.js";
 import { siteConfig } from "./site-config.js";
+import {createCompanion} from "./companion-ui.js";
 import {
   normalizeNode,
   clientInfo,
@@ -56,6 +57,15 @@ catch {journal={local:{pending:[],conflicts:[],views:[],recoveredChanges:[]},sav
 let local=journal.local;
 clientId = local.clientId;
 let endpoints={};
+async function companionService(service,args) {
+  if(!online||!snapshot||!clientId)throw Error('Reconnect to your Mac to use the companion.');
+  if(!apps.find(app=>app.id===APP)?.services?.includes(service))throw Error('This service is not available to Spider.');
+  const workspaceId=snapshot.id,sessionId=clientId;
+  const result=await api('/api/service/'+service,{...args,appId:APP,sessionId,workspaceId});
+  if(snapshot?.id!==workspaceId||clientId!==sessionId)throw Error('Workspace changed during this request.');
+  return result;
+}
+const companion=createCompanion({button:$('#companion-toggle'),request:args=>companionService('companion',args),knowledge:args=>companionService('context',args)});
 const launcher=createLauncher({dialog:$('#app-dialog'),input:$('#app-search'),results:$('#app-results'),onLaunch:openApp});
 const desktop = createDesktop({
   container: $("#mounts"),
@@ -186,6 +196,7 @@ function contextState(ctx) {
   };
 }
 function broadcast() {
+  companion.update({online,workspaceId:snapshot?.id});
   updateSessionSelectors();
   for (const [id, port] of ports) {
     const c = contexts.get(id);
@@ -546,6 +557,7 @@ async function dispatch(ctx, msg, transferPort) {
     case "openrig":
     case "agent":
     case "context":
+    case "companion":
     case "reader": {
       if (!apps.find((a) => a.id === ctx.appId)?.services?.includes(method))
         throw Error(`${method} is not declared by this app`);
