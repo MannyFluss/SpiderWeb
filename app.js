@@ -598,7 +598,8 @@ async function dispatch(ctx, msg, transferPort) {
       if (ctx.workspaceId !== snapshot?.id) throw Error("Workspace changed before submission");
       if (local.pending.some((op) => op.appId === ctx.appId && op.sessionId === ctx.sessionId))
         throw Error("Wait for this app to finish syncing");
-      const result = await api(`/api/service/${method}`, { ...args, appId:ctx.appId, sessionId:ctx.sessionId, workspaceId:ctx.workspaceId });
+      const result = await api(`/api/service/${method}`, { ...args, appId:ctx.appId, sessionId:ctx.sessionId, workspaceId:ctx.workspaceId,
+        ...(ctx.appId===SANDBOX_ID?{sandboxVersion:sandboxWriteVersion(ctx,currentSandboxVersion())}:{}) });
       await refresh();
       return result;
     }
