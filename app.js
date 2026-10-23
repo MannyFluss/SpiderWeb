@@ -6,6 +6,7 @@ import { createLauncher } from "./launcher.js";
 import { clientStorage } from "./client-storage.js";
 import { siteConfig } from "./site-config.js";
 import {createCompanion} from "./companion-ui.js";
+import {SANDBOX_ID,createSandboxLoader,sandboxVersion,sameSandboxVersion,sandboxWriteVersion,quarantineSandboxEdits} from "./sandbox-code.js";
 import {
   normalizeNode,
   clientInfo,
@@ -115,6 +116,24 @@ async function api(path, body, method) {
     throw error;
   }
 }
+function currentSandboxVersion(){return snapshot?.apps?.[SANDBOX_ID]?.sandbox;}
+const sandboxCodeCache={
+ async get(key){try{const c=await caches.open('spider-sandbox-verified-v1'),r=await c.match(new URL('/__spider_sandbox_cache/'+encodeURIComponent(key),location.origin).href);return r?await r.json():undefined;}catch{}},
+ async put(key,value){const c=await caches.open('spider-sandbox-verified-v1');await c.put(new URL('/__spider_sandbox_cache/'+encodeURIComponent(key),location.origin).href,new Response(JSON.stringify(value),{headers:{'Content-Type':'application/json'}}));}
+};
+const sandboxLoader=createSandboxLoader({
+ metadata:()=>api('/api/sandbox/version'),
+ bundle:hash=>fetch(nodeBase+'/api/sandbox/bundle/'+hash,{credentials:hosted?'include':'same-origin',...(hosted?{redirect:'manual'}:{}),cache:'no-store',headers:deviceToken?{Authorization:'Spider '+deviceToken}:{},signal:AbortSignal.timeout(15000)}),
+ cache:sandboxCodeCache
+});
+function updateSandboxViews(){
+ for(const c of contexts.values()){
+  if(c.appId!==SANDBOX_ID||!c.sandboxVersion)continue;
+  const stale=c.sandboxReadonly||!sameSandboxVersion(c.sandboxVersion,currentSandboxVersion());
+  const panel=document.querySelector('[data-mount="'+c.mountId+'"]'),reload=panel?.querySelector('.sandbox-reload');
+  if(reload){reload.hidden=!stale;reload.title=stale?'The old view is read-only. Reopen to use matching code and state.':'';}
+ }
+}
 const versionKey = (app, sid, path) =>
   [app, sid, ...path]
     .map((s) => s.replaceAll("~", "~0").replaceAll("/", "~1"))
@@ -153,12 +172,17 @@ function projected(app, sid) {
   return data;
 }
 function contextState(ctx) {
+  const stale=ctx.appId===SANDBOX_ID&&ctx.sandboxVersion&&!sameSandboxVersion(ctx.sandboxVersion,currentSandboxVersion());
+  const scopedData=stale||ctx.sandboxReadonly?structuredClone(ctx.lastSandboxData||{}):projected(ctx.appId,ctx.sessionId);
+  if(ctx.appId===SANDBOX_ID&&!stale&&!ctx.sandboxReadonly)ctx.lastSandboxData=structuredClone(scopedData);
   return {
     workspaceId: snapshot?.id,
     appId: ctx.appId,
     sessionId: ctx.sessionId,
-    data: projected(ctx.appId, ctx.sessionId),
-    online,
+    data: scopedData,
+    online: online&&!stale&&!ctx.sandboxReadonly,
+    sandboxVersion:ctx.appId===SANDBOX_ID?ctx.sandboxVersion:undefined,
+    sandboxReadOnly:stale||!!ctx.sandboxReadonly,
     revision: snapshot?.revision || 0,
     window: desktop.state(rootMount(ctx)),
     jobs: Object.fromEntries(
@@ -196,11 +220,12 @@ function contextState(ctx) {
   };
 }
 function broadcast() {
+  updateSandboxViews();
   companion.update({online,workspaceId:snapshot?.id});
   updateSessionSelectors();
   for (const [id, port] of ports) {
     const c = contexts.get(id);
-    if (c) port.postMessage({ type: "state", state: contextState(c) });
+    if (c && (c.appId!==SANDBOX_ID||c.sandboxVersion||currentSandboxVersion()==null)) port.postMessage({ type: "state", state: contextState(c) });
   }
   $("#connection-status").textContent = online
     ? local.pending.length
@@ -211,8 +236,9 @@ function broadcast() {
   $("#sync-status").textContent =
     `Revision ${snapshot?.revision || 0} · ${local.pending.length} pending${local.conflicts.length ? " · " + local.conflicts.length + " resolved to Mac" : ""}`;
 }
-async function write(app, sid, path, value, {defer=false}={}) {
+async function write(app, sid, path, value, {defer=false,sandboxVersion:loadedVersion}={}) {
   if (!snapshot) throw Error("Connect to Spider first");
+  if(app===SANDBOX_ID){loadedVersion=sandboxWriteVersion({appId:app,sandboxVersion:loadedVersion},currentSandboxVersion());}
   if (
     !Array.isArray(path) ||
     !path.length ||
@@ -227,7 +253,7 @@ async function write(app, sid, path, value, {defer=false}={}) {
   let previous = [...local.pending]
     .reverse()
     .find(
-      (o) => o.key === key && o.workspaceId === snapshot.id && !o.attempted,
+      (o) => o.key === key && o.workspaceId === snapshot.id && !o.attempted && (app!==SANDBOX_ID||(!loadedVersion&&!o.sandboxVersion)||sameSandboxVersion(o.sandboxVersion,loadedVersion)),
     );
   if (previous) {
     previous.value = structuredClone(value);
@@ -242,6 +268,7 @@ async function write(app, sid, path, value, {defer=false}={}) {
       sessionId: sid,
       path: [...path],
       value: structuredClone(value),
+      ...(app===SANDBOX_ID&&loadedVersion?{sandboxVersion:{...loadedVersion}}:{}),
       baseVersion: targetVersion(key),
       key,
       predecessor: predecessor?.id,
@@ -262,6 +289,7 @@ function payload(op) {
       "path",
       "value",
       "baseVersion",
+      "sandboxVersion",
     ].map((k) => [k, op[k]]),
   );
 }
@@ -354,6 +382,8 @@ async function refresh(shouldFlush = true) {
     )
       snapshot = data.state;
     clientId = data.clientId;
+    const quarantined=quarantineSandboxEdits(local,snapshot?.apps?.[SANDBOX_ID]?.sandbox);
+    if(quarantined)notice("Sandbox was restored or deployed. Earlier unsent edits were kept for export and will not replay. Reopen Sandbox to continue.");
     apps = data.apps;
     endpoints=data.endpoints || {};
     local.workspaceId = snapshot.id;
@@ -451,6 +481,8 @@ async function dispatch(ctx, msg, transferPort) {
     throw Error(
       "This view belongs to a previous workspace. Reopen it before continuing.",
     );
+  if(currentSandboxVersion()!=null&&ctx.appId!==SANDBOX_ID&&ctx.ancestors?.includes(SANDBOX_ID))throw Error("Sandbox cannot write through another app context.");
+  if(ctx.appId===SANDBOX_ID)sandboxWriteVersion(ctx,currentSandboxVersion());
   const { method, args = {} } = msg;
   switch (method) {
     case "launcher":
@@ -486,7 +518,7 @@ async function dispatch(ctx, msg, transferPort) {
       return {connected:true};
     }
     case "write":
-      return write(ctx.appId, ctx.sessionId, args.path, args.value);
+      return write(ctx.appId, ctx.sessionId, args.path, args.value,{sandboxVersion:ctx.appId===SANDBOX_ID?sandboxWriteVersion(ctx,currentSandboxVersion()):undefined});
     case "renameDevice": {
       if (ctx.appId !== "spider.connections")
         throw Error("Device management is not declared by this app");
@@ -588,6 +620,7 @@ async function dispatch(ctx, msg, transferPort) {
         appId: ctx.appId,
         sessionId: ctx.sessionId,
         workspaceId: snapshot.id,
+        ...(ctx.appId===SANDBOX_ID?{sandboxVersion:sandboxWriteVersion(ctx,currentSandboxVersion())}:{}),
       });
     case "cancel": {
       const job = snapshot.jobs?.[args.taskId];
@@ -596,6 +629,7 @@ async function dispatch(ctx, msg, transferPort) {
       return api("/api/jobs/cancel", args);
     }
     case "mount": {
+      if((currentSandboxVersion()!=null||ctx.sandboxVersion)&&(ctx.appId===SANDBOX_ID||ctx.ancestors?.includes(SANDBOX_ID)))throw Error("Sandbox cannot create another app’s write context.");
       const child = makeContext(
         args.appId,
         args.sessionId,
@@ -603,12 +637,13 @@ async function dispatch(ctx, msg, transferPort) {
         ctx.mountId,
       );
       const app = apps.find((a) => a.id === child.appId);
+      const html=await loadAppHtml(app,child);
       return {
         src: `/apps/${app.id}/${app.entry || "index.html"}`,
         name: app.name,
         context: child,
         state: contextState(child),
-        html: await loadAppHtml(app),
+        html,
       };
     }
     case "child":
@@ -632,7 +667,13 @@ function dispose(id) {
   ports.delete(id);
   contexts.delete(id);
 }
-async function loadAppHtml(app) {
+async function loadAppHtml(app,ctx) {
+  if(app.id===SANDBOX_ID&&(currentSandboxVersion()!=null||ctx?.sandboxVersion)){
+    const loaded=await sandboxLoader.load({workspaceId:snapshot?.id,runtime:nodeBase,online});
+    if(!loaded.readonly){await refresh(false);if(!online||!sameSandboxVersion(loaded.version,currentSandboxVersion()))throw Error("Sandbox changed while loading. Reopen it to load matching code and state.");}
+    if(ctx){ctx.sandboxVersion=Object.freeze({...loaded.version});ctx.sandboxReadonly=loaded.readonly;ctx.lastSandboxData=sameSandboxVersion(loaded.version,currentSandboxVersion())?projected(ctx.appId,ctx.sessionId):{};}
+    if(loaded.message)notice(loaded.message);return loaded.html;
+  }
   const url = hosted
     ? new URL(`apps/${app.id}/${app.entry || "index.html"}`, import.meta.url)
         .href
@@ -688,6 +729,7 @@ async function renderView(view) {
       saveLayout();
     };
     bar.append(label, tag);
+    if(app.id===SANDBOX_ID){const reload=document.createElement("button");reload.type="button";reload.className="sandbox-reload";reload.textContent="Reload Sandbox";reload.setAttribute("aria-label","Reload Sandbox with current code and state");reload.hidden=true;reload.onclick=async()=>{dispose(view.id);panel.remove();await renderView(view);};bar.append(reload);}
     if (app.id === "spider.calculator") {
       const link = document.createElement("a");
       link.href = hosted
@@ -718,7 +760,7 @@ async function renderView(view) {
     frame.title = app.name;
     frame.sandbox = "allow-scripts allow-forms";
     frame.allowFullscreen = true;
-    const html = loadAppHtml(app);
+    const html = loadAppHtml(app,c);
     panel.append(bar, frame);
     desktop.world.append(panel);
     desktop.attach(view, panel, {bar, frame, name:app.name, close});
