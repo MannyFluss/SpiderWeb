@@ -99,15 +99,24 @@ function notice(message) {
   $("#notice").hidden = !message;
 }
 async function api(path, body, method, options = {}) {
-  if (accessPaused) throw accessError || Error("Sign into Cloudflare Access to continue.");
-  try {return await requestNode(nodeBase, path, {
+  // Only a read-only workspace probe may bypass an expired Access latch.
+  // Never retry a mutation whose outcome could be unknown.
+  const accessProbe = options.accessProbe === true && path === '/api/state' && !body && (!method || method === 'GET');
+  if (accessPaused && !accessProbe) throw accessError || Error("Sign into Cloudflare Access to continue.");
+  try {const result = await requestNode(nodeBase, path, {
     body,
     method,
     hosted,
     access: accessRequired,
     token: deviceToken,
     timeoutMs: options.timeoutMs ?? 8000,
-  });} catch(error) {
+  });
+    if (accessProbe) {
+      accessPaused = false; accessError = null;
+      $('#access-status').textContent = 'Cloudflare Access connected.';
+    }
+    return result;
+  } catch(error) {
     if (accessRequired && error.kind === "access") {
       accessPaused = true; accessError = error;
       for (const entry of terminalConnections.values()) entry.close();
@@ -184,6 +193,8 @@ function contextState(ctx) {
     online: online&&!stale&&!ctx.sandboxReadonly,
     sandboxVersion:ctx.appId===SANDBOX_ID?ctx.sandboxVersion:undefined,
     sandboxReadOnly:stale||!!ctx.sandboxReadonly,
+    connectionStatus: stale||ctx.sandboxReadonly ? 'update-required' : accessPaused ? 'sign-in-required' : online ? 'connected' : 'reconnecting',
+    connectionMessage: stale||ctx.sandboxReadonly ? 'Update available. This view is read-only; preserve your writing, then reopen Sandbox.' : accessPaused ? 'Sign-in required. Saved edits are retained.' : online ? 'Connected to Mac' : 'Reconnecting to Mac. Saved edits are retained.',
     revision: snapshot?.revision || 0,
     window: desktop.state(rootMount(ctx)),
     jobs: Object.fromEntries(
@@ -228,11 +239,16 @@ function broadcast() {
     const c = contexts.get(id);
     if (c && (c.appId!==SANDBOX_ID||c.sandboxVersion||currentSandboxVersion()==null)) port.postMessage({ type: "state", state: contextState(c) });
   }
-  $("#connection-status").textContent = online
-    ? local.pending.length
-      ? "Syncing"
-      : "Connected to Mac"
-    : "Mac unreachable · reconnect to sync";
+  if(online||accessPaused){clearTimeout(connectionNoticeTimer);connectionNoticeTimer=0;connectionNoticeReady=false;}
+  else if(!connectionNoticeTimer&&!connectionNoticeReady){connectionNoticeTimer=setTimeout(()=>{connectionNoticeTimer=0;connectionNoticeReady=true;broadcast();},3000);}
+  const updateRequired=[...contexts.values()].some(c=>c.appId===SANDBOX_ID&&(c.sandboxReadonly||(c.sandboxVersion&&!sameSandboxVersion(c.sandboxVersion,currentSandboxVersion()))));
+  $('#connection-status').setAttribute('role','status');
+  $('#connection-status').setAttribute('aria-live','polite');
+  $("#connection-status").textContent = updateRequired
+    ? 'Update required · preserve writing and reopen Sandbox'
+    : online
+      ? local.pending.length ? 'Syncing' : 'Connected to Mac'
+      : accessPaused ? 'Sign-in required · saved edits retained' : connectionNoticeReady ? 'Reconnecting to Mac · saved edits retained' : 'Checking connection · saved edits retained';
   $("#connection-status").classList.toggle("offline", !online);
   $("#sync-status").textContent =
     `Revision ${snapshot?.revision || 0} · ${local.pending.length} pending${local.conflicts.length ? " · " + local.conflicts.length + " resolved to Mac" : ""}`;
@@ -358,9 +374,18 @@ async function flush() {
     for (const resolve of flushWaiters.splice(0)) resolve();
   }
 }
-async function refresh(shouldFlush = true) {
+let lastAccessProbe = 0, accessSignedOut = false;
+let lastRecoveryProbe = 0, connectionNoticeTimer = 0, connectionNoticeReady = false;
+async function refresh(shouldFlush = true, foreground = false) {
+  // Expired sign-in is probed slowly, or immediately on foreground return.
+  // Explicit sign-out remains deliberate and is never undone by background work.
+  if (accessSignedOut) return;
+  if (!foreground && !online && lastRecoveryProbe && Date.now() - lastRecoveryProbe < 60000) return;
+  if (accessPaused && (!foreground && Date.now() - lastAccessProbe < 60000)) return;
+  lastRecoveryProbe = Date.now();
+  if (accessPaused) lastAccessProbe = Date.now();
   try {
-    const data = await api("/api/state");
+    const data = await api("/api/state", undefined, undefined, {accessProbe: accessPaused});
     if (snapshot && snapshot.id !== data.state.id && local.pending.length)
       notice(
         "A different workspace is active. Pending changes remain preserved.",
@@ -882,7 +907,7 @@ function pendingPair() {
   }catch{}
 }
 async function resumeAccess() {
-  accessPaused=false; accessError=null;
+  accessSignedOut=false; accessPaused=false; accessError=null;
   try {
     await api('/health');
     $('#access-status').textContent='Cloudflare Access connected. Spider pairing is checked separately.';
@@ -909,7 +934,7 @@ $('#access-signout').hidden=!accessRequired;
 $('#access-signout').onclick=()=>{
   persist();
   for(const entry of terminalConnections.values())entry.close();
-  accessPaused=true;accessError=Object.assign(Error('Sign into Cloudflare Access to continue.'),{kind:'access'});
+  accessSignedOut=true;accessPaused=true;accessError=Object.assign(Error('Sign into Cloudflare Access to continue.'),{kind:'access'});
   online=false;broadcast();
   $('#access-status').textContent='Signed out in this tab. Complete Cloudflare logout in the opened tab. Spider pairing and unsent edits are preserved.';
   window.open(nodeBase+'/cdn-cgi/access/logout','spider-access');
@@ -1119,9 +1144,9 @@ setInterval(async () => {
     polling = false;
   }
 }, 1800);
-window.addEventListener("online", () => refresh());
+window.addEventListener("online", () => refresh(true, true));
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) refresh();
+  if (!document.hidden) refresh(true, true);
 });
 
 if ("serviceWorker" in navigator)

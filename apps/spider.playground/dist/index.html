@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#c7d6ed" />
-  <title>OS Playground</title>
+  <title>Sandbox</title>
 
 
 
@@ -57,7 +57,7 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
 @media(pointer:coarse){.module-socket{min-height:38px;padding:5px 7px}.module-socket .socket-dot{width:14px;height:14px}.module-sockets:not(.is-editing) .module-socket{min-height:34px}.patch-route button,.patch-actions button,.module-send{min-height:40px}}
 </style></head>
 <body>
-  <main id="shell" aria-label="OS Playground">
+  <main id="shell" aria-label="Sandbox">
     <header class="topbar">
       <div class="identity"><span id="brand-icon"></span><strong>Playground</strong><span class="experiment-tag">OS sketch</span></div>
       <div class="top-actions">
@@ -145,7 +145,7 @@ dialog{border:1px solid #bbc9e0;border-radius:14px;padding:24px;background:#f5f8
     <p class="dialog-hint">Your writing and ideas stay in place.</p>
   </dialog>
   <div id="notice" role="alert" hidden></div>
-<script type="module">// gestures.js
+<script type="module">// SpiderFrontend/gestures.js
 var installed = /* @__PURE__ */ new WeakSet();
 function isolatePageZoom(doc = document) {
   if (installed.has(doc)) return;
@@ -164,15 +164,20 @@ function isolatePageZoom(doc = document) {
     view.addEventListener(type, preventNativeZoom, { passive: false });
 }
 
-// sdk.js
+// SpiderFrontend/sdk.js
 var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 function connect() {
   if (window.parent === window) return Promise.resolve(null);
   isolatePageZoom(document);
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    const deadline = setTimeout(() => {
+      window.removeEventListener("message", ready);
+      reject(Error("Spider host connection timed out. Reopen this view to connect; your saved writing is retained."));
+    }, 15e3);
     const ready = (e) => {
       if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
         return;
+      clearTimeout(deadline);
       window.removeEventListener("message", ready);
       const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set(), focusListeners = /* @__PURE__ */ new Set();
       let state2 = e.data.state;
@@ -190,14 +195,25 @@ function connect() {
         const task = pending.get(data2.id);
         if (task) {
           pending.delete(data2.id);
+          clearTimeout(task.timer);
           data2.error ? task.reject(Error(data2.error)) : task.resolve(data2.result);
         }
       };
       function request(method, args = {}, transfers = []) {
-        return new Promise((resolve2, reject) => {
+        return new Promise((resolve2, reject2) => {
           const id = uid();
-          pending.set(id, { resolve: resolve2, reject });
-          port.postMessage({ id, method, args }, transfers);
+          const timer = setTimeout(() => {
+            pending.delete(id);
+            reject2(Error("Spider bridge reply timed out; this action is unconfirmed. Your saved writing is retained. Check its status before retrying."));
+          }, 75e3);
+          pending.set(id, { resolve: resolve2, reject: reject2, timer });
+          try {
+            port.postMessage({ id, method, args }, transfers);
+          } catch (error) {
+            clearTimeout(timer);
+            pending.delete(id);
+            reject2(error);
+          }
         });
       }
       const sdk2 = {
@@ -310,7 +326,7 @@ function connect() {
   });
 }
 
-// ../SpiderPlayground/camera.js
+// work/camera.js
 var WORLD_LIMIT = 1e6;
 var MIN_ZOOM = 1e-5;
 var MAX_ZOOM = 4;
@@ -362,9 +378,10 @@ function visibleWorld(camera, bounds, padding = 80) {
   return { left: Math.min(...points.map((p) => p.x)), top: Math.min(...points.map((p) => p.y)), right: Math.max(...points.map((p) => p.x)), bottom: Math.max(...points.map((p) => p.y)) };
 }
 
-// ../SpiderPlayground/model.js
+// work/model.js
 var SPACES = [{ id: "studio", name: "Studio" }, { id: "quiet", name: "Quiet room" }];
 var APPS = [
+  { id: "hermes", name: "Hermes", icon: "relay", description: "Chat directly with your Hermes companion", width: 520, height: 620 },
   { id: "guide", name: "Start here", icon: "spark", description: "Get a feel for this desktop", width: 470, height: 430 },
   { id: "note", name: "Scratchpad", icon: "pen", description: "A little room for a thought", width: 440, height: 360 },
   { id: "board", name: "Ideas", icon: "board", description: "Collect what to try, keep, and change", width: 660, height: 440 },
@@ -461,7 +478,7 @@ function remainingTime(timer, now = Date.now()) {
   return { duration, remaining: timer?.endAt > 0 ? clamp2(Math.ceil((timer.endAt - now) / 1e3), 0, duration) : clamp2(finite2(timer?.remaining, duration), 0, duration), running: timer?.endAt > now };
 }
 
-// ../SpiderPlayground/frames.js
+// work/frames.js
 function createFrames() {
   const pending = /* @__PURE__ */ new Set();
   let raf = 0, disposed = false;
@@ -492,7 +509,7 @@ function createFrames() {
   };
 }
 
-// ../SpiderPlayground/navigation.js
+// work/navigation.js
 function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, planting, onInteraction = () => {
 }, onGroundClick = () => {
 }, isBlocked, isWindowMoving, cancelWindow, fitAll }) {
@@ -673,7 +690,7 @@ function createNavigation({ stage, getCamera, setCamera, commit, getTool, ink, p
   } };
 }
 
-// ../SpiderPlayground/ink.js
+// work/ink.js
 var INK_COLORS = ["#334f60", "#365fd3", "#d47d42", "#488875", "#bc5e86"];
 var MAX_STROKES = 256;
 var MAX_POINTS = 6e4;
@@ -907,7 +924,7 @@ function createInk({ canvas, liveCanvas, frames, read, write: write2, getSpace, 
   };
 }
 
-// ../SpiderPlayground/liquid-model.js
+// work/liquid-model.js
 var FIELD_SIZE = 256;
 var MAX_PIXELS = 6e5;
 function surfaceSize(width, height, budget = MAX_PIXELS) {
@@ -915,7 +932,7 @@ function surfaceSize(width, height, budget = MAX_PIXELS) {
   return { width: Math.max(1, Math.floor(width * scale)), height: Math.max(1, Math.floor(height * scale)) };
 }
 
-// ../SpiderPlayground/terrain.js
+// work/terrain.js
 var CONTOUR_INTERVAL = 5;
 var MAX_LOADS = 8;
 var MAX_SOURCES = 192;
@@ -1090,7 +1107,7 @@ function createTerrain() {
   };
 }
 
-// ../SpiderPlayground/liquid-surface.js
+// work/liquid-surface.js
 var vertex = `attribute vec2 aPosition;varying vec2 vUV;void main(){vUV=aPosition*.5+.5;gl_Position=vec4(aPosition,0.,1.);}`;
 var display = `precision highp float;
 varying vec2 vUV;uniform vec2 uView;uniform vec4 uCamera;uniform sampler2D uField;
@@ -1424,7 +1441,7 @@ function createScenery({ canvas, fallback, stage, frames, getBounds, getCamera, 
   };
 }
 
-// ../SpiderPlayground/placement.js
+// work/placement.js
 var separated = (a, b, gap = 38) => a.x + a.width + gap <= b.x || b.x + b.width + gap <= a.x || a.y + a.height + gap <= b.y || b.y + b.height + gap <= a.y;
 function placeWindow(size, windows, center) {
   const occupied = windows.filter((w) => !w.minimized && w.mode === "normal").map((w) => w.rect), gap = 44;
@@ -1438,7 +1455,7 @@ function placeWindow(size, windows, center) {
   return { ...origin, x: right };
 }
 
-// ../SpiderPlayground/world-model.js
+// work/world-model.js
 var MAX_PLANTS = 192;
 var NEIGHBORS = [
   { name: "Pip", role: "reads the contours", color: "#6c8c9c" },
@@ -1449,7 +1466,7 @@ var NEIGHBORS = [
   { name: "Rue", role: "takes the long way home", color: "#7b9f9e" }
 ];
 var COMMONS = { x: 275, y: 665 };
-var defaults = { guide: { x: 282, y: 505 }, note: { x: 700, y: 570 }, board: { x: 1080, y: 670 }, timer: { x: 1050, y: 220 }, calculator: { x: 1115, y: 450 }, relay: { x: 1330, y: 790 }, appearance: { x: 680, y: 810 } };
+var defaults = { hermes: { x: 1510, y: 520 }, guide: { x: 282, y: 505 }, note: { x: 700, y: 570 }, board: { x: 1080, y: 670 }, timer: { x: 1050, y: 220 }, calculator: { x: 1115, y: 450 }, relay: { x: 1330, y: 790 }, appearance: { x: 680, y: 810 } };
 var bounded = (n, fallback, min, max) => Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback;
 function normalizeWorld(raw, now = Date.now()) {
   const places = {};
@@ -1561,7 +1578,7 @@ function worldExtents(scene) {
   return [{ x: scene.commons.x - 190, y: scene.commons.y - 140, width: 380, height: 300 }, ...scene.places.map((place) => ({ x: place.x - 95, y: place.y - 100, width: 190, height: 185 })), ...scene.plants.map((plant) => plant.kind === "tree" ? { x: plant.x - 40, y: plant.y - 96, width: 80, height: 100 } : { x: plant.x - 15, y: plant.y - 36, width: 30, height: 40 })];
 }
 
-// ../SpiderPlayground/citizen-art.js
+// work/citizen-art.js
 var cache = /* @__PURE__ */ new Map();
 function citizen(color, pose = 2) {
   const key2 = color + pose;
@@ -1603,7 +1620,7 @@ function citizen(color, pose = 2) {
   return image;
 }
 
-// ../SpiderPlayground/residents.js
+// work/residents.js
 function steerResident(a, dt, obstacles, others, pointer, now, sampleTerrain = () => ({ height: 0, dx: 0, dy: 0, slope: 0 })) {
   const ground = sampleTerrain(a);
   if (Number.isFinite(a.elevation) && dt > 0 && Math.abs(ground.height - a.elevation) / dt > 5) a.bracingUntil = now + 350;
@@ -1677,7 +1694,7 @@ function steerResident(a, dt, obstacles, others, pointer, now, sampleTerrain = (
   return Math.hypot(a.vx, a.vy);
 }
 
-// ../SpiderPlayground/living-world.js
+// work/living-world.js
 function createLivingWorld({ canvas, frames, read, write: write2, getLayout, getCamera, getBounds, onChange, onStatus, open, notice: notice2, onWake, onStep, sampleTerrain = () => ({ height: 0, dx: 0, dy: 0, slope: 0 }), terrainMoving = () => false }) {
   const ctx = canvas.getContext("2d"), events = new AbortController(), media = matchMedia("(prefers-reduced-motion: reduce)");
   const worlds = /* @__PURE__ */ new Map(), pending = /* @__PURE__ */ new Map();
@@ -2087,7 +2104,7 @@ function createLivingWorld({ canvas, frames, read, write: write2, getLayout, get
   };
 }
 
-// ../SpiderPlayground/icons.js
+// work/icons.js
 var paths = {
   relay: '<circle cx="5" cy="7" r="3"/><circle cx="19" cy="17" r="3"/><path d="M8 7h4a4 4 0 0 1 4 4v2M5 10v7h11m0-10 3-3 3 3"/>',
   wire: '<circle cx="5" cy="6" r="3"/><circle cx="19" cy="18" r="3"/><path d="M5 9v5a4 4 0 0 0 4 4h7"/>',
@@ -2126,7 +2143,7 @@ function icon(name2) {
   return node;
 }
 
-// ../SpiderPlayground/windows.js
+// work/windows.js
 function createWindows({ stage, container, shield, layout: initial, createContent: createContent2, onChange, onPaint, onMenu, read, write: write2, notice: notice2, onTools, onWorldState, modules }) {
   let layout = normalizeLayout(initial), gesture = null, desktopRestore = [], tool = "move", disposed = false;
   const entries = /* @__PURE__ */ new Map(), events = new AbortController(), frames = createFrames(), overlay = stage.querySelector("#overlay-windows");
@@ -2707,7 +2724,7 @@ function createWindows({ stage, container, shield, layout: initial, createConten
   };
 }
 
-// ../SpiderCalculator/math.js
+// SpiderCalculator/math.js
 function calculate(text) {
   const source = text.replaceAll("\xD7", "*").replaceAll("\xF7", "/").replaceAll("\u2212", "-");
   const tokens = source.match(/(?:\d*\.?\d+(?:[eE][+-]?\d+)?)|[()+\-*/%]/g) || [];
@@ -2752,7 +2769,7 @@ function calculate(text) {
   return Number(result.toPrecision(13));
 }
 
-// ../SpiderPlayground/patch-model.js
+// work/patch-model.js
 var MAX_CONNECTIONS = 32;
 var MAX_DELIVERIES = 64;
 var MAX_TEXT = 16e3;
@@ -2845,7 +2862,7 @@ function appendEntry(text, entry) {
   return result;
 }
 
-// ../SpiderPlayground/relay-content.js
+// work/relay-content.js
 function createRelayContent(body, router, space) {
   body.classList.add("relay-content");
   let models = [], loading = false, error = "";
@@ -2963,7 +2980,213 @@ function createRelayContent(body, router, space) {
   return { update };
 }
 
-// ../SpiderPlayground/contents.js
+// work/hermes-state.js
+var held = (w) => w.held === true || w.quiet === true || /held|quiet|paused|setup|provider|budget|policy/.test(w.phase || "");
+var activeWork = (work) => (work || []).filter((w) => ["queued", "running", "pending", "retrying"].includes(w.status) && !held(w) && !(w.status === "retrying" && w.lastFailure));
+function failureText(value) {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object") return "";
+  for (const key2 of ["reason", "message", "detail", "code"]) {
+    const text = failureText(value[key2]);
+    if (text) return text;
+  }
+  return "";
+}
+function workStatus(work) {
+  const latest = (work || []).reduce((best, w) => !best || String(w.updatedAt || "") >= String(best.updatedAt || "") ? w : best, null);
+  if (!latest) return "";
+  if (["blocked", "failed", "interrupted"].includes(latest.status) || latest.status === "retrying" && latest.lastFailure) return "Latest request needs attention: " + (failureText(latest.lastFailure) || latest.title || latest.status) + ". Use Refresh after resolving the issue.";
+  if (held(latest)) return "Latest request is on hold. Use Refresh to check again.";
+  return "";
+}
+function answerText(value) {
+  const original = typeof value === "string" ? value : JSON.stringify(value) ?? "";
+  let parsed = value;
+  if (typeof value === "string") {
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      return original;
+    }
+  }
+  if (parsed && !Array.isArray(parsed) && ["answer", "proposal"].includes(parsed.kind)) {
+    if (typeof parsed.content === "string" && parsed.content) return parsed.content;
+    if (typeof parsed.summary === "string") return parsed.summary;
+  }
+  return original;
+}
+function visibleMessages(messages) {
+  const visible = (messages || []).filter((m) => ["user", "assistant"].includes(m.role) && m.visible !== false && !["analysis", "tool", "commentary"].includes(m.channel)).map((m) => ({ ...m, content: m.role === "assistant" ? answerText(m.content) : String(m.content || "") })).filter((m) => m.content), out = [];
+  for (const m of visible) {
+    const prior = out.at(-1), sameWork = prior && m.workId && (m.workId === prior.workId || m.workId === "signal-outbox:" + prior.workId);
+    if (m.role === "assistant" && prior?.role === "assistant" && sameWork && (m.content === prior.content || m.channel === "signal" && m.content === "Spider: " + prior.content)) continue;
+    out.push(m);
+  }
+  return out;
+}
+function pendingSend(existing, prompt, uuid) {
+  return existing || { id: uuid(), prompt };
+}
+function scrollPosition({ older, initial, nearBottom, top, height, nextHeight }) {
+  return older ? top + nextHeight - height : initial || nearBottom ? nextHeight : top;
+}
+function pendingSaved(pending, work) {
+  return !!pending && (work || []).some((w) => typeof w.id === "string" && w.id.startsWith("chat:") && w.id.endsWith(":" + pending.id));
+}
+
+// work/hermes-chat.js
+function createHermesChat(body, { request, read, write: write2, space }) {
+  body.classList.add("hermes-chat");
+  body.style.cssText += ";display:flex;flex-direction:column;gap:10px;padding:16px;overflow:hidden;min-width:0;min-height:0;flex:1";
+  let disposed = false, busy = false, sending = false, generation = "", timer = 0, cursor = null, messages = [], working = false, failures = 0;
+  let connectionNotice = 0;
+  function clearConnectionNotice() {
+    clearTimeout(connectionNotice);
+    connectionNotice = 0;
+  }
+  let pending = read().hermesPending?.[space] || null;
+  const intro = el("p", "", "Your shared Hermes conversation, including Signal. Messages are saved by Spider."), bar = el("div"), log = el("div"), status2 = el("p"), form = el("form"), input = el("textarea"), send = el("button", "primary", "Send");
+  const refresh = button("Refresh / reconnect", () => load()), earlier = button("Load earlier", () => load(true));
+  bar.append(refresh, earlier);
+  log.style.cssText = "flex:1;min-height:0;overflow:auto;overflow-anchor:none";
+  bar.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;flex-shrink:0";
+  for (const node of [intro, status2, form]) node.style.flexShrink = "0";
+  log.setAttribute("role", "log");
+  log.setAttribute("aria-label", "Hermes conversation");
+  status2.setAttribute("role", "status");
+  input.setAttribute("aria-label", "Message Hermes");
+  input.placeholder = "Message Hermes\u2026";
+  input.rows = 3;
+  input.maxLength = 2e4;
+  input.style.cssText = "width:100%;box-sizing:border-box;min-height:80px;font-size:16px";
+  form.style.cssText = "display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end";
+  send.style.cssText = "min-width:72px;max-width:120px;white-space:normal";
+  input.value = String(read().hermesDrafts?.[space] || pending?.prompt || "");
+  send.type = "submit";
+  form.append(input, send);
+  body.append(intro, bar, log, status2, form);
+  input.addEventListener("input", () => write2(["hermesDrafts", space], input.value));
+  function controls() {
+    send.disabled = sending || busy || !generation || !request || !pending && !input.value.trim();
+    send.textContent = sending ? "Saving\u2026" : pending ? "Retry unconfirmed send" : "Send";
+    input.disabled = sending || !!pending;
+    refresh.disabled = busy || sending;
+    earlier.hidden = !cursor;
+    earlier.disabled = busy || sending;
+  }
+  input.addEventListener("input", controls);
+  function render(older = false) {
+    const top = log.scrollTop, height = log.scrollHeight, initial = !log.children.length, nearBottom = height - top - log.clientHeight < 60;
+    log.replaceChildren();
+    for (const m of visibleMessages(messages)) {
+      const row = el("article"), text = el("div", "", m.content);
+      row.style.cssText = "padding:12px 0;border-bottom:1px solid #ccc";
+      text.style.cssText = "white-space:pre-wrap;overflow-wrap:anywhere";
+      row.append(el("strong", "", m.role === "user" ? "You" : "Hermes"), text);
+      log.append(row);
+    }
+    if (!log.children.length) log.append(el("p", "", "No saved messages to show yet."));
+    log.scrollTop = scrollPosition({ older, initial, nearBottom, top, height, nextHeight: log.scrollHeight });
+  }
+  function schedule() {
+    clearTimeout(timer);
+    if (!disposed && (working || failures || pending)) timer = setTimeout(() => load(), failures || pending ? 6e4 : 4e3);
+  }
+  async function load(older = false) {
+    if (disposed || busy || sending || !request) return;
+    busy = true;
+    clearTimeout(timer);
+    controls();
+    try {
+      const s = await request("companion", { action: "chat-status" });
+      if (disposed) return;
+      let resumedSend = false;
+      if (generation && generation !== s.generation) {
+        messages = [];
+        cursor = null;
+        older = false;
+      }
+      generation = s.generation;
+      if (pending && pendingSaved(pending, s.work)) {
+        pending = null;
+        write2(["hermesPending", space], null);
+        input.value = "";
+        write2(["hermesDrafts", space], "");
+        resumedSend = true;
+      }
+      const page = await request("companion", { action: "chat-history", expectedGeneration: generation, limit: 50, maxChars: 64e3, ...older && cursor ? { before: cursor } : {} });
+      if (disposed) return;
+      messages = older ? [...page.messages || [], ...messages] : page.messages || [];
+      cursor = page.hasMore ? page.nextCursor : null;
+      render(older);
+      working = resumedSend || activeWork(s.work).length > 0;
+      failures = 0;
+      clearConnectionNotice();
+      status2.textContent = pending ? "A send is unconfirmed. Retry retains its original message ID and text." : workStatus(s.work) || (working ? "Hermes is working. Replies refresh automatically." : "Connected to Hermes. Refresh to check for new messages.");
+    } catch (e) {
+      if (!disposed) {
+        generation = "";
+        failures++;
+        if (!connectionNotice) connectionNotice = setTimeout(() => {
+          connectionNotice = 0;
+          if (!disposed && failures) status2.textContent = "Connection interrupted. Checking again every 60 seconds; use Refresh to try now. Your draft is retained. " + e.message;
+        }, 3e3);
+      }
+    } finally {
+      busy = false;
+      if (!disposed) {
+        controls();
+        schedule();
+      }
+    }
+  }
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (disposed || sending || busy || !generation || !request) return;
+    const prompt = input.value.trim();
+    if (!pending && !prompt) return;
+    pending = pendingSend(pending, prompt, () => crypto.randomUUID());
+    write2(["hermesPending", space], pending);
+    sending = true;
+    clearTimeout(timer);
+    controls();
+    let saved = false;
+    try {
+      await request("companion", { action: "chat-send", ...pending, expectedGeneration: generation });
+      if (disposed) return;
+      saved = true;
+      pending = null;
+      write2(["hermesPending", space], null);
+      input.value = "";
+      write2(["hermesDrafts", space], "");
+      status2.textContent = "Message saved and queued. Waiting for Hermes\u2026";
+      working = true;
+    } catch (error) {
+      if (!disposed) {
+        failures++;
+        status2.textContent = "Send not confirmed: " + error.message + ". Retry sends the same ID and original text; your draft is retained. Spider will only check status automatically. Use Retry unconfirmed send to retry manually with the original ID.";
+      }
+    } finally {
+      sending = false;
+      if (!disposed) {
+        controls();
+        if (saved) await load();
+        else schedule();
+      }
+    }
+  });
+  if (!request) status2.textContent = "Open Sandbox inside Spider and connect Hermes to use chat. No simulated replies are shown.";
+  controls();
+  load();
+  return { destroy() {
+    disposed = true;
+    clearTimeout(timer);
+    clearConnectionNotice();
+  }, update() {
+  } };
+}
+
+// work/contents.js
 function el(tag, className = "", text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -2985,7 +3208,8 @@ var lanes = [["try", "Try"], ["keep", "Keep"], ["change", "Change"]];
 function cardsOf(value) {
   return Array.isArray(value) ? value.filter((card) => card && typeof card.id === "string" && typeof card.text === "string" && lanes.some(([id]) => id === card.lane)).slice(0, 100) : defaultCards();
 }
-function createContent(win, body, { read, write: write2, open, library, explore, modules }) {
+function createContent(win, body, { read, write: write2, open, library, explore, modules, request }) {
+  if (win.app === "hermes") return createHermesChat(body, { request, read, write: write2, space: win.space });
   const space = win.space;
   const get = (field, fallback) => read()[field]?.[space] ?? fallback;
   const emit = (port, value, extra = {}) => modules.router.emit(win.app, port, value, extra, space);
@@ -3003,7 +3227,7 @@ function createContent(win, body, { read, write: write2, open, library, explore,
     }
     body.append(instructions);
     const actions = el("div", "guide-actions");
-    actions.append(button("Explore the world", explore, "primary"), button("Open apps", library, "text-button"), button("Try connected tools", () => modules.demo(), "patch-try"));
+    actions.append(button("Chat with Hermes", () => open("hermes"), "primary"), button("Explore the world", explore, "primary"), button("Open apps", library, "text-button"), button("Try connected tools", () => modules.demo(), "patch-try"));
     body.append(actions, el("p", "small-print", "Neighbors feel the same ground: they slow uphill and find their footing. Pan, pinch, or twist to explore. Closed apps keep a marker."));
     return {};
   }
@@ -3257,7 +3481,7 @@ function createContent(win, body, { read, write: write2, open, library, explore,
   return {};
 }
 
-// ../SpiderPlayground/patch-router.js
+// work/patch-router.js
 function createPatchRouter({ read, write: write2, getLayout, getState = () => null, request, onActivity = () => {
 } }) {
   let disposed = false, checking = false;
@@ -3489,7 +3713,7 @@ function createPatchRouter({ read, write: write2, getLayout, getState = () => nu
   };
 }
 
-// ../SpiderPlayground/patches.js
+// work/patches.js
 var svgNode = (tag, attributes = {}) => {
   const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
   for (const [k, v] of Object.entries(attributes)) n.setAttribute(k, v);
@@ -3849,7 +4073,7 @@ function createPatches({ stage, read, write: write2, getLayout, getState, reques
   };
 }
 
-// ../SpiderPlayground/app.js
+// work/app.js
 var $ = (selector) => document.querySelector(selector);
 var sdk = await connect();
 var data = {};
@@ -3882,8 +4106,11 @@ function notice(message, { transient = false } = {}) {
   if (transient) noticeTimer = setTimeout(() => notice(""), 3e3);
 }
 function updateStatus() {
-  status.textContent = saveError ? "Save needs attention" : !sdk ? "Preview \xB7 changes last until reload" : state?.online ? "Spider connected" : "Offline \xB7 edits queued";
-  status.classList.toggle("has-error", !!saveError);
+  const updateRequired = state?.connectionStatus === "update-required" || state?.sandboxReadOnly === true;
+  status.setAttribute("role", "status");
+  status.setAttribute("aria-live", "polite");
+  status.textContent = updateRequired ? "Update required \xB7 this view is read-only. Keep your writing, then reopen Sandbox." : saveError ? "Save needs attention" : !sdk ? "Preview \xB7 changes last until reload" : state?.connectionStatus === "sign-in-required" ? "Sign-in required \xB7 drafts retained" : state?.online ? "Spider connected" : "Reconnecting \xB7 drafts retained";
+  status.classList.toggle("has-error", !!saveError || updateRequired);
 }
 function write(path, value) {
   const key2 = JSON.stringify(path), pending = { path: [...path], value: structuredClone(value) };
@@ -3999,7 +4226,7 @@ function makeManager(layout) {
     onTools: tools,
     onWorldState: worldStatus,
     modules,
-    createContent: (win, body) => createContent(win, body, { read: () => data, write, open: (id) => manager.open(id), library: openLibrary, explore: () => manager.explore(), modules }),
+    createContent: (win, body) => createContent(win, body, { read: () => data, write, open: (id) => manager.open(id), library: openLibrary, explore: () => manager.explore(), modules, request: sdk ? (method, args) => sdk.request(method, args) : null }),
     onChange: (value) => {
       layoutKey = JSON.stringify(value);
       write(["layout"], value);

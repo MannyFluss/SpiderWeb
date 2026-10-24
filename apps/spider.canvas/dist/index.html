@@ -122,10 +122,15 @@ var uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.rando
 function connect() {
   if (window.parent === window) return Promise.resolve(null);
   isolatePageZoom(document);
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    const deadline = setTimeout(() => {
+      window.removeEventListener("message", ready);
+      reject(Error("Spider host connection timed out. Reopen this view to connect; your saved writing is retained."));
+    }, 15e3);
     const ready = (e) => {
       if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
         return;
+      clearTimeout(deadline);
       window.removeEventListener("message", ready);
       const port = e.ports[0], pending = /* @__PURE__ */ new Map(), listeners = /* @__PURE__ */ new Set(), focusListeners = /* @__PURE__ */ new Set();
       let state = e.data.state;
@@ -143,14 +148,25 @@ function connect() {
         const task = pending.get(data.id);
         if (task) {
           pending.delete(data.id);
+          clearTimeout(task.timer);
           data.error ? task.reject(Error(data.error)) : task.resolve(data.result);
         }
       };
       function request(method, args = {}, transfers = []) {
-        return new Promise((resolve2, reject) => {
+        return new Promise((resolve2, reject2) => {
           const id = uid();
-          pending.set(id, { resolve: resolve2, reject });
-          port.postMessage({ id, method, args }, transfers);
+          const timer = setTimeout(() => {
+            pending.delete(id);
+            reject2(Error("Spider bridge reply timed out; this action is unconfirmed. Your saved writing is retained. Check its status before retrying."));
+          }, 75e3);
+          pending.set(id, { resolve: resolve2, reject: reject2, timer });
+          try {
+            port.postMessage({ id, method, args }, transfers);
+          } catch (error) {
+            clearTimeout(timer);
+            pending.delete(id);
+            reject2(error);
+          }
         });
       }
       const sdk = {

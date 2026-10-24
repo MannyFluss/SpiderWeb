@@ -5,10 +5,15 @@ export const uid = () =>
 export function connect() {
   if (window.parent === window) return Promise.resolve(null);
   isolatePageZoom(document);
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    const deadline = setTimeout(() => {
+      window.removeEventListener('message', ready);
+      reject(Error('Spider host connection timed out. Reopen this view to connect; your saved writing is retained.'));
+    }, 15000);
     const ready = (e) => {
       if (e.source !== parent || e.data?.type !== "spider:init" || !e.ports[0])
         return;
+      clearTimeout(deadline);
       window.removeEventListener("message", ready);
       const port = e.ports[0],
         pending = new Map(),
@@ -29,6 +34,7 @@ export function connect() {
         const task = pending.get(data.id);
         if (task) {
           pending.delete(data.id);
+          clearTimeout(task.timer);
           data.error
             ? task.reject(Error(data.error))
             : task.resolve(data.result);
@@ -37,8 +43,14 @@ export function connect() {
       function request(method, args = {}, transfers = []) {
         return new Promise((resolve, reject) => {
           const id = uid();
-          pending.set(id, { resolve, reject });
-          port.postMessage({ id, method, args }, transfers);
+          // A timed-out mutation may already have reached the host. Never replay it.
+          const timer = setTimeout(() => {
+            pending.delete(id);
+            reject(Error('Spider bridge reply timed out; this action is unconfirmed. Your saved writing is retained. Check its status before retrying.'));
+          }, 75000);
+          pending.set(id, { resolve, reject, timer });
+          try { port.postMessage({ id, method, args }, transfers); }
+          catch (error) { clearTimeout(timer); pending.delete(id); reject(error); }
         });
       }
       const sdk = {
