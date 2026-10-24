@@ -1,10 +1,11 @@
 const base = new URL(".", self.location.href);
 const hosted = true;
-const CACHE = "spider-code-v23:" + base.pathname;
+const CACHE = "spider-code-v24:" + base.pathname;
 const shell = hosted
   ? [
       ".",
       "app.js",
+      "diagnostics.js",
       "sandbox-code.js",
       "companion-ui.js",
       "companion-ui.css",
@@ -25,6 +26,7 @@ const shell = hosted
   : [
       ".",
       "apps/spider.frontend/app.js",
+      "apps/spider.frontend/diagnostics.js",
       "apps/spider.frontend/sandbox-code.js",
       "apps/spider.frontend/companion-ui.js",
       "apps/spider.frontend/companion-ui.css",

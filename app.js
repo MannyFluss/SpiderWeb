@@ -1,3 +1,6 @@
+import {diagnostics,installDiagnostics,createDiagnosticsApp} from './diagnostics.js';
+installDiagnostics();
+const diagnosticsApp=createDiagnosticsApp();
 import {downloadSpec,p5ReferenceUrl} from "./download.js";
 import { portableView } from "./export.js";
 import { uid } from "./sdk.js";
@@ -231,7 +234,11 @@ function contextState(ctx) {
         : undefined,
   };
 }
+let lastDiagnosticState='';
 function broadcast() {
+  const diagnosticState={online,pending:local.pending.length,conflicts:local.conflicts.length,revision:snapshot?.revision||0,kind:accessPaused?'sign-in-required':'normal'};
+  const diagnosticKey=JSON.stringify(diagnosticState);
+  if(diagnosticKey!==lastDiagnosticState){lastDiagnosticState=diagnosticKey;diagnostics.record('workspace.state',diagnosticState);}
   updateSandboxViews();
   companion.update({online,workspaceId:snapshot?.id});
   updateSessionSelectors();
@@ -440,7 +447,7 @@ function showWorkspace() {
   if (!snapshot) return;
   $("#pair-screen").hidden = true;
   $("#workspace").hidden = false;
-  launcher.update(apps);
+  launcher.update([...apps,{id:'spider.local-diagnostics',name:'Reliability logs',category:'Utilities',keywords:['logs','diagnostics','export','offline']}]);
   $("#client-label").textContent =
     projected("spider.connections", "directory").names?.[clientId] ||
     snapshot.devices?.[clientId]?.label ||
@@ -1022,7 +1029,9 @@ $("#pair-form").onsubmit = (e) => {
   e.preventDefault();
   pairBrowser($("#pair-code").value.trim());
 };
+$('#diagnostics-toggle').onclick=()=>diagnosticsApp.open();
 function openApp(appId) {
+    if(appId==='spider.local-diagnostics'){diagnosticsApp.open();return;}
     const manifest = apps.find((app) => app.id === appId && !app.rootOnly);
     if(!manifest)return;
     const v = { id: uid(), appId, sessionId: manifest.defaultSession || uid() };

@@ -1,3 +1,4 @@
+import {diagnostics,diagnosticRoute} from './diagnostics.js';
 export function normalizeNode(value) {
   const u = new URL(value);
   if (
@@ -88,6 +89,8 @@ export async function requestNode(
     ? { "Content-Type": "application/json", "X-Spider-Request": "1" }
     : {};
   if (token) headers.Authorization = "Spider " + token;
+  const started=Date.now(),meta={route:diagnosticRoute(path),method:method||(body?'POST':'GET')};
+  diagnostics.record('request.start',meta);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -100,6 +103,7 @@ export async function requestNode(
       cache: "no-store",
       signal: controller.signal,
     });
+    diagnostics.record('request.response',{...meta,status:response.status,durationMs:Date.now()-started});
     if (response.type === "opaqueredirect" || (response.status >= 300 && response.status < 400))
       throw new NodeRequestError("Sign into Cloudflare Access to continue.", {kind:"access",status:response.status || undefined});
     let result;
@@ -121,6 +125,7 @@ export async function requestNode(
       );
     return result;
   } catch (error) {
+    diagnostics.record('request.error',{...meta,durationMs:Date.now()-started,kind:error instanceof NodeRequestError?error.kind:controller.signal.aborted?'timeout':'network',status:error.status});
     if (error instanceof NodeRequestError) throw error;
     if (access)
       throw new NodeRequestError("Cloudflare sign-in or the Mac connection could not be confirmed. Sign in, then check that the Mac is awake and online.", {kind:"access-or-network"});
