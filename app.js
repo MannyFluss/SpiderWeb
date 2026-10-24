@@ -98,7 +98,7 @@ function notice(message) {
   $("#notice").textContent = message;
   $("#notice").hidden = !message;
 }
-async function api(path, body, method) {
+async function api(path, body, method, options = {}) {
   if (accessPaused) throw accessError || Error("Sign into Cloudflare Access to continue.");
   try {return await requestNode(nodeBase, path, {
     body,
@@ -106,6 +106,7 @@ async function api(path, body, method) {
     hosted,
     access: accessRequired,
     token: deviceToken,
+    timeoutMs: options.timeoutMs ?? 8000,
   });} catch(error) {
     if (accessRequired && error.kind === "access") {
       accessPaused = true; accessError = error;
@@ -598,9 +599,10 @@ async function dispatch(ctx, msg, transferPort) {
       if (ctx.workspaceId !== snapshot?.id) throw Error("Workspace changed before submission");
       if (local.pending.some((op) => op.appId === ctx.appId && op.sessionId === ctx.sessionId))
         throw Error("Wait for this app to finish syncing");
+      const chat = method === 'companion' && ['chat-status','chat-history','chat-send'].includes(args.action);
       const result = await api(`/api/service/${method}`, { ...args, appId:ctx.appId, sessionId:ctx.sessionId, workspaceId:ctx.workspaceId,
-        ...(ctx.appId===SANDBOX_ID?{sandboxVersion:sandboxWriteVersion(ctx,currentSandboxVersion())}:{}) });
-      await refresh();
+        ...(ctx.appId===SANDBOX_ID?{sandboxVersion:sandboxWriteVersion(ctx,currentSandboxVersion())}:{}) }, undefined, chat ? {timeoutMs:60000} : {});
+      if (!chat) await refresh();
       return result;
     }
     case "ollama":
