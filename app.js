@@ -1,4 +1,6 @@
+import {createHermesReader} from './hermes-reader.js';
 import {diagnostics,installDiagnostics,createDiagnosticsApp} from './diagnostics.js';
+import {createReliabilityMonitor} from './reliability-monitor.js';
 installDiagnostics();
 const diagnosticsApp=createDiagnosticsApp();
 import {downloadSpec,p5ReferenceUrl} from "./download.js";
@@ -70,6 +72,9 @@ async function companionService(service,args) {
   return result;
 }
 const companion=createCompanion({button:$('#companion-toggle'),request:args=>companionService('companion',args),knowledge:args=>companionService('context',args)});
+createHermesReader({button:$('#hermes-reader-toggle'),request:args=>companionService('companion',args),scope:()=>nodeBase+':'+(snapshot?.id||'')});
+const reliabilityMonitor=createReliabilityMonitor({log:diagnostics,storage:globalThis.localStorage,scope:()=>nodeBase+':'+(snapshot?.id||''),ready:()=>online&&!!snapshot&&!accessPaused,send:report=>companionService('companion',{action:'reliability-report',report})});
+setInterval(()=>{void reliabilityMonitor.tick();},15000);
 const launcher=createLauncher({dialog:$('#app-dialog'),input:$('#app-search'),results:$('#app-results'),onLaunch:openApp});
 const desktop = createDesktop({
   container: $("#mounts"),

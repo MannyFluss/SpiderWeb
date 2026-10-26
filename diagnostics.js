@@ -1,3 +1,4 @@
+import {summarizeDiagnostics,formatDiagnosticsReport} from './diagnostics-report.js';
 // Local-only, metadata-only diagnostics. Never record payloads, URLs or error messages.
 export const DIAGNOSTICS_BUILD='local-diagnostics-v1';
 const KEY='spider.diagnostics.v1',LIMIT=800,MAX_BYTES=240000;
@@ -14,7 +15,7 @@ export function createDiagnostics({storage,now=()=>new Date().toISOString()}={})
  }
  try{const saved=JSON.parse(storage?.getItem(KEY)||'[]');if(Array.isArray(saved))events=saved.slice(-LIMIT).filter(x=>x&&typeof x==='object').map(x=>({...clean(x.event,x),at:typeof x.at==='string'&&/^\d{4}-\d\d-\d\dT[0-9:.]+Z$/.test(x.at)?x.at:now()}));}catch{persistent=false;}
  function save(){while(events.length>LIMIT||JSON.stringify(events).length>MAX_BYTES)events.shift();try{if(!storage)throw Error();storage.setItem(KEY,JSON.stringify(events));persistent=true;}catch{persistent=false;}for(const fn of listeners)try{fn();}catch{}}
- return {record(event,detail){events.push(clean(event,detail));save();},clear(){events=[];save();},subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},snapshot(){return {schemaVersion:1,build:DIAGNOSTICS_BUILD,exportedAt:now(),persistent,privacy:'Metadata only. No request bodies, saved work, tokens, full URLs, keystrokes or error messages. No automatic upload.',events:events.map(x=>({...x}))};}};
+ return {record(event,detail){events.push(clean(event,detail));save();},clear(){events=[];save();},subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},snapshot(){return {summary:summarizeDiagnostics(events),schemaVersion:1,build:DIAGNOSTICS_BUILD,exportedAt:now(),persistent,privacy:'Metadata only. No request bodies, saved work, tokens, full URLs, keystrokes or error messages. Suspicious metadata may be submitted automatically to the authenticated Spider runtime for Hermes review when connected.',events:events.map(x=>({...x}))};}};
 }
 let storage;try{storage=globalThis.localStorage;}catch{}
 export const diagnostics=createDiagnostics({storage});
@@ -30,16 +31,17 @@ export function installDiagnostics(log=diagnostics,win=globalThis.window,doc=glo
 export function createDiagnosticsApp(log=diagnostics){
  const dialog=document.createElement('dialog');dialog.setAttribute('aria-label','Reliability logs');
  const title=document.createElement('h2');title.textContent='Reliability logs';
- const intro=document.createElement('p');intro.textContent='Local to this browser. Export after a problem and share the JSON with Hermes. Metadata only; nothing is uploaded automatically. Different browsers and frontend addresses keep separate logs.';
+ const intro=document.createElement('p');intro.textContent='Metadata-only logs are retained in this browser. Suspicious or unfamiliar events are automatically submitted to your authenticated Spider runtime for Hermes review when connected. No request bodies, saved work, tokens or error messages are included. Browser collection requires this page to be open; offline reports wait for reconnection.';
  const status=document.createElement('p');status.setAttribute('role','status');
  const preview=document.createElement('pre');preview.style.cssText='max-height:45vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere';
  const tools=document.createElement('div');tools.className='toolbar';
  const button=(text,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;tools.append(b);};
  button('Export JSON',()=>{try{const blob=new Blob([JSON.stringify(log.snapshot(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='spider-reliability-'+new Date().toISOString().replaceAll(':','-')+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch{status.textContent='Download failed. Select and copy the visible log below.';}});
+ button('Export readable report',()=>{try{const blob=new Blob([formatDiagnosticsReport(log.snapshot())],{type:'text/markdown;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='spider-reliability-report.md';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch{status.textContent='Download failed. Select and copy the visible report below.';}});
  button('Mark problem now',()=>log.record('user.problem'));
  button('Clear logs',()=>{if(confirm('Delete reliability logs on this browser?'))log.clear();});
  button('Close',()=>dialog.close());
  dialog.append(title,intro,status,tools,preview);document.body.append(dialog);
- function render(){if(!dialog.open)return;const s=log.snapshot();status.textContent=`${s.events.length} events · ${s.persistent?'Saved locally across reloads':'Memory only — browser storage unavailable; export before closing'} · ${s.build}`;preview.textContent=JSON.stringify(s,null,2);}
+ function render(){if(!dialog.open)return;const s=log.snapshot();status.textContent=`${s.events.length} events · ${s.persistent?'Saved locally across reloads':'Memory only — browser storage unavailable; export before closing'} · ${s.build}`;preview.textContent=formatDiagnosticsReport(s);}
  log.subscribe(render);return {open(){if(!dialog.open)dialog.showModal();render();}};
 }
