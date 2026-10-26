@@ -1,3 +1,4 @@
+import {renderMarkdown} from './markdown.js';
 function el(tag,className='',text){const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n;}
 function button(text,action){const n=el('button','',text);n.type='button';n.addEventListener('click',action);return n;}
 import {activeWork,visibleMessages,pendingSend,workStatus,scrollPosition,pendingSaved} from './hermes-state.js';
@@ -18,7 +19,7 @@ export function createHermesChat(body,{request,read,write,space}){
  input.addEventListener('input',()=>write(['hermesDrafts',space],input.value));
  function controls(){send.disabled=sending||busy||!generation||!request||(!pending&&!input.value.trim());send.textContent=sending?'Saving…':pending?'Retry unconfirmed send':'Send';input.disabled=sending||!!pending;refresh.disabled=busy||sending;earlier.hidden=!cursor;earlier.disabled=busy||sending;}
  input.addEventListener('input',controls);
- function render(older=false){const top=log.scrollTop,height=log.scrollHeight,initial=!log.children.length,nearBottom=height-top-log.clientHeight<60;log.replaceChildren();for(const m of visibleMessages(messages)){const row=el('article'),text=el('div','',m.content);row.style.cssText='padding:12px 0;border-bottom:1px solid #ccc';text.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere';row.append(el('strong','',m.role==='user'?'You':'Hermes'),text);log.append(row);}if(!log.children.length)log.append(el('p','','No saved messages to show yet.'));log.scrollTop=scrollPosition({older,initial,nearBottom,top,height,nextHeight:log.scrollHeight});}
+ function render(older=false){const top=log.scrollTop,height=log.scrollHeight,initial=!log.children.length,nearBottom=height-top-log.clientHeight<60;log.replaceChildren();for(const m of visibleMessages(messages)){const row=el('article'),text=el('div','',m.content);row.style.cssText='padding:12px 0;border-bottom:1px solid #ccc';text.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere';if(m.role!=='user')renderMarkdown(text,m.content);row.append(el('strong','',m.role==='user'?'You':'Hermes'),text);log.append(row);}if(!log.children.length)log.append(el('p','','No saved messages to show yet.'));log.scrollTop=scrollPosition({older,initial,nearBottom,top,height,nextHeight:log.scrollHeight});}
  function schedule(){clearTimeout(timer);if(!disposed&&(working||failures||pending))timer=setTimeout(()=>load(),failures||pending?60000:4000);}
  async function load(older=false){
   if(disposed||busy||sending||!request)return;busy=true;clearTimeout(timer);controls();

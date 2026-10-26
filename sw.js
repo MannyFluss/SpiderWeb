@@ -1,6 +1,6 @@
 const base = new URL(".", self.location.href);
 const hosted = true;
-const CACHE = "spider-code-v27:" + base.pathname;
+const CACHE = "spider-code-v29:" + base.pathname;
 // Include the reliability collector in both hosted and local offline shells.
 const monitorAsset = hosted ? 'reliability-monitor.js' : 'apps/spider.frontend/reliability-monitor.js';
 const shell = hosted
@@ -12,6 +12,7 @@ const shell = hosted
       "sandbox-code.js",
       "hermes-reader.js",
       "hermes-chat.js",
+      "markdown.js",
       "hermes-state.js",
       "companion-ui.js",
       "companion-ui.css",
@@ -37,6 +38,7 @@ const shell = hosted
       "apps/spider.frontend/sandbox-code.js",
       "apps/spider.frontend/hermes-reader.js",
       "apps/spider.frontend/hermes-chat.js",
+      "apps/spider.frontend/markdown.js",
       "apps/spider.frontend/hermes-state.js",
       "apps/spider.frontend/companion-ui.js",
       "apps/spider.frontend/companion-ui.css",
