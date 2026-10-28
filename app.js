@@ -1,4 +1,5 @@
-import {createHermesReader} from './hermes-reader.js';
+import {createHermesWorld} from './hermes-world.js';
+import {createHermesChat} from './hermes-chat.js';
 import {diagnostics,installDiagnostics,createDiagnosticsApp} from './diagnostics.js';
 import {createReliabilityMonitor} from './reliability-monitor.js';
 installDiagnostics();
@@ -72,7 +73,36 @@ async function companionService(service,args) {
   return result;
 }
 const companion=createCompanion({button:$('#companion-toggle'),request:args=>companionService('companion',args),knowledge:args=>companionService('context',args)});
-createHermesReader({button:$('#hermes-reader-toggle'),request:args=>companionService('companion',args),scope:()=>nodeBase+':'+(snapshot?.id||'')});
+// Hermes lives in world space rather than a modal reader.
+$('#hermes-reader-toggle').onclick=()=>openShellWindow('hermes');
+const shellWindows=new Map();
+function openShellWindow(kind,restoredView){
+ if(!snapshot||!clientId){notice('Connect to your Mac first.');return;}
+ const existing=shellWindows.get(kind);if(existing){desktop.activate(existing.id,true);return;}
+ const view=restoredView||{id:uid(),appId:'spider.shell-'+kind,sessionId:clientId};
+ if(!local.views.some(v=>v.id===view.id))local.views.push(view);
+ const panel=document.createElement('section'),bar=document.createElement('div'),body=document.createElement('div');
+ panel.className='app-window';panel.dataset.mount=view.id;bar.className='window-bar';
+ const title=document.createElement('span');title.className='window-title';title.textContent=kind==='world'?'Hermes · Living workspace':kind==='hermes'?'Hermes':'Scratchpad';bar.append(title);
+ body.style.cssText='display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto;padding:16px';panel.append(bar,body);desktop.world.append(panel);
+ let chat;const close=(persistClose=true)=>{chat?.destroy();desktop.remove(view.id);panel.remove();shellWindows.delete(kind);local.views=local.views.filter(v=>v.id!==view.id);if(persistClose)saveLayout();};
+ shellWindows.set(kind,{...view,close});desktop.attach(view,panel,{bar,frame:body,name:title.textContent,close});
+ const read=()=>projected(APP,clientId);const save=(path,value)=>write(APP,clientId,path,value).catch(e=>notice(e.message));
+ if(kind==='world'){
+ title.textContent='Hermes · Living workspace';
+ chat=createHermesWorld(body,{request:args=>companionService('companion',args),openChat:()=>openShellWindow('hermes'),openApp});
+ }else if(kind==='hermes'){
+ const worldButton=document.createElement('button');worldButton.type='button';worldButton.textContent='Living workspace';worldButton.onclick=()=>openShellWindow('world');bar.append(worldButton);
+ const scratch=document.createElement('button');scratch.type='button';scratch.textContent='Scratchpad';scratch.onclick=()=>openShellWindow('scratchpad');bar.append(scratch);
+ chat=createHermesChat(body,{space:'shared',read,write:save,request:(_service,args)=>{const actions={'chat-status':'status','chat-history':'history','chat-send':'terminal-input'};return companionService('companion',{...args,action:actions[args.action]}).then(result=>args.action==='chat-status'?{...result,work:(result.work||[]).map(w=>({...w,id:typeof w.id==='string'&&!w.id.startsWith('chat:')?'chat:frontend:'+w.id:w.id}))}:result);}});
+ }else{
+ const seed='Hermes world-space vision\n\nI have an editable HyperFrames concept video showing a Hermes conversation growing its own work area, branching into related tasks, and exchanging a source-identified shadow. This is a scripted design concept, not deployed functionality.\n\nWatch: http://127.0.0.1:3019/\nMP4: http://127.0.0.1:3019/movie.mp4\nEditable preview: http://localhost:3002/#project/HermesDesignTrailer\n\nNext: make video output an owned subwindow beside the Hermes conversation responsible for editing it. Localhost links work only on the Mac running those servers.\n';
+ const input=document.createElement('textarea');input.setAttribute('aria-label','Scratchpad notes');input.style.cssText='flex:1;min-height:240px;width:100%;box-sizing:border-box;font:16px/1.6 system-ui;resize:none';input.value=String(read().scratchpad??seed);if(read().scratchpad===undefined)save(['scratchpad'],seed);input.oninput=()=>save(['scratchpad'],input.value);
+ const link=document.createElement('a');link.href='http://127.0.0.1:3019/';link.target='_blank';link.rel='noopener';link.textContent='Watch HyperFrames concept · Mac localhost';body.append(input,link);
+ }
+ saveLayout();
+}
+
 const reliabilityMonitor=createReliabilityMonitor({log:diagnostics,storage:globalThis.localStorage,scope:()=>nodeBase+':'+(snapshot?.id||''),ready:()=>online&&!!snapshot&&!accessPaused,send:report=>companionService('companion',{action:'reliability-report',report})});
 setInterval(()=>{void reliabilityMonitor.tick();},15000);
 const launcher=createLauncher({dialog:$('#app-dialog'),input:$('#app-search'),results:$('#app-results'),onLaunch:openApp});
@@ -403,6 +433,8 @@ async function refresh(shouldFlush = true, foreground = false) {
         "A different workspace is active. Pending changes remain preserved.",
       );
     if (snapshot && snapshot.id !== data.state.id) {
+      for(const entry of shellWindows.values())entry.close?.(false);
+      shellWindows.clear();
       desktop.reset();
       for (const id of [...contexts.keys()]) dispose(id);
       for (const p of ports.values()) p.close();
@@ -746,6 +778,7 @@ async function loadAppHtml(app,ctx) {
   }
 }
 async function renderView(view) {
+  if(['spider.shell-hermes','spider.shell-scratchpad','spider.shell-world'].includes(view.appId)){openShellWindow(view.appId.slice('spider.shell-'.length),view);return;}
   try {
     const app = apps.find((a) => a.id === view.appId);
     if (!app) return;
@@ -1046,6 +1079,12 @@ function openApp(appId) {
   }
 $('#app-menu-toggle').onclick=()=>launcher.open();
 $('#search-apps').onclick=()=>launcher.open('search');
+$('#reload-world').onclick=async()=>{
+ const button=$('#reload-world');button.disabled=true;
+ try{await persist();await flush();if(local.pending.length){notice('Reload paused: unsent edits are retained. Reconnect and try again.');return;}location.reload();}
+ catch(e){notice('Reload paused to protect your edits. '+e.message);}
+ finally{button.disabled=false;}
+};
 document.addEventListener('keydown',event=>{
   if(event.altKey && !event.ctrlKey && !event.metaKey && event.code==='Space' && !event.repeat && snapshot){event.preventDefault();launcher.open('search');}
 },true);

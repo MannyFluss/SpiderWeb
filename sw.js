@@ -1,8 +1,9 @@
 const base = new URL(".", self.location.href);
 const hosted = true;
-const CACHE = "spider-code-v29:" + base.pathname;
+const CACHE = "spider-code-v31:" + base.pathname;
 // Include the reliability collector in both hosted and local offline shells.
 const monitorAsset = hosted ? 'reliability-monitor.js' : 'apps/spider.frontend/reliability-monitor.js';
+const worldAsset = hosted ? 'hermes-world.js' : 'apps/spider.frontend/hermes-world.js';
 const shell = hosted
   ? [
       ".",
@@ -65,7 +66,7 @@ self.addEventListener("install", (event) =>
       .open(CACHE)
       .then((cache) =>
         cache.addAll(
-          [...shell, monitorAsset, ...bundles].map((file) => new URL(file, base).href),
+          [...shell, monitorAsset, worldAsset, ...bundles].map((file) => new URL(file, base).href),
         ),
       )
       .then(() => self.skipWaiting()),
